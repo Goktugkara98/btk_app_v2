@@ -1,0 +1,81 @@
+/* Quiz Settings Section Styles */
+.quiz-settings-section {
+    padding: 3rem 0;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 200px);
+}
+
+.quiz-settings-form {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.setting-group {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.setting-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.setting-header {
+    margin-bottom: 1.5rem;
+}
+
+.setting-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.setting-header h3 i {
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+.setting-header p {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.setting-content {
+    padding-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quiz-settings-section {
+        padding: 2rem 0;
+    }
+    
+    .quiz-settings-form {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .setting-group {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+    }
+    
+    .setting-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .setting-header p {
+        font-size: 0.9rem;
+    }
+} 

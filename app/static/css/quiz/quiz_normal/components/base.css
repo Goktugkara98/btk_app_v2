@@ -1,0 +1,39 @@
+/* ===== BASE STYLES ===== */
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #2d3748;
+}
+
+.quiz-body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main Container */
+.quiz-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+}
+
+/* Root container - full viewport height */
+.quiz-body {
+    height: 100vh;
+    overflow: hidden;
+}

@@ -1,0 +1,11 @@
+/* ===== QUIZ NORMAL - MODULAR CSS STRUCTURE ===== */
+
+/* Import all component stylesheets */
+@import url('./components/base.css');
+@import url('./components/header.css');
+@import url('./components/navigation.css');
+@import url('./components/main-content.css');
+@import url('./components/footer.css');
+@import url('./components/loading-error.css');
+@import url('./components/responsive.css');
+@import url('./components/utilities.css');

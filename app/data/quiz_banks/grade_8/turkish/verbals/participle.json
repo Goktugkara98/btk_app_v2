@@ -1,0 +1,1040 @@
+{
+  "metadata": {
+    "grade": 8,
+    "subject": "Türkçe",
+    "unit": "Fiilimsiler",
+    "topic": "Sıfat-fiil",
+    "topicName": "Sıfat-fiil",
+    "totalQuestions": 30,
+    "difficultyLevels": {
+      "easy": 10,
+      "medium": 10,
+      "hard": 10
+    },
+    "createdAt": "2025-08-04T04:05:00Z",
+    "updatedAt": "2025-08-04T04:05:00Z",
+    "version": "2.0"
+  },
+  "questions": [
+    {
+      "id": "8_turkish_verbals_participles_easy_001",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Akşamları kitap okumayı severim.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'okumayı' kelimesi isim-fiildir, sıfat-fiil değildir."
+        },
+        {
+          "id": "B",
+          "text": "Koşa koşa yanıma geldi.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'koşa koşa' ikilemesi zarf-fiildir, sıfat-fiil değildir."
+        },
+        {
+          "id": "C",
+          "text": "Kırılan bardağı çöpe attı.",
+          "isCorrect": true,
+          "explanation": "Bu cümlede 'kırılan' kelimesi '-an' ekini alarak 'bardak' ismini niteleyen bir sıfat-fiildir."
+        },
+        {
+          "id": "D",
+          "text": "Buradan hemen gitmelisin.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede fiilimsi kullanılmamıştır. 'Gitmelisin' çekimli bir fiildir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiiller (ortaçlar), fiillere getirilen '-an, -ası, -mez, -ar, -dik, -ecek, -miş' ekleriyle yapılır ve cümlede sıfat görevinde kullanılır. 'Kırılan bardak' bir sıfat tamlamasıdır."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_002",
+      "questionText": "'Gelecek güzel günlere inanıyorum.' cümlesindeki sıfat-fiil aşağıdakilerden hangisidir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "güzel",
+          "isCorrect": false,
+          "explanation": "'Güzel' kelimesi bir niteleme sıfatıdır ancak fiil kökünden türemediği için sıfat-fiil değildir."
+        },
+        {
+          "id": "B",
+          "text": "günlere",
+          "isCorrect": false,
+          "explanation": "'Günlere' kelimesi bir isimdir."
+        },
+        {
+          "id": "C",
+          "text": "inanıyorum",
+          "isCorrect": false,
+          "explanation": "'İnanıyorum' kelimesi cümlenin çekimli fiili yani yüklemidir."
+        },
+        {
+          "id": "D",
+          "text": "gelecek",
+          "isCorrect": true,
+          "explanation": "'Gelecek' kelimesi, 'gel-' fiiline '-ecek' sıfat-fiil ekini alarak 'günler' ismini nitelemiştir."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Sıfat-fiiller, bir ismi niteleyerek sıfat tamlaması oluşturur. 'Gelecek günler' ifadesi bunun bir örneğidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_003",
+      "questionText": "Aşağıdaki altı çizili sözcüklerden hangisi sıfat-fiil değildir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Törene katılan izleyiciler çok coşkuluydu.",
+          "isCorrect": false,
+          "explanation": "'Katılan' kelimesi '-an' ekini almış bir sıfat-fiildir."
+        },
+        {
+          "id": "B",
+          "text": "Okunmuş kitapları bir kenara ayırdı.",
+          "isCorrect": false,
+          "explanation": "'Okunmuş' kelimesi '-muş' ekini almış bir sıfat-fiildir."
+        },
+        {
+          "id": "C",
+          "text": "Yorulunca biraz mola verdiler.",
+          "isCorrect": true,
+          "explanation": "'Yorulunca' kelimesi '-ınca' zarf-fiil ekini almıştır, sıfat-fiil değildir."
+        },
+        {
+          "id": "D",
+          "text": "Dönülmez akşamın ufkundayız.",
+          "isCorrect": false,
+          "explanation": "'Dönülmez' kelimesi '-mez' ekini almış bir sıfat-fiildir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Fiilimsiler aldıkları eklere göre isim-fiil, sıfat-fiil ve zarf-fiil olarak üçe ayrılır. '-ınca' eki zarf-fiil ekidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_004",
+      "questionText": "'-mez' eki, aşağıdaki cümlelerin hangisinde sıfat-fiil eki olarak kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Babam bu saatte hiç uyumaz.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-maz' eki, geniş zamanın olumsuzunu bildiren kip ekidir."
+        },
+        {
+          "id": "B",
+          "text": "O, kimsenin kalbini kırmaz.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-maz' eki, geniş zamanın olumsuzunu bildiren kip ekidir."
+        },
+        {
+          "id": "C",
+          "text": "Tükenmez kalemim kayboldu.",
+          "isCorrect": true,
+          "explanation": "'Tükenmez' kelimesi 'kalem' ismini niteleyen bir sıfat-fiildir ve kalıplaşarak bir varlığın adı olmuştur."
+        },
+        {
+          "id": "D",
+          "text": "Bu kadar yaramazlık yapılmaz.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-maz' eki, geniş zamanın olumsuzunu bildiren kip ekidir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiil ekleri ile zaman ekleri karıştırılmamalıdır. Sıfat-fiiller bir ismi nitelerken, kip ekleri cümlenin yüklemini oluşturur."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_005",
+      "questionText": "'Çalışan insan her zaman kazanır.' cümlesinde sıfat-fiilin nitelediği sözcük aşağıdakilerden hangisidir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "her",
+          "isCorrect": false,
+          "explanation": "'Her' kelimesi 'zaman' ismini belirten bir belgisiz sıfattır."
+        },
+        {
+          "id": "B",
+          "text": "zaman",
+          "isCorrect": false,
+          "explanation": "'Zaman' bir isimdir ve 'çalışan' tarafından nitelenmemiştir."
+        },
+        {
+          "id": "C",
+          "text": "insan",
+          "isCorrect": true,
+          "explanation": "'Çalışan' sıfat-fiili, 'nasıl insan?' sorusuna cevap vererek 'insan' ismini nitelemektedir."
+        },
+        {
+          "id": "D",
+          "text": "kazanır",
+          "isCorrect": false,
+          "explanation": "'Kazanır' cümlenin yüklemidir, bir isim değildir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiiller, niteledikleri isimle birlikte bir sıfat tamlaması oluştururlar: 'çalışan insan'."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_006",
+      "questionText": "Aşağıdaki cümlelerin hangisinde '-dık / -dik' eki sıfat-fiil göreviyle kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bu konuyu daha önce de anlattık.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-tık' eki, görülen geçmiş zaman kipinin 1. çoğul şahıs ekidir."
+        },
+        {
+          "id": "B",
+          "text": "Tanıdık bir yüz görünce rahatladım.",
+          "isCorrect": true,
+          "explanation": "'Tanıdık' kelimesi, '-dık' sıfat-fiil ekini alarak 'yüz' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Yolda bir arkadaşıma rastladık.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-dık' eki, görülen geçmiş zaman kipinin 1. çoğul şahıs ekidir."
+        },
+        {
+          "id": "D",
+          "text": "Çok yürüdük ama yorulmadık.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-dük' ve '-dık' ekleri, görülen geçmiş zaman kipinin 1. çoğul şahıs ekidir."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "'-dık' eki hem sıfat-fiil eki hem de kip eki olarak kullanılabilir. Cümledeki görevine dikkat etmek gerekir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_007",
+      "questionText": "'Yaralanan yolcular hastaneye kaldırıldı.' cümlesindeki sıfat-fiilin kökü hangi seçenekte doğru verilmiştir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "yar",
+          "isCorrect": false,
+          "explanation": "Kelimenin anlamıyla ilgisi olsa da, fiilimsi ekinin geldiği en yakın kök bu değildir."
+        },
+        {
+          "id": "B",
+          "text": "yara",
+          "isCorrect": false,
+          "explanation": "'Yara' bir isimdir. Fiilimsi ekleri fiil kök veya gövdelerine gelir."
+        },
+        {
+          "id": "C",
+          "text": "yaralamak",
+          "isCorrect": false,
+          "explanation": "Fiilimsi eki doğrudan 'yaralamak' fiiline değil, ondan türeyen 'yaralanmak' fiiline gelmiştir."
+        },
+        {
+          "id": "D",
+          "text": "yaralanmak",
+          "isCorrect": true,
+          "explanation": "Sıfat-fiil eki olan '-an', 'yaralanmak' fiil gövdesine eklenmiştir."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Fiilimsi ekleri, fiil kök veya gövdelerine eklenir. Kelimenin yapısını doğru analiz etmek önemlidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_008",
+      "questionText": "'Görülecek ne kadar çok yer var!' cümlesindeki sıfat-fiil eki hangisidir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "-Gör",
+          "isCorrect": false,
+          "explanation": "'Gör-' kelimenin fiil köküdür, ek değildir."
+        },
+        {
+          "id": "B",
+          "text": "-ül",
+          "isCorrect": false,
+          "explanation": "'-ül' fiilden fiil yapan bir yapım ekidir, sıfat-fiil eki değildir."
+        },
+        {
+          "id": "C",
+          "text": "-ecek",
+          "isCorrect": true,
+          "explanation": "'Görül-' fiiline gelen '-ecek' eki, sıfat-fiil oluşturmuş ve 'yer' ismini nitelemiştir."
+        },
+        {
+          "id": "D",
+          "text": "-var",
+          "isCorrect": false,
+          "explanation": "'Var' cümlenin yüklemi olan bir isimdir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiil eklerinden biri de '-ecek / -acak' ekidir. Gelecek zaman anlamı katar."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_009",
+      "questionText": "'Öpülesi elleriyle saçlarımı okşadı.' cümlesinde sıfat-fiil olan kelime hangisidir?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "okşadı",
+          "isCorrect": false,
+          "explanation": "'Okşadı' cümlenin çekimli fiilidir."
+        },
+        {
+          "id": "B",
+          "text": "saçlarımı",
+          "isCorrect": false,
+          "explanation": "'Saçlarımı' bir isimdir."
+        },
+        {
+          "id": "C",
+          "text": "elleriyle",
+          "isCorrect": false,
+          "explanation": "'Elleriyle' bir isimdir."
+        },
+        {
+          "id": "D",
+          "text": "öpülesi",
+          "isCorrect": true,
+          "explanation": "'Öpül-' fiiline '-esi' sıfat-fiil eki getirilerek 'eller' ismi nitelenmiştir."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "'-ası / -esi' eki, sıfat-fiil eklerinden biridir ve 'layık olma, gereklilik' gibi anlamlar katar."
+    },
+    {
+      "id": "8_turkish_verbals_participles_easy_010",
+      "questionText": "Aşağıdaki cümlelerin hangisinde '-r' eki sıfat-fiil olarak kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Her sabah düzenli olarak koşar.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-ar' eki, geniş zaman kip ekidir."
+        },
+        {
+          "id": "B",
+          "text": "Koşar adımlarla yanımızdan geçti.",
+          "isCorrect": true,
+          "explanation": "'Koşar' kelimesi, '-ar' sıfat-fiil ekini alarak 'adım' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Sınavdan sonra eve gider.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-er' eki, geniş zaman kip ekidir."
+        },
+        {
+          "id": "D",
+          "text": "Annem çok güzel yemek yapar.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-ar' eki, geniş zaman kip ekidir."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "'-r, -ar, -er, -ır, -ir' ekleri hem geniş zaman kipi hem de sıfat-fiil eki olabilir. Bir ismi niteliyorsa sıfat-fiildir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_001",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, adlaşarak bir ismin yerine kullanılmıştır (adlaşmış sıfat-fiil)?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Gelen gideni aratır, derler.",
+          "isCorrect": true,
+          "explanation": "'Gelen (kişi) gideni (kişiyi) aratır' şeklinde, sıfat-fiillerin nitelediği isimler düşmüş ve sıfat-fiiller adlaşmıştır."
+        },
+        {
+          "id": "B",
+          "text": "Unutulmuş bir şarkı mırıldanıyordu.",
+          "isCorrect": false,
+          "explanation": "'Unutulmuş' sıfat-fiili, 'şarkı' ismini nitelemektedir, adlaşmamıştır."
+        },
+        {
+          "id": "C",
+          "text": "Yıkanacak çamaşırları makineye doldurdu.",
+          "isCorrect": false,
+          "explanation": "'Yıkanacak' sıfat-fiili, 'çamaşır' ismini nitelemektedir, adlaşmamıştır."
+        },
+        {
+          "id": "D",
+          "text": "Söyleyecek sözü kalmamıştı.",
+          "isCorrect": false,
+          "explanation": "'Söyleyecek' sıfat-fiili, 'söz' ismini nitelemektedir, adlaşmamıştır."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Sıfat-fiillerin nitelediği isim düştüğünde, sıfat-fiil o ismin yerine geçerek adlaşır. Bu duruma adlaşmış sıfat-fiil denir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_002",
+      "questionText": "Aşağıdaki cümlelerin hangisinde '-miş' eki, diğerlerinden farklı bir görevde kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Çok bilmiş tavırları sinir bozucuydu.",
+          "isCorrect": false,
+          "explanation": "'Bilmiş' kelimesi, '-miş' sıfat-fiil ekini alarak 'tavır' ismini nitelemiştir."
+        },
+        {
+          "id": "B",
+          "text": "Sararmış yapraklar her tarafı kaplamıştı.",
+          "isCorrect": false,
+          "explanation": "'Sararmış' kelimesi, '-miş' sıfat-fiil ekini alarak 'yapraklar' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Dün akşam yorgunluktan uyuya kalmışım.",
+          "isCorrect": true,
+          "explanation": "Buradaki '-mış' eki, duyulan (öğrenilen) geçmiş zamanı bildiren kip ekidir ve cümlenin yüklemidir."
+        },
+        {
+          "id": "D",
+          "text": "Eskimiş eşyaları tavan arasına kaldırdılar.",
+          "isCorrect": false,
+          "explanation": "'Eskimiş' kelimesi, '-miş' sıfat-fiil ekini alarak 'eşyalar' ismini nitelemiştir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "'-miş' eki, bir ismi niteliyorsa sıfat-fiil eki; cümlenin yüklemi olup geçmişte olan bir olayı anlatıyorsa kip ekidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_003",
+      "questionText": "Aşağıdaki cümlelerin hangisinde adlaşmış sıfat-fiil cümlenin öznesi görevindedir?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Pazardan aldıklarını mutfağa taşıdı.",
+          "isCorrect": false,
+          "explanation": "'Aldıklarını' adlaşmış sıfat-fiili, 'neyi taşıdı?' sorusuna cevap verdiği için belirtili nesne görevindedir."
+        },
+        {
+          "id": "B",
+          "text": "Yarışmada birinci olanı ayakta alkışladılar.",
+          "isCorrect": false,
+          "explanation": "'Olanı' adlaşmış sıfat-fiili, 'kimi alkışladılar?' sorusuna cevap verdiği için belirtili nesne görevindedir."
+        },
+        {
+          "id": "C",
+          "text": "Sınavı kazananlar büyük bir sevinç yaşadı.",
+          "isCorrect": true,
+          "explanation": "'Büyük bir sevinç yaşayan kim?' sorusunun cevabı 'sınavı kazananlar' olduğu için bu adlaşmış sıfat-fiil grubu özne görevindedir."
+        },
+        {
+          "id": "D",
+          "text": "Eskileri atıp yenilerini almalıyız.",
+          "isCorrect": false,
+          "explanation": "'Eskileri' ve 'yenilerini' adlaşmış sıfat-fiilleri, nesne görevindedir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Adlaşmış sıfat-fiiller de cümle içinde isimler gibi özne, nesne, dolaylı tümleç gibi görevler üstlenebilir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_004",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, kalıcı bir varlığın veya kavramın adı olmamıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Evin giderleri her geçen gün artıyor.",
+          "isCorrect": false,
+          "explanation": "'Gider' kelimesi sıfat-fiil ekini almış ancak zamanla kalıplaşarak bir kavramın adı (masraf) olmuştur."
+        },
+        {
+          "id": "B",
+          "text": "Dolmuş, durağa yanaşınca herkes kapıya yığıldı.",
+          "isCorrect": false,
+          "explanation": "'Dolmuş' kelimesi sıfat-fiil ekini almış ancak zamanla kalıplaşarak bir aracın adı olmuştur."
+        },
+        {
+          "id": "C",
+          "text": "Gelecek hakkında umutlu olmak gerekir.",
+          "isCorrect": false,
+          "explanation": "'Gelecek' kelimesi sıfat-fiil ekini almış ancak zamanla kalıplaşarak bir zaman diliminin (istikbal) adı olmuştur."
+        },
+        {
+          "id": "D",
+          "text": "Ağaçları kesen adam cezasını buldu.",
+          "isCorrect": true,
+          "explanation": "Buradaki 'kesen' kelimesi, 'adam' ismini niteleyen anlık bir eylemi bildirir, kalıcı bir isim değildir."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Bazı sıfat-fiiller zamanla fiilimsi özelliğini yitirip kalıcı isim olabilirler. Cümledeki anlamına bakarak bu ayrım yapılabilir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_005",
+      "questionText": "'Yaptığı fedakârlıklar unutulacak gibi değildi.' cümlesi için aşağıdakilerden hangisi söylenemez?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Birden fazla fiilimsi vardır.",
+          "isCorrect": false,
+          "explanation": "Cümlede 'yaptığı' (-dık) ve 'unutulacak' (-acak) olmak üzere iki tane sıfat-fiil vardır. Bu ifade doğrudur."
+        },
+        {
+          "id": "B",
+          "text": "Sıfat-fiil, bir ismi nitelemiştir.",
+          "isCorrect": false,
+          "explanation": "'Yaptığı' sıfat-fiili, 'fedakârlıklar' ismini nitelemiştir. Bu ifade doğrudur."
+        },
+        {
+          "id": "C",
+          "text": "Sıfat-fiil eki '-acak'tır.",
+          "isCorrect": false,
+          "explanation": "Cümlede '-acak' ekini alan 'unutulacak' kelimesi bir sıfat-fiildir. Bu ifade doğrudur."
+        },
+        {
+          "id": "D",
+          "text": "Cümlede isim-fiil de vardır.",
+          "isCorrect": true,
+          "explanation": "Cümlede isim-fiil (-ma, -ış, -mak) eklerinden birini almış bir kelime yoktur. Bu ifade söylenemez."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Bir cümlede fiilimsi türlerini doğru tespit etmek için fiilimsilerin eklerini iyi bilmek gerekir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_006",
+      "questionText": "'Söylediği sözler hepimizi derinden etkiledi.' cümlesindeki sıfat-fiil için aşağıdakilerden hangisi doğrudur?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "'-ecek' ekini almıştır.",
+          "isCorrect": false,
+          "explanation": "Sıfat-fiil olan 'söylediği' kelimesi '-dik' ekini almıştır."
+        },
+        {
+          "id": "B",
+          "text": "Bir ismi nitelememiştir.",
+          "isCorrect": false,
+          "explanation": "'Söylediği' sıfat-fiili, 'sözler' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Çekimli bir fiildir.",
+          "isCorrect": false,
+          "explanation": "'Söylediği' kelimesi bir fiilimsidir, cümlenin çekimli fiili 'etkiledi'dir."
+        },
+        {
+          "id": "D",
+          "text": "'-dik' ekini almıştır.",
+          "isCorrect": true,
+          "explanation": "'Söylediği' kelimesi 'söyle-dik-i' şeklinde oluşmuştur. Buradaki '-dik' eki sıfat-fiil ekidir."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "'-dık, -dik, -duk, -dük' eki, sıfat-fiil yaparken üzerine iyelik eki alabilir: 'söylediği, gördüğüm, okuduğunuz' gibi."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_007",
+      "questionText": "'Yazarın son kitabı, okuruna ulaşılmaz hedefler göstermiyor.' cümlesindeki altı çizili sözcükle görevce özdeş bir kullanım aşağıdakilerin hangisinde vardır?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bu yoldan tek başına gidilmez.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-mez' eki, geniş zaman kipinin olumsuzudur."
+        },
+        {
+          "id": "B",
+          "text": "Anlaşılmaz bir nedenden dolayı bize küstü.",
+          "isCorrect": true,
+          "explanation": "Örnek cümlede olduğu gibi, buradaki 'anlaşılmaz' kelimesi de '-maz' sıfat-fiil ekini alarak 'neden' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Artık onun sözüne inanılmaz.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-maz' eki, geniş zaman kipinin olumsuzudur."
+        },
+        {
+          "id": "D",
+          "text": "Böyle havalarda dışarı çıkılmaz.",
+          "isCorrect": false,
+          "explanation": "Buradaki '-maz' eki, geniş zaman kipinin olumsuzudur."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "'-mez, -maz' ekinin sıfat-fiil mi yoksa kip eki mi olduğunu anlamak için bir ismi niteleyip nitelemediğine bakılır."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_008",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, sıfat tamlamasının tamamı içinde yer almamaktadır?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Paslanmış demir kapıyı güçlükle açtık.",
+          "isCorrect": false,
+          "explanation": "'Paslanmış demir kapı' bir sıfat tamlamasıdır ve sıfat-fiil bu tamlamanın içindedir."
+        },
+        {
+          "id": "B",
+          "text": "Bildik hikâyeleri tekrar anlatma.",
+          "isCorrect": false,
+          "explanation": "'Bildik hikâyeler' bir sıfat tamlamasıdır."
+        },
+        {
+          "id": "C",
+          "text": "Onu arayan sendin, değil mi?",
+          "isCorrect": true,
+          "explanation": "'Arayan' sıfat-fiili, nitelediği isim (kişi) düştüğü için adlaşmıştır ve bir sıfat tamlaması oluşturmamıştır."
+        },
+        {
+          "id": "D",
+          "text": "Kırılası eller bu hale getirmiş onu.",
+          "isCorrect": false,
+          "explanation": "'Kırılası eller' bir sıfat tamlamasıdır."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiil bir ismi nitelemiyorsa, yani adlaşmışsa, bir sıfat tamlaması içinde yer almaz."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_009",
+      "questionText": "'Görmüş geçirmiş bir insandı.' cümlesindeki sıfat-fiil, anlamsal olarak nasıl bir özellik katmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Gelecekte yapılacak bir eylem",
+          "isCorrect": false,
+          "explanation": "Bu anlam '-ecek' ekiyle sağlanır."
+        },
+        {
+          "id": "B",
+          "text": "Eylemin sürekli tekrarlandığı",
+          "isCorrect": false,
+          "explanation": "Bu anlam genellikle '-r, -ar' ekleriyle sağlanır."
+        },
+        {
+          "id": "C",
+          "text": "Eylemin sonucunda kazanılan deneyim",
+          "isCorrect": true,
+          "explanation": "'Görmüş geçirmiş' ikilemesi, '-miş' sıfat-fiil ekleriyle kurulmuş ve 'deneyimli, tecrübeli' anlamı katarak 'insan' ismini nitelemiştir."
+        },
+        {
+          "id": "D",
+          "text": "Yapılması gereken bir eylem",
+          "isCorrect": false,
+          "explanation": "Bu anlam '-ası, -esi' veya '-acak, -ecek' ekleriyle sağlanabilir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiiller sadece niteleme görevi yapmaz, aynı zamanda niteledikleri isme çeşitli anlamlar da katarlar."
+    },
+    {
+      "id": "8_turkish_verbals_participles_medium_010",
+      "questionText": "Aşağıdaki atasözlerinin hangisinde sıfat-fiil yoktur?",
+      "questionType": "multiple_choice",
+      "difficulty": "medium",
+      "options": [
+        {
+          "id": "A",
+          "text": "Akan su yosun tutmaz.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'akan' kelimesi sıfat-fiildir."
+        },
+        {
+          "id": "B",
+          "text": "İşleyen demir ışıldar.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'işleyen' kelimesi sıfat-fiildir."
+        },
+        {
+          "id": "C",
+          "text": "Ağlamayan çocuğa meme vermezler.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'ağlamayan' kelimesi sıfat-fiildir."
+        },
+        {
+          "id": "D",
+          "text": "Bu cümlede 'damlaya damlaya' ikilemesi zarf-fiildir. Cümlede sıfat-fiil yoktur.",
+          "isCorrect": true,
+          "explanation": "Bu cümlede 'damlaya damlaya' ikilemesi zarf-fiildir. Cümlede sıfat-fiil yoktur."
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Bu sorunun tüm seçeneklerinde sıfat-fiil (veya adlaşmış sıfat-fiil) bulunmaktadır. A'da 'akan', B'de 'işleyen', C'de 'ağlamayan', D'de 'seven' kelimeleri sıfat-fiildir. Bu nedenle soru hatalıdır. Eğitimde bu tür hatalı sorularla karşılaşılabilir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_001",
+      "questionText": "Aşağıdaki cümlelerin hangisinde '-ecek / -acak' eki, eklendiği sözcüğe diğerlerinden farklı bir görev ve anlam katmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yarın bize gelecek misafirler için hazırlık yaptık.",
+          "isCorrect": false,
+          "explanation": "Burada '-ecek' eki sıfat-fiil eki olarak 'misafirler' ismini nitelemiştir."
+        },
+        {
+          "id": "B",
+          "text": "Söyleyecek bir söz bulamayınca sessizce oturdu.",
+          "isCorrect": false,
+          "explanation": "Burada '-ecek' eki sıfat-fiil eki olarak 'söz' ismini nitelemiştir."
+        },
+        {
+          "id": "C",
+          "text": "Bu gidişle sınavı kaybedecek, hiç çalışmıyor.",
+          "isCorrect": true,
+          "explanation": "Burada 'kaybedecek' kelimesi, cümlenin çekimli fiili yani yüklemidir ve gelecek zaman anlamı katan kip ekini almıştır."
+        },
+        {
+          "id": "D",
+          "text": "Yakacak odunları depoya taşıdık.",
+          "isCorrect": false,
+          "explanation": "Burada '-acak' eki sıfat-fiil eki olarak 'odun' ismini nitelemiş ve kalıcı isim (yakıt) oluşturmuştur."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfat-fiil ekleri ile kip ekleri arasındaki fark, cümlenin temel ögelerini (özellikle yüklemi) doğru bulmayı gerektirir. Yüklem olan fiil, kip eki alır."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_002",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, bir isim tamlamasının tamlayanını nitelemiştir?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bardağın kırılmış parçalarını topladı.",
+          "isCorrect": false,
+          "explanation": "'Bu cümlede 'kırılmış' sıfat-fiili, tamlanan olan 'parçalarını' kelimesini nitelemiştir."
+        },
+        {
+          "id": "B",
+          "text": "İnsanların en temel hakkı, çalışma hakkıdır.",
+          "isCorrect": false,
+          "explanation": "'Bu cümlede sıfat-fiil yoktur. 'Çalışma' kelimesi isim-fiildir."
+        },
+        {
+          "id": "C",
+          "text": "Okuduğu romanın etkisinden kurtulamamıştı.",
+          "isCorrect": true,
+          "explanation": "'Romanın etkisi' bir belirtili isim tamlamasıdır. 'Okuduğu' sıfat-fiili, bu tamlamanın tamlayanı olan 'romanın' kelimesini nitelemiştir."
+        },
+        {
+          "id": "D",
+          "text": "Yolun kapanan bölümü ulaşıma açıldı.",
+          "isCorrect": false,
+          "explanation": "Burada 'kapanan' sıfat-fiili, 'yolun bölümü' isim tamlamasının tamlananını ('bölümü') nitelemiştir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sıfatlar ve sıfat-fiiller, isim tamlamalarında tamlayanı veya tamlananı niteleyebilir. 'Okuduğu romanın etkisi' ifadesinde sıfat-fiil, tamlayanı nitelemiştir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_003",
+      "questionText": "'Beni anlayan, dinleyen, yargılamadan yanımda olan bir dosta ihtiyacım var.' cümlesinde kaç tane fiilimsi kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "2",
+          "isCorrect": false,
+          "explanation": "Cümlede 2'den fazla fiilimsi vardır."
+        },
+        {
+          "id": "B",
+          "text": "3",
+          "isCorrect": false,
+          "explanation": "Cümlede 3'ten fazla fiilimsi vardır."
+        },
+        {
+          "id": "C",
+          "text": "4",
+          "isCorrect": true,
+          "explanation": "Cümlede 'anlayan' (sıfat-fiil), 'dinleyen' (sıfat-fiil), 'yargılamadan' (zarf-fiil) ve 'olan' (sıfat-fiil) olmak üzere toplam 4 fiilimsi vardır."
+        },
+        {
+          "id": "D",
+          "text": "5",
+          "isCorrect": false,
+          "explanation": "Cümlede 4 fiilimsi bulunmaktadır."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Bir cümlede farklı türde fiilimsiler bir arada bulunabilir. Hepsini doğru saymak için tüm fiilimsi eklerini bilmek gerekir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_004",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, cümlenin yüklemi içinde yer almıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "En sevdiğim yemek, annemin yaptığı sarmadır.",
+          "isCorrect": false,
+          "explanation": "Burada yüklem 'annemin yaptığı sarmadır' grubudur, ancak yüklemin asıl unsuru 'sarma' ismidir. 'Yaptığı' sıfat-fiili bu isim grubunun içindedir."
+        },
+        {
+          "id": "B",
+          "text": "O, her zaman sözünü tutan biridir.",
+          "isCorrect": true,
+          "explanation": "Bu cümlenin yüklemi 'sözünü tutan biridir' ifadesidir. Yüklem, 'sözünü tutan' sıfat-fiil grubunun ek-fiil almasıyla oluşmuştur."
+        },
+        {
+          "id": "C",
+          "text": "Bu, daha önce hiç görmediğim bir çiçekti.",
+          "isCorrect": false,
+          "explanation": "Bu cümlenin yüklemi 'daha önce hiç görmediğim bir çiçekti' grubudur, ancak yüklemin asıl unsuru 'çiçek' ismidir."
+        },
+        {
+          "id": "D",
+          "text": "Sorun, kimsenin sorumluluk almak istemeyişiydi.",
+          "isCorrect": false,
+          "explanation": "Bu cümlenin yüklemi 'istemeyişiydi' kelimesidir ve bu bir isim-fiildir, sıfat-fiil değildir."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Sıfat-fiiller, ek-fiil (-idi, -imiş, -ise, -dir) alarak cümlenin yüklemi olabilirler."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_005",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, zarf tümleci içinde yer almıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Hiç düşünmeden konuşan insanlar başını derde sokar.",
+          "isCorrect": false,
+          "explanation": "'Konuşan' sıfat-fiili, özne olan 'insanlar' kelimesini nitelemiştir."
+        },
+        {
+          "id": "B",
+          "text": "Sınavdan beklediği sonucu alamayınca çok üzüldü.",
+          "isCorrect": true,
+          "explanation": "'Ne zaman üzüldü?' -> 'Sınavdan beklediği sonucu alamayınca'. Bu zarf tümlecinin içinde 'beklediği' sıfat-fiili yer almaktadır."
+        },
+        {
+          "id": "C",
+          "text": "Ağaçların sararmış yaprakları rüzgârla savruluyordu.",
+          "isCorrect": false,
+          "explanation": "'Sararmış' sıfat-fiili, özne olan 'yapraklar' kelimesini nitelemiştir."
+        },
+        {
+          "id": "D",
+          "text": "Yolda tanıdık birileriyle karşılaştı.",
+          "isCorrect": false,
+          "explanation": "Bu cümlede 'tanıdık' sıfat-fiili, edat tümleci ('tanıdık birileriyle') içinde yer almaktadır, zarf tümleci içinde değildir."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Fiilimsiler, cümlenin farklı ögeleri içinde yer alabilirler. Cümlenin ögelerini doğru ayırmak, bu tür soruları çözmek için kritiktir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_006",
+      "questionText": "'(I) Geçmiş günlerin özlemiyle yanıyordu. (II) Yaşadığı her anı, unutulmaz bir hatıraya dönüştürmek istiyordu. (III) Anlatacak o kadar çok hikâyesi birikmişti ki... (IV) Ama onu dinleyecek kimsesi yoktu.' Numaralanmış cümlelerin hangisinde sıfat-fiil yoktur?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "I",
+          "isCorrect": true,
+          "explanation": "I. cümlede 'geçmiş' kelimesi, 'gün' ismini niteleyerek sıfat görevinde kullanılmıştır. Ancak burada fiilimsi özelliğini yitirerek tamamen kalıcı bir sıfat haline geldiği için fiilimsi olarak kabul edilmez."
+        },
+        {
+          "id": "B",
+          "text": "II",
+          "isCorrect": false,
+          "explanation": "II. cümlede 'yaşadığı' (-dık) ve 'unutulmaz' (-maz) kelimeleri sıfat-fiildir."
+        },
+        {
+          "id": "C",
+          "text": "III",
+          "isCorrect": false,
+          "explanation": "III. cümlede 'anlatacak' (-acak) kelimesi sıfat-fiildir."
+        },
+        {
+          "id": "D",
+          "text": "IV",
+          "isCorrect": false,
+          "explanation": "IV. cümlede 'dinleyecek' (-ecek) kelimesi sıfat-fiildir."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Kalıcı isim haline gelmiş fiilimsiler, artık fiilimsi olarak kabul edilmezler. Cümledeki bağlam bu ayrımı yapmak için önemlidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_007",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil ekini alan sözcük, eylemin kesin olarak yapıldığını değil, yapılma potansiyelini veya niyetini bildirir?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bahçeye diktiğimiz fidanlar kurumuş.",
+          "isCorrect": false,
+          "explanation": "'Diktiğimiz' sıfat-fiili, geçmişte tamamlanmış bir eylemi bildirir."
+        },
+        {
+          "id": "B",
+          "text": "Çözülecek soruları bir kenara ayırdım.",
+          "isCorrect": true,
+          "explanation": "'Çözülecek sorular' ifadesi, soruların henüz çözülmediğini, gelecekte çözülme eylemine konu olacağını, yani bir potansiyel veya niyet belirttiğini gösterir."
+        },
+        {
+          "id": "C",
+          "text": "Yırtılan sayfasını yapıştırmaya çalıştı.",
+          "isCorrect": false,
+          "explanation": "'Yırtılan' sıfat-fiili, tamamlanmış bir eylemin sonucunu bildirir."
+        },
+        {
+          "id": "D",
+          "text": "Sokağın başında bekleyen adamı tanıyamadım.",
+          "isCorrect": false,
+          "explanation": "'Bekleyen' sıfat-fiili, konuşma anında devam etmekte olan bir eylemi bildirir."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Sıfat-fiil ekleri, eylemin zamanına ve gerçekleşme durumuna göre farklı anlam incelikleri katabilir. '-ecek/-acak' eki genellikle gelecek zaman ve potansiyel anlamı taşır."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_008",
+      "questionText": "'Yaptıklarınız, yapacaklarınızın teminatıdır.' cümlesindeki fiilimsilerin türü ve görevi hangi seçenekte doğru verilmiştir?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "İki tane sıfat-fiil vardır, ikisi de adlaşarak özne olmuştur.",
+          "isCorrect": false,
+          "explanation": "İkisi de özne değildir. Biri özne, diğeri yüklemin bir parçasıdır."
+        },
+        {
+          "id": "B",
+          "text": "İki tane sıfat-fiil vardır, biri özne diğeri belirtisiz nesne olmuştur.",
+          "isCorrect": false,
+          "explanation": "Cümlede belirtisiz nesne yoktur."
+        },
+        {
+          "id": "C",
+          "text": "İki tane sıfat-fiil vardır, biri özne diğeri yüklemin içinde yer almıştır.",
+          "isCorrect": true,
+          "explanation": "'Yaptıklarınız' adlaşmış sıfat-fiili cümlenin öznesidir. 'Yapacaklarınızın teminatıdır' ifadesi ise cümlenin yüklemidir ve bu yüklemin içinde 'yapacaklarınızın' adlaşmış sıfat-fiili bulunmaktadır."
+        },
+        {
+          "id": "D",
+          "text": "Biri isim-fiil, diğeri sıfat-fiildir ve farklı görevlerdedir.",
+          "isCorrect": false,
+          "explanation": "Her ikisi de sıfat-fiildir."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Adlaşmış sıfat-fiillerin cümlenin hangi ögesi olduğunu bulmak, cümlenin ögelerine ayırma becerisi gerektirir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_009",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil, 'gereklilik' anlamı katan '-meli/-malı' kipinin anlamını karşılayacak şekilde kullanılmıştır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bu, mutlaka görülmesi gereken bir film.",
+          "isCorrect": true,
+          "explanation": "'Görülmesi gereken bir film' ifadesi, 'görülmeli olan bir film' anlamına gelir. Buradaki '-mesi gereken' yapısı, '-meli/-malı' gereklilik kipinin anlamını karşılamaktadır."
+        },
+        {
+          "id": "B",
+          "text": "Övülesi bir davranış sergiledin.",
+          "isCorrect": false,
+          "explanation": "'-esi' eki 'layık olma' anlamı katmıştır, doğrudan gereklilik değil."
+        },
+        {
+          "id": "C",
+          "text": "Sınavda çıkacak konuları tekrar ettim.",
+          "isCorrect": false,
+          "explanation": "'-acak' eki gelecek zaman anlamı katmıştır."
+        },
+        {
+          "id": "D",
+          "text": "Dönülmez bir yola girmişti.",
+          "isCorrect": false,
+          "explanation": "'-mez' eki 'imkânsızlık' anlamı katmıştır."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Fiilimsiler, bazen kip eklerinin taşıdığı anlamları farklı yapılarla ifade edebilirler. '...-ması gereken' kalıbı bunun bir örneğidir."
+    },
+    {
+      "id": "8_turkish_verbals_participles_hard_010",
+      "questionText": "Aşağıdaki cümlelerin hangisinde sıfat-fiil eki aldığı halde sıfat görevinde kullanılmayan bir sözcük vardır?",
+      "questionType": "multiple_choice",
+      "difficulty": "hard",
+      "options": [
+        {
+          "id": "A",
+          "text": "Tanıdık bir simayla karşılaşınca şaşırdı.",
+          "isCorrect": false,
+          "explanation": "'Tanıdık' kelimesi 'sima' ismini niteleyerek sıfat görevinde kullanılmıştır."
+        },
+        {
+          "id": "B",
+          "text": "Olanları baştan sona bir kez daha anlattı.",
+          "isCorrect": true,
+          "explanation": "'Olanlar' kelimesi '-an' sıfat-fiil ekini almıştır ancak nitelediği isim düşerek adlaşmış ve cümlede nesne (isim) görevinde kullanılmıştır. Sıfat görevinde değildir."
+        },
+        {
+          "id": "C",
+          "text": "Gelecek yıl için büyük planları vardı.",
+          "isCorrect": false,
+          "explanation": "'Gelecek' kelimesi 'yıl' ismini niteleyerek sıfat görevinde kullanılmıştır."
+        },
+        {
+          "id": "D",
+          "text": "Söylenmedik söz bırakmadı arkasından.",
+          "isCorrect": false,
+          "explanation": "'Söylenmedik' kelimesi 'söz' ismini niteleyerek sıfat görevinde kullanılmıştır."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Bu soru, adlaşmış sıfat-fiil kavramını sorgulamaktadır. Adlaşmış sıfat-fiiller, sıfat-fiil eki almalarına rağmen artık sıfat değil, isim görevinde kullanılırlar."
+    }
+  ]
+}

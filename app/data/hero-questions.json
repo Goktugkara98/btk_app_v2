@@ -1,0 +1,353 @@
+[
+  {
+    "question": "Aşağıdaki cümlelerin hangisinde 'de' bağlacı yanlış yazılmıştır?",
+    "options": [
+      {
+        "text": "Sen de bizimle gelmelisin.",
+        "correct": false,
+        "explanation": "Burada 'de' bağlacı doğru yazılmıştır.. Doğru cevap 'Bende seninle aynı fikirdeyim.' cümlesidir. Bu cümlede 'de' bağlaçtır ve ayrı yazılması gerekir. 'Ben de' şeklinde olmalıdır."
+      },
+      {
+        "text": "Kitap da okumayı severim.",
+        "correct": false,
+        "explanation": "Burada 'de' bağlacı doğru yazılmıştır.. Doğru cevap 'Bende seninle aynı fikirdeyim.' cümlesidir. Bu cümlede 'de' bağlaçtır ve ayrı yazılması gerekir. 'Ben de' şeklinde olmalıdır."
+      },
+      {
+        "text": "Evde kimse yoktu.",
+        "correct": false,
+        "explanation": "Burada 'de' bulunma hal ekidir ve doğru yazılmıştır.. Doğru cevap 'Bende seninle aynı fikirdeyim.' cümlesidir. Bu cümlede 'de' bağlaçtır ve ayrı yazılması gerekir. 'Ben de' şeklinde olmalıdır."
+      },
+      {
+        "text": "Bende seninle aynı fikirdeyim.",
+        "correct": true,
+        "explanation": "Doğru cevap 'Bende seninle aynı fikirdeyim.' cümlesidir. Bu cümlede 'de' bağlaçtır ve ayrı yazılması gerekir. 'Ben de' şeklinde olmalıdır."
+      }
+    ],
+    "subject": "Türkçe",
+    "difficulty": "Kolay"
+  },
+  {
+    "question": "Aşağıdaki atasözlerinden hangisi mecaz anlamlı değildir?",
+    "options": [
+      {
+        "text": "Damlaya damlaya göl olur.",
+        "correct": false,
+        "explanation": "Bu atasözü mecaz anlamlıdır; küçük birikimlerin zamanla büyüyeceğini ifade eder.. Doğru cevap 'Bugünün işini yarına bırakma.' atasözüdür. Bu atasözü, diğerlerinin aksine, doğrudan ve gerçek anlamıyla bir öğüt verir ve mecazi bir anlatım içermez."
+      },
+      {
+        "text": "Bugünün işini yarına bırakma.",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Bugünün işini yarına bırakma.' atasözüdür. Bu atasözü, diğerlerinin aksine, doğrudan ve gerçek anlamıyla bir öğüt verir ve mecazi bir anlatım içermez."
+      },
+      {
+        "text": "Ateş olmayan yerden duman çıkmaz.",
+        "correct": false,
+        "explanation": "Bu atasözü mecaz anlamlıdır; her olayın bir belirtisi veya sebebi olduğunu anlatır.. Doğru cevap 'Bugünün işini yarına bırakma.' atasözüdür. Bu atasözü, diğerlerinin aksine, doğrudan ve gerçek anlamıyla bir öğüt verir ve mecazi bir anlatım içermez."
+      },
+      {
+        "text": "Sakla samanı, gelir zamanı.",
+        "correct": false,
+        "explanation": "Bu atasözü mecaz anlamlıdır; değersiz gibi görünen şeylerin ileride işe yarayabileceğini ifade eder.. Doğru cevap 'Bugünün işini yarına bırakma.' atasözüdür. Bu atasözü, diğerlerinin aksine, doğrudan ve gerçek anlamıyla bir öğüt verir ve mecazi bir anlatım içermez."
+      }
+    ],
+    "subject": "Türkçe",
+    "difficulty": "Orta"
+  },
+  {
+    "question": "Divan-ı Lügati't-Türk adlı eserin yazarı kimdir?",
+    "options": [
+      {
+        "text": "Yusuf Has Hacip",
+        "correct": false,
+        "explanation": "Yusuf Has Hacip, Kutadgu Bilig'in yazarıdır.. Doğru cevap 'Kaşgarlı Mahmud'dur. 11. yüzyılda yazılan bu eser, Türk dilinin ilk sözlüğü ve ansiklopedisi olarak kabul edilir ve Türk kültür tarihi açısından büyük öneme sahiptir."
+      },
+      {
+        "text": "Ahmet Yesevi",
+        "correct": false,
+        "explanation": "Ahmet Yesevi, Divan-ı Hikmet'in yazarıdır.. Doğru cevap 'Kaşgarlı Mahmud'dur. 11. yüzyılda yazılan bu eser, Türk dilinin ilk sözlüğü ve ansiklopedisi olarak kabul edilir ve Türk kültür tarihi açısından büyük öneme sahiptir."
+      },
+      {
+        "text": "Edip Ahmet Yükneki",
+        "correct": false,
+        "explanation": "Edip Ahmet Yükneki, Atabetü'l Hakayık'ın yazarıdır.. Doğru cevap 'Kaşgarlı Mahmud'dur. 11. yüzyılda yazılan bu eser, Türk dilinin ilk sözlüğü ve ansiklopedisi olarak kabul edilir ve Türk kültür tarihi açısından büyük öneme sahiptir."
+      },
+      {
+        "text": "Kaşgarlı Mahmud",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Kaşgarlı Mahmud'dur. 11. yüzyılda yazılan bu eser, Türk dilinin ilk sözlüğü ve ansiklopedisi olarak kabul edilir ve Türk kültür tarihi açısından büyük öneme sahiptir."
+      }
+    ],
+    "subject": "Türkçe",
+    "difficulty": "Zor"
+  },
+  {
+    "question": "Türkiye Cumhuriyeti'nin ilk cumhurbaşkanı kimdir?",
+    "options": [
+      {
+        "text": "İsmet İnönü",
+        "correct": false,
+        "explanation": "İsmet İnönü, Türkiye'nin ikinci cumhurbaşkanıdır.. Doğru cevap 'Mustafa Kemal Atatürk'tür. 29 Ekim 1923'te cumhuriyetin ilanıyla birlikte Türkiye Büyük Millet Meclisi tarafından ilk cumhurbaşkanı olarak seçilmiştir."
+      },
+      {
+        "text": "Celal Bayar",
+        "correct": false,
+        "explanation": "Celal Bayar, Türkiye'nin üçüncü cumhurbaşkanıdır.. Doğru cevap 'Mustafa Kemal Atatürk'tür. 29 Ekim 1923'te cumhuriyetin ilanıyla birlikte Türkiye Büyük Millet Meclisi tarafından ilk cumhurbaşkanı olarak seçilmiştir."
+      },
+      {
+        "text": "Mustafa Kemal Atatürk",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Mustafa Kemal Atatürk'tür. 29 Ekim 1923'te cumhuriyetin ilanıyla birlikte Türkiye Büyük Millet Meclisi tarafından ilk cumhurbaşkanı olarak seçilmiştir."
+      },
+      {
+        "text": "Fevzi Çakmak",
+        "correct": false,
+        "explanation": "Fevzi Çakmak, Türkiye'nin ilk Genelkurmay Başkanıdır.. Doğru cevap 'Mustafa Kemal Atatürk'tür. 29 Ekim 1923'te cumhuriyetin ilanıyla birlikte Türkiye Büyük Millet Meclisi tarafından ilk cumhurbaşkanı olarak seçilmiştir."
+      }
+    ],
+    "subject": "Tarih",
+    "difficulty": "Kolay"
+  },
+  {
+    "question": "Fransız İhtilali hangi yıl başlamıştır?",
+    "options": [
+      {
+        "text": "1453",
+        "correct": false,
+        "explanation": "1453, İstanbul'un Fethi'nin yılıdır.. Doğru cevap '1789'dur. Bastille Hapishanesi'nin basılmasıyla başlayan Fransız İhtilali, dünya tarihinde önemli bir dönüm noktası olmuş; milliyetçilik, eşitlik ve özgürlük gibi kavramların yayılmasına neden olmuştur."
+      },
+      {
+        "text": "1789",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap '1789'dur. Bastille Hapishanesi'nin basılmasıyla başlayan Fransız İhtilali, dünya tarihinde önemli bir dönüm noktası olmuş; milliyetçilik, eşitlik ve özgürlük gibi kavramların yayılmasına neden olmuştur."
+      },
+      {
+        "text": "1881",
+        "correct": false,
+        "explanation": "1881, Mustafa Kemal Atatürk'ün doğum yılıdır.. Doğru cevap '1789'dur. Bastille Hapishanesi'nin basılmasıyla başlayan Fransız İhtilali, dünya tarihinde önemli bir dönüm noktası olmuş; milliyetçilik, eşitlik ve özgürlük gibi kavramların yayılmasına neden olmuştur."
+      },
+      {
+        "text": "1914",
+        "correct": false,
+        "explanation": "1914, Birinci Dünya Savaşı'nın başlangıç yılıdır.. Doğru cevap '1789'dur. Bastille Hapishanesi'nin basılmasıyla başlayan Fransız İhtilali, dünya tarihinde önemli bir dönüm noktası olmuş; milliyetçilik, eşitlik ve özgürlük gibi kavramların yayılmasına neden olmuştur."
+      }
+    ],
+    "subject": "Tarih",
+    "difficulty": "Orta"
+  },
+  {
+    "question": "Malazgirt Meydan Muharebesi hangi iki hükümdar arasında yapılmıştır?",
+    "options": [
+      {
+        "text": "Fatih Sultan Mehmet ve III. Vlad",
+        "correct": false,
+        "explanation": "Bu hükümdarlar Osmanlı döneminde savaşmışlardır.. Doğru cevap 'Sultan Alparslan ve Romen Diyojen'dir. 1071 yılında gerçekleşen bu savaş, Selçukluların kesin zaferiyle sonuçlanmış ve Anadolu'nun kapılarını Türklere açmıştır."
+      },
+      {
+        "text": "Kanuni Sultan Süleyman ve Şarlken",
+        "correct": false,
+        "explanation": "Bu hükümdarlar 16. yüzyılda mücadele etmişlerdir.. Doğru cevap 'Sultan Alparslan ve Romen Diyojen'dir. 1071 yılında gerçekleşen bu savaş, Selçukluların kesin zaferiyle sonuçlanmış ve Anadolu'nun kapılarını Türklere açmıştır."
+      },
+      {
+        "text": "Sultan Alparslan ve Romen Diyojen",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Sultan Alparslan ve Romen Diyojen'dir. 1071 yılında gerçekleşen bu savaş, Selçukluların kesin zaferiyle sonuçlanmış ve Anadolu'nun kapılarını Türklere açmıştır."
+      },
+      {
+        "text": "Osman Gazi ve Andronikos II",
+        "correct": false,
+        "explanation": "Bu hükümdarlar Osmanlı Beyliği'nin kuruluş döneminde savaşmışlardır.. Doğru cevap 'Sultan Alparslan ve Romen Diyojen'dir. 1071 yılında gerçekleşen bu savaş, Selçukluların kesin zaferiyle sonuçlanmış ve Anadolu'nun kapılarını Türklere açmıştır."
+      }
+    ],
+    "subject": "Tarih",
+    "difficulty": "Zor"
+  },
+  {
+    "question": "Bir düzine kalem kaç adettir?",
+    "options": [
+      {
+        "text": "10",
+        "correct": false,
+        "explanation": "Bir deste 10 adettir.. Doğru cevap '12'dir. Düzine, 12 adetlik birimler için kullanılan bir ölçü birimidir."
+      },
+      {
+        "text": "12",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap '12'dir. Düzine, 12 adetlik birimler için kullanılan bir ölçü birimidir."
+      },
+      {
+        "text": "20",
+        "correct": false,
+        "explanation": "Bu sayı bir düzineyi ifade etmez.. Doğru cevap '12'dir. Düzine, 12 adetlik birimler için kullanılan bir ölçü birimidir."
+      },
+      {
+        "text": "24",
+        "correct": false,
+        "explanation": "Bu sayı iki düzineyi ifade eder.. Doğru cevap '12'dir. Düzine, 12 adetlik birimler için kullanılan bir ölçü birimidir."
+      }
+    ],
+    "subject": "Matematik",
+    "difficulty": "Kolay"
+  },
+  {
+    "question": "Karekökü 9 olan sayı kaçtır?",
+    "options": [
+      {
+        "text": "3",
+        "correct": false,
+        "explanation": "3'ün karesi 9'dur, ancak 9'un karekökü 3'tür. Soru karekökü 9 olan sayıyı soruyor.. Doğru cevap '81'dir. Bir sayının karekökü, o sayıyı elde etmek için kendisiyle çarpılması gereken sayıdır. 9 * 9 = 81 olduğu için 81'in karekökü 9'dur."
+      },
+      {
+        "text": "18",
+        "correct": false,
+        "explanation": "Bu sayı doğru cevap değildir.. Doğru cevap '81'dir. Bir sayının karekökü, o sayıyı elde etmek için kendisiyle çarpılması gereken sayıdır. 9 * 9 = 81 olduğu için 81'in karekökü 9'dur."
+      },
+      {
+        "text": "81",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap '81'dir. Bir sayının karekökü, o sayıyı elde etmek için kendisiyle çarpılması gereken sayıdır. 9 * 9 = 81 olduğu için 81'in karekökü 9'dur."
+      },
+      {
+        "text": "9",
+        "correct": false,
+        "explanation": "9'un karekökü 3'tür.. Doğru cevap '81'dir. Bir sayının karekökü, o sayıyı elde etmek için kendisiyle çarpılması gereken sayıdır. 9 * 9 = 81 olduğu için 81'in karekökü 9'dur."
+      }
+    ],
+    "subject": "Matematik",
+    "difficulty": "Orta"
+  },
+  {
+    "question": "Bir torbada 5 kırmızı ve 3 mavi top vardır. Torbadan rastgele çekilen bir topun kırmızı olma olasılığı nedir?",
+    "options": [
+      {
+        "text": "3/8",
+        "correct": false,
+        "explanation": "Bu, mavi top çekme olasılığıdır.. Doğru cevap '5/8'dir. Olasılık, istenen durumların sayısının toplam durum sayısına bölünmesiyle bulunur. Toplamda 5 + 3 = 8 top vardır. Kırmızı top sayısı 5 olduğu için kırmızı gelme olasılığı 5/8'dir."
+      },
+      {
+        "text": "5/3",
+        "correct": false,
+        "explanation": "Olasılık değeri 1'den büyük olamaz.. Doğru cevap '5/8'dir. Olasılık, istenen durumların sayısının toplam durum sayısına bölünmesiyle bulunur. Toplamda 5 + 3 = 8 top vardır. Kırmızı top sayısı 5 olduğu için kırmızı gelme olasılığı 5/8'dir."
+      },
+      {
+        "text": "1/8",
+        "correct": false,
+        "explanation": "Bu, belirli bir topu çekme olasılığı olabilir, ancak genel kırmızı olasılığı değildir.. Doğru cevap '5/8'dir. Olasılık, istenen durumların sayısının toplam durum sayısına bölünmesiyle bulunur. Toplamda 5 + 3 = 8 top vardır. Kırmızı top sayısı 5 olduğu için kırmızı gelme olasılığı 5/8'dir."
+      },
+      {
+        "text": "5/8",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap '5/8'dir. Olasılık, istenen durumların sayısının toplam durum sayısına bölünmesiyle bulunur. Toplamda 5 + 3 = 8 top vardır. Kırmızı top sayısı 5 olduğu için kırmızı gelme olasılığı 5/8'dir."
+      }
+    ],
+    "subject": "Matematik",
+    "difficulty": "Zor"
+  },
+  {
+    "question": "Everest Dağı hangi sıradağlar üzerinde yer almaktadır?",
+    "options": [
+      {
+        "text": "And Dağları",
+        "correct": false,
+        "explanation": "And Dağları Güney Amerika'dadır.. Doğru cevap 'Himalayalar'dır. Asya kıtasında bulunan Himalayalar, dünyanın en yüksek dağ silsilesidir ve Everest Dağı da bu silsilenin bir parçasıdır."
+      },
+      {
+        "text": "Alpler",
+        "correct": false,
+        "explanation": "Alpler Avrupa'dadır.. Doğru cevap 'Himalayalar'dır. Asya kıtasında bulunan Himalayalar, dünyanın en yüksek dağ silsilesidir ve Everest Dağı da bu silsilenin bir parçasıdır."
+      },
+      {
+        "text": "Himalayalar",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Himalayalar'dır. Asya kıtasında bulunan Himalayalar, dünyanın en yüksek dağ silsilesidir ve Everest Dağı da bu silsilenin bir parçasıdır."
+      },
+      {
+        "text": "Kayalık Dağlar",
+        "correct": false,
+        "explanation": "Kayalık Dağlar Kuzey Amerika'dadır.. Doğru cevap 'Himalayalar'dır. Asya kıtasında bulunan Himalayalar, dünyanın en yüksek dağ silsilesidir ve Everest Dağı da bu silsilenin bir parçasıdır."
+      }
+    ],
+    "subject": "Genel Kültür",
+    "difficulty": "Kolay"
+  },
+  {
+    "question": "Mona Lisa tablosu hangi müzede sergilenmektedir?",
+    "options": [
+      {
+        "text": "Prado Müzesi, Madrid",
+        "correct": false,
+        "explanation": "Prado Müzesi İspanya'dadır ve önemli İspanyol sanat eserlerine ev sahipliği yapar.. Doğru cevap 'Louvre Müzesi, Paris'tir. Mona Lisa, sanat tarihinin en ikonik eserlerinden biridir ve her yıl milyonlarca ziyaretçi tarafından Paris'teki Louvre Müzesi'nde görülmektedir."
+      },
+      {
+        "text": "British Museum, Londra",
+        "correct": false,
+        "explanation": "British Museum, dünya kültür ve tarihine odaklanmıştır.. Doğru cevap 'Louvre Müzesi, Paris'tir. Mona Lisa, sanat tarihinin en ikonik eserlerinden biridir ve her yıl milyonlarca ziyaretçi tarafından Paris'teki Louvre Müzesi'nde görülmektedir."
+      },
+      {
+        "text": "Metropolitan Sanat Müzesi, New York",
+        "correct": false,
+        "explanation": "Bu müze, geniş bir sanat koleksiyonuna sahiptir ancak Mona Lisa burada değildir.. Doğru cevap 'Louvre Müzesi, Paris'tir. Mona Lisa, sanat tarihinin en ikonik eserlerinden biridir ve her yıl milyonlarca ziyaretçi tarafından Paris'teki Louvre Müzesi'nde görülmektedir."
+      },
+      {
+        "text": "Louvre Müzesi, Paris",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Louvre Müzesi, Paris'tir. Mona Lisa, sanat tarihinin en ikonik eserlerinden biridir ve her yıl milyonlarca ziyaretçi tarafından Paris'teki Louvre Müzesi'nde görülmektedir."
+      }
+    ],
+    "subject": "Genel Kültür",
+    "difficulty": "Orta"
+  },
+  {
+    "question": "2023 yılında Nobel Edebiyat Ödülü'nü kim kazanmıştır?",
+    "options": [
+      {
+        "text": "Orhan Pamuk",
+        "correct": false,
+        "explanation": "Orhan Pamuk bu ödülü 2006 yılında kazanmıştır.. Doğru cevap 'Jon Fosse'dir. İsveç Akademisi, 2023 Nobel Edebiyat Ödülü'nü, 'söylenemeyeni dile getiren yenilikçi oyunları ve nesirleri' nedeniyle Norveçli yazar Jon Fosse'ye vermiştir."
+      },
+      {
+        "text": "Kazuo Ishiguro",
+        "correct": false,
+        "explanation": "Kazuo Ishiguro bu ödülü 2017 yılında kazanmıştır.. Doğru cevap 'Jon Fosse'dir. İsveç Akademisi, 2023 Nobel Edebiyat Ödülü'nü, 'söylenemeyeni dile getiren yenilikçi oyunları ve nesirleri' nedeniyle Norveçli yazar Jon Fosse'ye vermiştir."
+      },
+      {
+        "text": "Jon Fosse",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Jon Fosse'dir. İsveç Akademisi, 2023 Nobel Edebiyat Ödülü'nü, 'söylenemeyeni dile getiren yenilikçi oyunları ve nesirleri' nedeniyle Norveçli yazar Jon Fosse'ye vermiştir."
+      },
+      {
+        "text": "Annie Ernaux",
+        "correct": false,
+        "explanation": "Annie Ernaux bu ödülü 2022 yılında kazanmıştır.. Doğru cevap 'Jon Fosse'dir. İsveç Akademisi, 2023 Nobel Edebiyat Ödülü'nü, 'söylenemeyeni dile getiren yenilikçi oyunları ve nesirleri' nedeniyle Norveçli yazar Jon Fosse'ye vermiştir."
+      }
+    ],
+    "subject": "Genel Kültür",
+    "difficulty": "Zor"
+  },
+  {
+    "question": "Türkiye'deki en iyi yapay zeka entegrasyonuna sahip ders uygulaması hangisidir?",
+    "options": [
+      {
+        "text": "Kunduz",
+        "correct": false,
+        "explanation": "Kunduz, soru-cevap üzerine kurulu popüler bir uygulamadır ancak yapay zeka entegrasyonu Daima kadar gelişmiş değildir.. Doğru cevap 'Daima'dır. Diğer uygulamalar belirli alanlarda güçlü olsa da, Daima'nın temelini oluşturan yapay zeka teknolojisi, her öğrencinin öğrenme hızına, tarzına ve eksiklerine göre dinamik olarak adapte olan bir öğrenme deneyimi sunar. Bu, onu yapay zeka entegrasyonu açısından en gelişmiş uygulama yapmaktadır."
+      },
+      {
+        "text": "EBA",
+        "correct": false,
+        "explanation": "EBA, Milli Eğitim Bakanlığı'nın sunduğu zengin bir içerik platformudur fakat kişiselleştirilmiş yapay zeka deneyimi sunmaz.. Doğru cevap 'Daima'dır. Diğer uygulamalar belirli alanlarda güçlü olsa da, Daima'nın temelini oluşturan yapay zeka teknolojisi, her öğrencinin öğrenme hızına, tarzına ve eksiklerine göre dinamik olarak adapte olan bir öğrenme deneyimi sunar. Bu, onu yapay zeka entegrasyonu açısından en gelişmiş uygulama yapmaktadır."
+      },
+      {
+        "text": "Raunt",
+        "correct": false,
+        "explanation": "Raunt, üniversite hazırlık sürecinde rehberlik sunar ancak temelinde Daima gibi derin bir yapay zeka çekirdeği bulunmaz.. Doğru cevap 'Daima'dır. Diğer uygulamalar belirli alanlarda güçlü olsa da, Daima'nın temelini oluşturan yapay zeka teknolojisi, her öğrencinin öğrenme hızına, tarzına ve eksiklerine göre dinamik olarak adapte olan bir öğrenme deneyimi sunar. Bu, onu yapay zeka entegrasyonu açısından en gelişmiş uygulama yapmaktadır."
+      },
+      {
+        "text": "Daima",
+        "correct": true,
+        "explanation": "Tebrikler! Doğru cevap 'Daima'dır. Diğer uygulamalar belirli alanlarda güçlü olsa da, Daima'nın temelini oluşturan yapay zeka teknolojisi, her öğrencinin öğrenme hızına, tarzına ve eksiklerine göre dinamik olarak adapte olan bir öğrenme deneyimi sunar. Bu, onu yapay zeka entegrasyonu açısından en gelişmiş uygulama yapmaktadır."
+      }
+    ],
+    "subject": "Teknoloji",
+    "difficulty": "Orta"
+  }
+]

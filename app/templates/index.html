@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Daima - Akıllı Soru Bankası{% endblock %}
+
+{% block head_extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index/index.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-background">
+        <div class="hero-particles"></div>
+    </div>
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <!-- Hero Text Column - Responsive Grid -->
+            <div class="col-12 col-lg-5 col-xl-4 hero-text mb-4 mb-lg-0">
+                <h1 class="hero-title">
+                    <span class="hero-logo">D<span class="hero-logo-ai">ai</span>ma</span>
+                </h1>
+                <div class="hero-subtitle">En akıllı öğrenme partnerin.</div>
+                <p class="hero-description">
+                    Sıradan quizleri unutun. Yapay zeka destekli kişisel öğrenme asistanınızla tanışın. Sadece doğru cevabı değil, bir soruyu neden yanlış anladığınızı keşfedin. Anlamadığınız her noktayı yapay zekaya sorun, sohbet ederek öğrenin ve kişisel analizlerle potansiyelinizi ortaya çıkarın. Öğrenmeyi yeniden keşfetmeye hazır mısınız?
+                </p>
+                <div class="hero-buttons">
+                    {% if session.get('logged_in') %}
+                        <a href="/quiz/start" class="btn btn-primary">
+                            <i class="bi bi-play-circle"></i>
+                            Tam Quiz Başlat
+                        </a>
+                        <a href="#features" class="btn btn-primary">
+                            <i class="bi bi-info-circle"></i>
+                            Daha Fazla
+                        </a>
+                    {% else %}
+                        <a href="#" class="btn btn-primary">
+                            <i class="bi bi-play-circle"></i>
+                            Demo Yap
+                        </a>
+                        <a href="/login" class="btn btn-primary">
+                            <i class="bi bi-person-circle"></i>
+                            Giriş Yap
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quiz Panel Column - Responsive Grid -->
+            <div class="col-12 col-lg-3 col-xl-4 mb-4 mb-lg-0">
+                <div class="quiz-panel">
+                    <div class="quiz-question">
+                        <h3 id="demo-question">Aşağıdaki sayılardan hangisi en büyüktür?</h3>
+                    </div>
+                    <div class="quiz-info">
+                        <div class="quiz-meta-tags">
+                            <span class="quiz-subject">Matematik</span>
+                            <span class="quiz-difficulty">Orta</span>
+                        </div>
+                        <div class="quiz-timer" id="quiz-timer">
+                            <i class="fa-regular fa-clock"></i>
+                            <span id="quiz-timer-value">00:15</span>
+                        </div>
+                    </div>
+                    <div class="quiz-options" id="demo-options">
+                        <div class="option" data-correct="true">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">1250</span>
+                        </div>
+                        <div class="option" data-correct="false">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">999</span>
+                        </div>
+                        <div class="option" data-correct="false">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">850</span>
+                        </div>
+                        <div class="option" data-correct="false">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">750</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Chat Panel Column - Responsive Grid -->
+            <div class="col-12 col-lg-4 col-xl-4">
+                <div class="ai-chat-panel">
+                    <div class="chat-header">
+                        <div class="ai-avatar">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="ai-info">
+                            <h4>Daima</h4>
+                            <span>Yardımcı Asistan</span>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message ai-message">
+                            <div class="message-content">
+                                <p>Merhaba! Bu soruyu çözmeye hazır mısın? Hangi seçeneği düşünüyorsun?</p>
+                            </div>
+                            <div class="message-time">Şimdi</div>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-input" placeholder="Cevabın için seçeneğe tıkla..." disabled>
+                        <button id="send-message" disabled>
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Section -->
+<section class="index-demo-section">
+    <div class="container">
+        <!-- Bilimsel Avantaj Bilgisi -->
+        <div class="index-demo-advantage-info">
+            <div class="index-demo-advantage-card">
+                <div class="index-demo-advantage-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="index-demo-advantage-content">
+                    <h3>2 Kat Daha Hızlı Öğrenme</h3>
+                    <p>Metabilişsel farkındalık ile öğrenenler, sadece ezber yapanlara göre <strong>2 kata kadar daha hızlı</strong> ustalaşır. Daima, yanlış cevabınızın ardındaki düşünce sürecini analiz ederek size "Neden yanlış düşündüğünü" gösterir.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="index-demo-panels-section">
+            <!-- Index Demo Quiz Panel -->
+            <div class="index-demo-panel index-demo-quiz-panel">
+                <div class="index-demo-panel-header">
+                    <h3>Demo Quiz</h3>
+                    <div class="index-demo-quiz-meta">
+                        <span class="index-demo-quiz-subject">Matematik</span>
+                        <span class="index-demo-quiz-difficulty">Orta</span>
+                    </div>
+                </div>
+                <div class="index-demo-quiz-content">
+                    <h4 id="index-demo-question">Aşağıdaki sayılardan hangisi en büyüktür?</h4>
+                    <div class="index-demo-quiz-options" id="index-demo-options">
+                        <div class="index-demo-option" data-correct="true">
+                            <span class="index-demo-option-letter">A</span>
+                            <span class="index-demo-option-text">1250</span>
+                        </div>
+                        <div class="index-demo-option" data-correct="false">
+                            <span class="index-demo-option-letter">B</span>
+                            <span class="index-demo-option-text">999</span>
+                        </div>
+                        <div class="index-demo-option" data-correct="false">
+                            <span class="index-demo-option-letter">C</span>
+                            <span class="index-demo-option-text">850</span>
+                        </div>
+                        <div class="index-demo-option" data-correct="false">
+                            <span class="index-demo-option-letter">D</span>
+                            <span class="index-demo-option-text">750</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Index Demo AI Chat Panel -->
+            <div class="index-demo-panel index-demo-chat-panel">
+                <div class="index-demo-panel-header index-demo-chat-header">
+                    <div class="index-demo-ai-avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="index-demo-ai-info">
+                        <h3>Daima</h3>
+                        <span>AI Asistan</span>
+                    </div>
+                </div>
+                <div class="index-demo-chat-content">
+                    <div class="index-demo-chat-messages" id="index-demo-chat-messages">
+                        <div class="index-demo-message index-demo-ai-message">
+                            <p>Merhaba! Bu soruyu çözmeye hazır mısın?</p>
+                        </div>
+                    </div>
+                    <button class="index-demo-scroll-to-bottom" id="index-demo-scroll-to-bottom" title="En Alta Git">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Avantajlar / Bilimsel Gerçekler Bölümü -->
+<section class="advantages-section">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-title">Bilimsel Olarak Kanıtlanmış Öğrenme Avantajları</h2>
+            <p class="section-subtitle">Daima ile öğrenmenin neden daha hızlı, kalıcı ve motive edici olduğunu bilimsel verilerle keşfedin.</p>
+        </div>
+        <div class="row advantages-grid">
+            <!-- 1. Metabilişsel Farkındalık -->
+            <div class="col-12 col-md-6 col-lg-6 mb-4">
+                <div class="advantage-card">
+                    <div class="advantage-icon" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);"><i class="bi bi-lightbulb"></i></div>
+                    <div class="advantage-title">2 Kat Daha Hızlı Ustalaşma</div>
+                    <div class="advantage-fact">
+                        <span class="fact-label">📈 Bilimsel Gerçek</span>
+                        <p>Neyi bilip bilmediğinin farkında olan (metabiliş) öğrenciler, sadece ezber yapanlara göre konularda <b>2 kata kadar daha hızlı</b> ustalaşır. Hatanın nedenini anlamak, aynı hatayı tekrarlamayı önler.</p>
+                    </div>
+                    <div class="advantage-program">
+                        <span class="program-label">💡 Programda Nasıl?</span>
+                        <p>Yapay zeka, yanlış cevabınızın ardındaki düşünce sürecini analiz eder. Size "Neden yanlış düşündüğünü" göstererek metabilişsel farkındalığınızı artırır ve öğrenme verimliliğinizi katlar.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 2. Test Etkisi -->
+            <div class="col-12 col-md-6 col-lg-6 mb-4">
+                <div class="advantage-card">
+                    <div class="advantage-icon" style="background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);"><i class="bi bi-journal-check"></i></div>
+                    <div class="advantage-title">+%50 Daha Fazla Kalıcılık</div>
+                    <div class="advantage-fact">
+                        <span class="fact-label">📈 Bilimsel Gerçek</span>
+                        <p>"Test Etkisi" olarak bilinen prensibe göre, bilgiyi sadece okumak yerine aktif olarak test ederek geri çağırmak, uzun süreli hafızaya kaydını <b>%50'ye varan oranlarda</b> artırır.</p>
+                    </div>
+                    <div class="advantage-program">
+                        <span class="program-label">💡 Programda Nasıl?</span>
+                        <p>Programımız sadece bir ölçme aracı değildir, bir öğrenme aracıdır. Her quiz, bilgiyi beyninizden aktif olarak geri çağırmanızı sağlayarak öğrendiklerinizin kalıcı olmasını sağlar.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 3. Aktif Geri Çağırma -->
+            <div class="col-12 col-md-6 col-lg-6 mb-4">
+                <div class="advantage-card">
+                    <div class="advantage-icon" style="background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);"><i class="bi bi-chat-dots"></i></div>
+                    <div class="advantage-title">%150 Daha Etkili Öğrenme</div>
+                    <div class="advantage-fact">
+                        <span class="fact-label">📈 Bilimsel Gerçek</span>
+                        <p>Bilgiyi pasif şekilde okumak yerine, onu kendi cümlelerinle açıklamaya çalışmak (Aktif Geri Çağırma), anlama ve hatırlama oranını <b>%150'ye kadar</b> artırır.</p>
+                    </div>
+                    <div class="advantage-program">
+                        <span class="program-label">💡 Programda Nasıl?</span>
+                        <p>Anlamadığınız bir konuyu yapay zeka ile sohbet ederek sorma ve tartışma imkanı, bilgiyi aktif olarak işlemeye ve anlamlandırmaya teşvik eder. Bu, öğrenmenin en etkili yollarından biridir.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 4. Kişiselleştirilmiş Yol Haritası -->
+            <div class="col-12 col-md-6 col-lg-6 mb-4">
+                <div class="advantage-card">
+                    <div class="advantage-icon" style="background: linear-gradient(135deg, #ff5858 0%, #f09819 100%);"><i class="bi bi-person-bounding-box"></i></div>
+                    <div class="advantage-title">%40 Daha Yüksek Motivasyon</div>
+                    <div class="advantage-fact">
+                        <span class="fact-label">📈 Bilimsel Gerçek</span>
+                        <p>Kendi seviyesine ve ilgi alanına göre düzenlenmiş bir müfredatla öğrenenlerin motivasyon ve bağlılık oranı <b>%40'a kadar</b> artar.</p>
+                    </div>
+                    <div class="advantage-program">
+                        <span class="program-label">💡 Programda Nasıl?</span>
+                        <p>Yapay zeka destekli profil analizimiz, güçlü ve zayıf yönlerinize göre kişisel bir öğrenme yol haritası çizer. Gereksiz tekrarlardan kaçınır, doğrudan hedefinize odaklanır ve motivasyonunuzu yüksek tutar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features  -->
+<section id="features" class="features">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-title">Daima'nın Öne Çıkan Özellikleri</h2>
+            <p class="section-subtitle">Öğrenme deneyiminizi bir üst seviyeye taşıyan güçlü araçlar</p>
+        </div>
+        <div class="row features-grid">
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+                    <h3>Akıllı Quiz Motoru</h3>
+                    <p>Her kullanıcıya özel, seviyenize ve ihtiyaçlarınıza göre uyarlanan dinamik soru sistemi.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <h3>Anında Geri Bildirim</h3>
+                    <p>Her cevap sonrası, doğruya ve yanlışa özel açıklamalar ve öğrenmeyi hızlandıran anlık analizler.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3>Kişisel Analiz & Raporlar</h3>
+                    <p>Güçlü ve zayıf yönlerinizi gösteren detaylı performans raporları ve gelişim grafikleri.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h3>Aktif Öğrenme & Sohbet</h3>
+                    <p>Yapay zeka ile sohbet ederek anlamadığınız konuları anında sorabilir, aktif öğrenme sağlayabilirsiniz.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-mobile-alt"></i></div>
+                    <h3>Esnek & Mobil Uyumlu</h3>
+                    <p>Tüm cihazlarda mükemmel çalışan, responsive ve erişilebilir bir kullanıcı deneyimi.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-shield-alt"></i></div>
+                    <h3>Güvenli & Gizli Altyapı</h3>
+                    <p>Kişisel verileriniz ve performansınız en yüksek güvenlik standartlarıyla korunur.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="container">
+        <div class="cta-content text-center">
+            <h2>Öğrenmeye Başlayın</h2>
+            <p>Hemen ücretsiz hesap oluşturun ve öğrenme yolculuğunuza başlayın.</p>
+            <div class="cta-buttons">
+                {% if session.get('logged_in') %}
+                    <a href="/quiz/start" class="btn btn-primary btn-large">
+                        <i class="bi bi-rocket"></i>
+                        Hemen Başla
+                    </a>
+                    <a href="#demo" class="btn btn-outline btn-large">
+                        <i class="bi bi-play"></i>
+                        Demo İzle
+                    </a>
+                {% else %}
+                    <a href="#" class="btn btn-primary btn-large">
+                        <i class="bi bi-play-circle"></i>
+                        Demo Yap
+                    </a>
+                    <a href="/login" class="btn btn-outline btn-large">
+                        <i class="bi bi-person-circle"></i>
+                        Giriş Yap
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block page_scripts %}
+    <!-- Index Page Specific Scripts -->
+    <script src="{{ url_for('static', filename='js/index/index.js') }}" type="module"></script>
+{% endblock %}

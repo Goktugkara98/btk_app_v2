@@ -1,0 +1,349 @@
+/* Profile Page Main Layout */
+.profile-container {
+    display: flex;
+    min-height: calc(100vh - 70px); /* Navbar yüksekliğini çıkar, min-height kullan */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin-top: 70px; /* Navbar'ın altında başla */
+    position: relative;
+    overflow: hidden; /* Container seviyesinde overflow'u kontrol et */
+}
+
+/* Sidebar Styles */
+.profile-sidebar {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* Sidebar'ın küçülmesini engelle */
+}
+
+/* Profile Header */
+.profile-header {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* Header'ın küçülmesini engelle */
+}
+
+.profile-avatar {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1rem;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-edit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: #667eea;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid #fff;
+}
+
+.avatar-edit:hover {
+    background: #5a6fd8;
+    transform: scale(1.1);
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 0.5rem;
+}
+
+.profile-email {
+    font-size: 0.875rem;
+    color: #718096;
+    margin: 0;
+}
+
+/* Navigation */
+.profile-nav {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto; /* Navigation scroll edilebilir olsun */
+}
+
+.profile-nav .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-nav .nav-item {
+    margin: 0.25rem 0;
+}
+
+.profile-nav .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    color: #4a5568;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.profile-nav .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border-left-color: #667eea;
+}
+
+.profile-nav .nav-link.active {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    border-left-color: #667eea;
+    font-weight: 500;
+}
+
+.profile-nav .nav-link i {
+    width: 20px;
+    margin-right: 0.75rem;
+    font-size: 1rem;
+}
+
+.profile-nav .nav-link span {
+    font-size: 0.9rem;
+}
+
+/* Profile Footer */
+.profile-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* Footer'ın küçülmesini engelle */
+}
+
+.logout-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+    background: #c53030;
+    transform: translateY(-1px);
+}
+
+.logout-btn i {
+    margin-right: 0.5rem;
+}
+
+/* Main Content Area */
+.profile-main {
+    flex: 1;
+    background: #f7fafc;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Flexbox için önemli */
+}
+
+.content-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0; /* Header'ın küçülmesini engelle */
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.5rem;
+}
+
+.page-description {
+    color: #718096;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.content-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto; /* İçerik scroll edilebilir olsun */
+    min-height: 0; /* Flexbox için önemli */
+    scrollbar-width: thin; /* Firefox için */
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent; /* Firefox için */
+}
+
+/* Content body scrollbar stilleri */
+.content-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content-body::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 3px;
+}
+
+.content-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+/* Tab Content */
+.content-tab {
+    display: none;
+    animation: fadeIn 0.3s ease;
+    height: 100%;
+}
+
+.content-tab.active {
+    display: block;
+}
+
+.tab-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    height: 100%;
+}
+
+.tab-content h3 {
+    color: #2d3748;
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.tab-content p {
+    color: #718096;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .profile-sidebar {
+        width: 250px;
+    }
+    
+    .content-header {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        flex-direction: column;
+        min-height: auto;
+    }
+    
+    .profile-sidebar {
+        width: 100%;
+        order: 2;
+        max-height: 300px; /* Mobile'da sidebar yüksekliğini sınırla */
+    }
+    
+    .profile-main {
+        order: 1;
+        flex: 1;
+    }
+    
+    .content-header {
+        padding: 1rem 1.25rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .content-body {
+        padding: 1rem;
+    }
+    
+    .tab-content {
+        padding: 1.25rem;
+    }
+    
+    .profile-nav {
+        max-height: 200px; /* Mobile'da navigation yüksekliğini sınırla */
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        margin-top: 70px; /* Navbar yüksekliğini koru */
+        min-height: calc(100vh - 70px);
+    }
+    
+    .content-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .content-body {
+        padding: 0.75rem;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+    }
+    
+    .profile-sidebar {
+        max-height: 250px; /* Daha küçük ekranlarda sidebar'ı daha da küçült */
+    }
+    
+    .profile-nav {
+        max-height: 150px; /* Navigation'ı daha da küçült */
+    }
+}
+
+/* Profile Info Section Styles will be loaded via link tag in HTML */ 

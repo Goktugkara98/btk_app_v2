@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "grade": 0,
+    "subject": "subject_name",
+    "unit": "unit_name",
+    "topic": "topic_name",
+    "topicName": "Topic Display Name",
+    "totalQuestions": 0,
+    "difficultyLevels": {
+      "easy": 0,
+      "medium": 0,
+      "hard": 0
+    },
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z",
+    "version": "1.0"
+  },
+  "questions": [
+    {
+      "id": "grade_subject_unit_topic_001",
+      "questionText": "Soru metni buraya yazılacak?",
+      "questionType": "multiple_choice",
+      "difficulty": "easy",
+      "options": [
+        {
+          "id": "A",
+          "text": "Seçenek A metni",
+          "isCorrect": false,
+          "explanation": "Bu seçenek neden yanlış açıklaması"
+        },
+        {
+          "id": "B",
+          "text": "Seçenek B metni",
+          "isCorrect": true,
+          "explanation": "Bu seçenek neden doğru açıklaması"
+        },
+        {
+          "id": "C",
+          "text": "Seçenek C metni",
+          "isCorrect": false,
+          "explanation": "Bu seçenek neden yanlış açıklaması"
+        },
+        {
+          "id": "D",
+          "text": "Seçenek D metni",
+          "isCorrect": false,
+          "explanation": "Bu seçenek neden yanlış açıklaması"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Soru için genel açıklama buraya yazılacak"
+    }
+  ]
+} 

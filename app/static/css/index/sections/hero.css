@@ -1,0 +1,605 @@
+/* =============================================================================
+ * HERO SECTION STYLES
+ * ============================================================================= */
+
+/* Hero Section tam genişlik arka plan */
+.hero {
+    position: relative;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    padding-top: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 1;
+    width: 100vw;
+    margin-left: calc(calc(-1 * 100vw) / 2 + 50%);
+    background: var(--primary-gradient);
+}
+
+/* Desktop'ta scroll bar hesaplaması */
+@media (min-width: 992px) {
+    .hero {
+        width: var(--full-width);
+        margin-left: calc(calc(-1 * var(--full-width)) / 2 + 50%);
+    }
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-gradient);
+    z-index: -2;
+}
+
+.hero-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+/* Bootstrap Grid Uyumlu Hero Content */
+.hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero .row {
+    align-items: stretch;
+    min-height: 100vh;
+    padding: 64px 0 40px 0;
+}
+
+/* Hero Text */
+.hero-text {
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.hero-logo {
+    font-family: var(--font-family-bruno);
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #fff;
+    display: inline;
+    background: none;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    text-shadow: 0 0 6px #fff, 0 0 24px #fff;
+}
+
+.hero-logo-ai {
+    color: var(--color-accent-primary);
+    font-weight: 700;
+    margin-left: 0.15em;
+    margin-right: 0.15em;
+    background: none;
+    display: inline-block;
+    text-shadow: 0 0 12px var(--color-accent-primary), 0 0 24px var(--color-accent-primary);
+}
+
+.hero-title {
+    font-family: var(--font-family-main);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 10px;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.hero-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Quiz Panel & AI Chat Panel */
+.quiz-panel, .ai-chat-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-panel {
+    margin-bottom: 1rem;
+}
+
+/* Quiz Panel İçerik Düzeni */
+.quiz-panel .quiz-question {
+    flex-shrink: 0;
+}
+
+.quiz-panel .quiz-info {
+    flex-shrink: 0;
+}
+
+.quiz-panel .quiz-options {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-top: auto;
+}
+
+/* AI Chat Panel İçerik Düzeni */
+.ai-chat-panel .chat-header {
+    flex-shrink: 0;
+}
+
+.ai-chat-panel .chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    height: 300px;
+    max-height: 300px;
+}
+
+.ai-chat-panel .chat-input {
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+/* Desktop için minimum yükseklik */
+@media (min-width: 992px) {
+    .quiz-panel, .ai-chat-panel {
+        min-height: 500px;
+    }
+}
+
+/* Büyük ekranlar için daha fazla yükseklik */
+@media (min-width: 1200px) {
+    .quiz-panel, .ai-chat-panel {
+        min-height: 550px;
+    }
+}
+
+/* XL ekranlar için maksimum yükseklik */
+@media (min-width: 1400px) {
+    .quiz-panel, .ai-chat-panel {
+        min-height: 500px;
+    }
+}
+
+/* Quiz Info */
+.quiz-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.quiz-meta-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.quiz-subject, .quiz-difficulty {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.quiz-subject {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+}
+
+.quiz-difficulty {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.quiz-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.quiz-timer i {
+    font-size: 0.875rem;
+}
+
+/* Quiz Question */
+.quiz-question h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+/* Quiz Options */
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.option:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.option.selected {
+    background: rgba(124, 58, 237, 0.3);
+    border-color: var(--color-accent-primary);
+}
+
+.option.correct {
+    background: rgba(67, 206, 162, 0.3);
+    border-color: #43cea2;
+}
+
+.option.incorrect {
+    background: rgba(220, 53, 69, 0.3);
+    border-color: #dc3545;
+}
+
+.option-letter {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+}
+
+.option.selected .option-letter {
+    background: var(--color-accent-primary);
+}
+
+.option.correct .option-letter {
+    background: #43cea2;
+}
+
+.option.incorrect .option-letter {
+    background: #dc3545;
+}
+
+.option-text {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+/* AI Chat Panel */
+.ai-chat-panel {
+    margin-bottom: 1rem;
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-avatar {
+    width: 3rem;
+    height: 3rem;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.25rem;
+}
+
+.ai-info h4 {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.ai-info span {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.chat-messages {
+    overflow-y: auto;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+.message {
+    margin-bottom: 1rem;
+}
+
+.ai-message {
+    text-align: left;
+}
+
+.user-message {
+    text-align: right;
+}
+
+.message-content {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    display: inline-block;
+    max-width: 80%;
+}
+
+.user-message .message-content {
+    background: var(--color-accent-primary);
+    color: #fff;
+}
+
+.message-content p {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.25rem;
+}
+
+.user-message .message-time {
+    text-align: right;
+}
+
+.chat-input {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.chat-input input {
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    background: rgba(0, 0, 0, 0.02);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+}
+
+.chat-input input:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+}
+
+.chat-input input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-input button {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--color-accent-primary);
+    border: none;
+    border-radius: var(--border-radius);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.chat-input button:hover:not(:disabled) {
+    background: var(--color-accent-secondary);
+    transform: scale(1.05);
+}
+
+.chat-input button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+    .hero .row {
+        padding: 48px 0 32px 0;
+    }
+    
+    .hero-logo {
+        font-size: 3rem;
+    }
+    
+    .hero-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .quiz-panel, .ai-chat-panel {
+        margin-bottom: 2rem;
+    }
+    
+    .hero .row {
+        padding: 32px 0 24px 0;
+        min-height: auto;
+    }
+    
+    .hero-text {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 900px) {
+    .hero-title {
+        font-size: 1.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.125rem;
+    }
+    
+    .hero-logo {
+        font-size: 2.5rem;
+    }
+    
+    .quiz-timer {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero .row {
+        padding: 24px 0 16px 0;
+    }
+    
+    .hero-title {
+        font-size: 1.25rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .quiz-panel, .ai-chat-panel {
+        margin-bottom: 1.5rem;
+    }
+    
+    .quiz-panel .rotate-inner, .ai-chat-panel .rotate-inner {
+        padding: 1rem;
+    }
+    
+    .hero-logo {
+        font-size: 2rem;
+    }
+    
+    .hero-description {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero, .advantages-section, .features {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .quiz-panel, .ai-chat-panel {
+        margin-bottom: 1rem;
+    }
+    
+    .quiz-panel .rotate-inner, .ai-chat-panel .rotate-inner {
+        padding: 0.75rem;
+    }
+    
+    .hero-logo {
+        font-size: 1.75rem;
+    }
+    
+    .hero-title {
+        font-size: 1.125rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .hero-description {
+        font-size: 0.8rem;
+    }
+    
+    .option {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .option-letter {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .chat-header {
+        gap: 0.75rem;
+    }
+    
+    .ai-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+    }
+}
+
+/* Remove old custom grid classes */
+.col-lg-35 {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+@media (max-width: 991.98px) {
+    .col-lg-35 {
+        width: 100%;
+    }
+} 

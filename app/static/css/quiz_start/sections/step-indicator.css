@@ -1,0 +1,150 @@
+/* Step Indicator - Minimal Design */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step.completed {
+    opacity: 0.8;
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #718096;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.step.active .step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    transform: scale(1.1);
+}
+
+.step.completed .step-number {
+    background: #48bb78;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.25);
+}
+
+.step-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #718096;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-text {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.step.completed .step-text {
+    color: #2d3748;
+}
+
+.step-line {
+    width: 50px;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0 1rem;
+    border-radius: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.step-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.5s ease;
+}
+
+.step.completed + .step-line::after,
+.step.active + .step-line::after {
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .step-indicator {
+        margin-bottom: 1rem;
+        padding: 0.4rem 0;
+    }
+    
+    .step {
+        gap: 0.4rem;
+    }
+    
+    .step-number {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+    
+    .step-text {
+        font-size: 0.75rem;
+    }
+    
+    .step-line {
+        width: 40px;
+        margin: 0 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .step-indicator {
+        margin-bottom: 0.75rem;
+        padding: 0.3rem 0;
+    }
+    
+    .step {
+        gap: 0.3rem;
+    }
+    
+    .step-number {
+        width: 22px;
+        height: 22px;
+        font-size: 0.7rem;
+    }
+    
+    .step-text {
+        font-size: 0.7rem;
+    }
+    
+    .step-line {
+        width: 30px;
+        margin: 0 0.5rem;
+    }
+} 

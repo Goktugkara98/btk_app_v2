@@ -1,0 +1,11 @@
+/* ===== QUIZ EDUCATIONAL - MODULAR CSS STRUCTURE ===== */
+
+/* Import base quiz styles */
+@import url('../quiz_normal/quiz_normal.css');
+
+/* Import all component stylesheets */
+@import url('./components/layout.css');
+@import url('./components/ai-chat.css');
+@import url('./components/responsive.css');
+@import url('./components/animations.css');
+@import url('./components/indicators.css');

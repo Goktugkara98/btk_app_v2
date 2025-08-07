@@ -1,0 +1,228 @@
+/* =============================================================================
+   QUIZ PRELOADER - CORPORATE DESIGN
+   ============================================================================= */
+
+/* Preloader Overlay */
+.quiz-preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.quiz-preloader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Preloader Container */
+.preloader-container {
+    text-align: center;
+    color: #1e293b;
+    position: relative;
+    max-width: 400px;
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Corporate Logo - Bruno Ace SC */
+.preloader-logo {
+    font-family: 'Bruno Ace SC', 'Bruno Ace', cursive, sans-serif !important;
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+    font-display: swap;
+}
+
+.preloader-logo .logo-ai {
+    color: #3b82f6;
+    font-weight: 400;
+}
+
+/* Corporate Subtitle */
+.preloader-subtitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 2rem;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+/* Loading Text */
+.preloader-text {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    color: #475569;
+    opacity: 1;
+}
+
+/* Corporate Loading Spinner */
+.preloader-spinner {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 2rem;
+    position: relative;
+}
+
+.spinner-ring {
+    width: 100%;
+    height: 100%;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #7c3aed;
+    border-radius: 50%;
+    animation: corporateSpin 1.2s linear infinite;
+    position: absolute;
+}
+
+.spinner-ring:nth-child(2) {
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-color: #f1f5f9;
+    border-top-color: #a855f7;
+    animation-duration: 1.8s;
+    animation-direction: reverse;
+}
+
+/* Corporate Progress Bar */
+.preloader-progress {
+    width: 280px;
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+    border-radius: 2px;
+    width: 0%;
+    animation: corporateProgress 3s ease-out forwards;
+    transition: width 0.3s ease;
+}
+
+/* Corporate Mode Indicator */
+.preloader-mode {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.025em;
+}
+
+.mode-icon {
+    display: inline-block;
+    margin-right: 0.75rem;
+    font-size: 1.125rem;
+    color: #7c3aed;
+}
+
+/* Corporate Animations */
+@keyframes corporateSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes corporateProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Corporate Responsive Design */
+@media (max-width: 768px) {
+    .preloader-container {
+        max-width: 320px;
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .preloader-logo {
+        font-size: 2rem;
+    }
+    
+    .preloader-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .preloader-text {
+        font-size: 0.9rem;
+    }
+    
+    .preloader-spinner {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .preloader-progress {
+        width: 240px;
+        height: 2px;
+    }
+    
+    .preloader-mode {
+        bottom: 2rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .preloader-container {
+        max-width: 280px;
+        padding: 1.5rem 1rem;
+    }
+    
+    .preloader-logo {
+        font-size: 1.75rem;
+    }
+    
+    .preloader-progress {
+        width: 200px;
+    }
+    
+    .preloader-mode {
+        bottom: 1.5rem;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .mode-icon {
+        margin-right: 0.5rem;
+        font-size: 1rem;
+    }
+}

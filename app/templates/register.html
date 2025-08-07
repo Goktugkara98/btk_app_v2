@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Kayıt Ol - Daima{% endblock %}
+{% block head_extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register/register.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+{% block content %}
+<div class="register-page">
+    <div class="register-container">
+        <!-- Register Form -->
+        <div class="register-form-section">
+            <div class="register-form-card">
+                <h1 class="register-title">Kayıt Ol</h1>
+                <p class="register-subtitle">Daima'ya katılın ve öğrenmeyi keşfedin</p>
+                
+                <!-- Message Container for dynamic messages -->
+                <div class="message-container" id="message-container"></div>
+                
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="name">
+                            <i class="fas fa-user"></i> Kullanıcı Adı
+                        </label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            required 
+                            autocomplete="username"
+                            placeholder="Kullanıcı adınızı giriniz"
+                            minlength="3"
+                            maxlength="30"
+                        >
+                        <div class="help-text">En az 3 karakter, sadece harf, rakam ve alt çizgi</div>
+                        <div class="error-text" id="name-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i> E-posta Adresi
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required 
+                            autocomplete="email"
+                            placeholder="ornek@email.com"
+                        >
+                        <div class="help-text">Geçerli bir e-posta adresi giriniz</div>
+                        <div class="error-text" id="email-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i> Şifre
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            autocomplete="new-password"
+                            placeholder="En az 6 karakter"
+                            minlength="6"
+                        >
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strength-fill"></div>
+                            </div>
+                            <span id="strength-text">Şifre gücü</span>
+                        </div>
+                        <div class="error-text" id="password-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password2">
+                            <i class="fas fa-lock"></i> Şifre (Tekrar)
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password2" 
+                            name="password2" 
+                            required 
+                            autocomplete="new-password"
+                            placeholder="Şifrenizi tekrar giriniz"
+                        >
+                        <div class="help-text">Şifrenizi doğrulamak için tekrar giriniz</div>
+                        <div class="error-text" id="password2-error"></div>
+                    </div>
+                    
+                    <button type="submit" class="register-btn" id="submit-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span class="btn-text">Kayıt Ol</span>
+                    </button>
+                </form>
+                
+                <div class="register-links">
+                    <a href="/login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Zaten hesabın var mı? Giriş Yap
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/register/register.js') }}"></script>
+{% endblock %} 

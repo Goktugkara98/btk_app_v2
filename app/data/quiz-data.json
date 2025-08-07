@@ -1,0 +1,79 @@
+{
+  "category": "Genel Kültür",
+  "title": "Genel Kültür Quiz",
+  "description": "Genel kültür bilginizi test edin",
+  "timeLimit": 20,
+  "totalQuestions": 10,
+  "questions": [
+    {
+      "id": 1,
+      "text": "Türkiye'nin başkenti neresidir?",
+      "options": ["İstanbul", "Ankara", "İzmir", "Bursa"],
+      "correctAnswer": 1,
+      "explanation": "Ankara, 13 Ekim 1923'ten beri Türkiye'nin başkentidir."
+    },
+    {
+      "id": 2,
+      "text": "Hangi gezegen Güneş'e en yakındır?",
+      "options": ["Mars", "Venüs", "Merkür", "Dünya"],
+      "correctAnswer": 2,
+      "explanation": "Merkür, Güneş Sistemi'ndeki en iç gezegendir."
+    },
+    {
+      "id": 3,
+      "text": "İstanbul hangi yılda fethedilmiştir?",
+      "options": ["1451", "1453", "1455", "1457"],
+      "correctAnswer": 1,
+      "explanation": "İstanbul, 29 Mayıs 1453'te Fatih Sultan Mehmet tarafından fethedilmiştir."
+    },
+    {
+      "id": 4,
+      "text": "Hangi element periyodik tabloda 'Fe' sembolü ile gösterilir?",
+      "options": ["Flor", "Demir", "Fosfor", "Fermiyum"],
+      "correctAnswer": 1,
+      "explanation": "Fe sembolü, Latince 'Ferrum' kelimesinden gelir ve demir elementini temsil eder."
+    },
+    {
+      "id": 5,
+      "text": "Hangi yıl Türkiye Cumhuriyeti kurulmuştur?",
+      "options": ["1920", "1921", "1922", "1923"],
+      "correctAnswer": 3,
+      "explanation": "Türkiye Cumhuriyeti, 29 Ekim 1923'te ilan edilmiştir."
+    },
+    {
+      "id": 6,
+      "text": "Dünya'nın en büyük okyanusu hangisidir?",
+      "options": ["Atlas Okyanusu", "Hint Okyanusu", "Pasifik Okyanusu", "Arktik Okyanusu"],
+      "correctAnswer": 2,
+      "explanation": "Pasifik Okyanusu, Dünya'nın en büyük ve en derin okyanusudur."
+    },
+    {
+      "id": 7,
+      "text": "Hangi yazar 'Suç ve Ceza' romanının yazarıdır?",
+      "options": ["Tolstoy", "Dostoyevski", "Çehov", "Puşkin"],
+      "correctAnswer": 1,
+      "explanation": "Suç ve Ceza, Fyodor Dostoyevski tarafından yazılmıştır."
+    },
+    {
+      "id": 8,
+      "text": "Hangi ülke 2022 FIFA Dünya Kupası'nı kazanmıştır?",
+      "options": ["Brezilya", "Arjantin", "Fransa", "Almanya"],
+      "correctAnswer": 1,
+      "explanation": "Arjantin, 2022 FIFA Dünya Kupası'nı kazanmıştır."
+    },
+    {
+      "id": 9,
+      "text": "DNA'nın açılımı nedir?",
+      "options": ["Deoksiribo Nükleik Asit", "Deoksiribo Nitrik Asit", "Deoksiribo Nüklear Asit", "Deoksiribo Nitro Asit"],
+      "correctAnswer": 0,
+      "explanation": "DNA, Deoksiribo Nükleik Asit'in kısaltmasıdır."
+    },
+    {
+      "id": 10,
+      "text": "Hangi yıl ilk iPhone piyasaya sürülmüştür?",
+      "options": ["2005", "2006", "2007", "2008"],
+      "correctAnswer": 2,
+      "explanation": "İlk iPhone, 29 Haziran 2007'de piyasaya sürülmüştür."
+    }
+  ]
+}

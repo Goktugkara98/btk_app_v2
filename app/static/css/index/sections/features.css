@@ -1,0 +1,219 @@
+/* =============================================================================
+ * FEATURES SECTION STYLES
+ * ============================================================================= */
+
+/* Features tam genişlik arka plan */
+.features {
+    padding: 100px 0;
+    background: #fff;
+    width: 100vw;
+    margin-left: calc(calc(-1 * 100vw) / 2 + 50%);
+    position: relative;
+}
+
+/* Desktop'ta scroll bar hesaplaması */
+@media (min-width: 992px) {
+    .features {
+        width: var(--full-width);
+        margin-left: calc(calc(-1 * var(--full-width)) / 2 + 50%);
+    }
+}
+
+.features .section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.features .section-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.features .section-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Bootstrap Grid Uyumlu Features Grid */
+.features-grid {
+    /* Grid yapısı artık Bootstrap ile sağlanıyor */
+}
+
+.feature-card {
+    padding: 40px;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50%;
+    font-size: 32px;
+    margin: 0 auto 24px;
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+    .features {
+        padding: 80px 0;
+    }
+    
+    .features .section-title {
+        font-size: 2.5rem;
+    }
+    
+    .features .section-header {
+        margin-bottom: 60px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .features {
+        padding: 60px 0;
+    }
+    
+    .features .section-title {
+        font-size: 2rem;
+    }
+    
+    .features .section-subtitle {
+        font-size: 1.125rem;
+    }
+    
+    .features .section-header {
+        margin-bottom: 50px;
+    }
+    
+    .feature-card {
+        padding: 32px 24px;
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .features {
+        padding: 50px 0;
+    }
+    
+    .features .section-title {
+        font-size: 1.75rem;
+    }
+    
+    .features .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    .features .section-header {
+        margin-bottom: 40px;
+    }
+    
+    .feature-card {
+        padding: 28px 20px;
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.125rem;
+        margin-bottom: 12px;
+    }
+    
+    .feature-card p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+}
+
+@media (max-width: 600px) {
+    .features {
+        padding: 40px 0;
+    }
+    
+    .features .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .features .section-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .features .section-header {
+        margin-bottom: 30px;
+    }
+    
+    .feature-card {
+        padding: 24px 16px;
+    }
+    
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .feature-card h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+} 

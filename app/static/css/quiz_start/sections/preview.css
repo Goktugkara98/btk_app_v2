@@ -1,0 +1,249 @@
+/* Quiz Preview Panel Styles */
+.quiz-preview-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: sticky;
+    top: 2rem;
+}
+
+.preview-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.preview-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.preview-header h3 i {
+    color: #ffd700;
+}
+
+.preview-content {
+    padding: 1.5rem;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+}
+
+.preview-label {
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.preview-value {
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: right;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+.preview-value.selected {
+    color: #667eea;
+}
+
+.preview-value.not-selected {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.preview-actions {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.preview-actions .btn {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.preview-actions .btn:last-child {
+    margin-bottom: 0;
+}
+
+.preview-actions .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.preview-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.preview-actions .btn-primary:disabled {
+    background: #adb5bd;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.preview-actions .btn-outline {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: transparent;
+}
+
+.preview-actions .btn-outline:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Validation Container Styles */
+.validation-container {
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid;
+}
+
+.validation-container.validation-error {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.validation-container.validation-warning {
+    border-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+.validation-header {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.validation-container.validation-error .validation-header {
+    background-color: #dc3545;
+    color: white;
+}
+
+.validation-container.validation-warning .validation-header {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.validation-content {
+    padding: 0.75rem 1rem;
+}
+
+.validation-error,
+.validation-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.validation-error:last-child,
+.validation-warning:last-child {
+    margin-bottom: 0;
+}
+
+.validation-error i {
+    color: #dc3545;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.validation-warning i {
+    color: #856404;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.validation-error span,
+.validation-warning span {
+    flex: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+    .quiz-preview-panel {
+        position: static;
+        margin-top: 2rem;
+    }
+    
+    .preview-header {
+        padding: 1.25rem;
+    }
+    
+    .preview-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .preview-content {
+        padding: 1.25rem;
+    }
+    
+    .preview-item {
+        padding: 0.5rem 0;
+    }
+    
+    .preview-label {
+        font-size: 0.85rem;
+    }
+    
+    .preview-value {
+        font-size: 0.9rem;
+    }
+    
+    .preview-actions {
+        padding: 1.25rem;
+    }
+    
+    .preview-actions .btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .validation-header {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .validation-content {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .validation-error,
+    .validation-warning {
+        font-size: 0.8rem;
+    }
+} 

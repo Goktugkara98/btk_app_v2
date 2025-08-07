@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Giriş Yap - Daima{% endblock %}
+{% block head_extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login/login.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+{% block content %}
+<div class="login-page">
+    <div class="login-container">
+        <!-- Login Form -->
+        <div class="login-form-section">
+            <div class="login-form-card">
+                <h1 class="login-title">Giriş Yap</h1>
+                <p class="login-subtitle">Daima'ya hoş geldiniz, öğrenmeye devam edin</p>
+                
+                <!-- Message Container for dynamic messages -->
+                <div class="message-container" id="message-container"></div>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i> E-posta Adresi
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required 
+                            autocomplete="email"
+                            placeholder="ornek@email.com"
+                        >
+                        <div class="help-text">Kayıtlı e-posta adresinizi giriniz</div>
+                        <div class="error-text" id="email-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i> Şifre
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            autocomplete="current-password"
+                            placeholder="Şifrenizi giriniz"
+                        >
+                        <div class="help-text">Hesabınızın şifresini giriniz</div>
+                        <div class="error-text" id="password-error"></div>
+                    </div>
+                    
+                    <button type="submit" class="login-btn" id="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="btn-text">Giriş Yap</span>
+                    </button>
+                </form>
+                
+                <div class="login-links">
+                    <a href="/register">
+                        <i class="fas fa-user-plus"></i>
+                        Hesabın yok mu? Kayıt Ol
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/login/login.js') }}"></script>
+{% endblock %} 

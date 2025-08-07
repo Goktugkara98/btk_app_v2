@@ -1,0 +1,139 @@
+/* Preview Panel - New Design */
+.preview-content {
+    padding: 1.5rem;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+}
+
+.preview-label {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.preview-value {
+    font-weight: 500;
+    color: #1e293b;
+    text-align: right;
+    max-width: 60%;
+    word-wrap: break-word;
+    font-size: 0.85rem;
+}
+
+/* Validation Messages */
+.validation-container {
+    margin: 0 1.5rem;
+}
+
+.validation-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.validation-warning {
+    background: #fffbeb;
+    border: 1px solid #fed7aa;
+    color: #d97706;
+    padding: 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+/* Preview Actions */
+.preview-actions {
+    padding: 1.5rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+}
+
+.btn-success:disabled {
+    background: #cbd5e0;
+    color: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+}
+
+.btn-lg {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .preview-content {
+        padding: 1rem;
+    }
+    
+    .preview-item {
+        padding: 0.5rem 0;
+    }
+    
+    .preview-label {
+        font-size: 0.8rem;
+    }
+    
+    .preview-value {
+        font-size: 0.8rem;
+    }
+    
+    .preview-actions {
+        padding: 1rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+    }
+} 

@@ -1,0 +1,112 @@
+{
+  "scenarios": [
+    {
+      "id": "math_comparison",
+      "title": "Sayı Karşılaştırma",
+      "subject": "Matematik",
+      "difficulty": "Orta",
+      "question": "Aşağıdaki sayılardan hangisi en büyüktür?",
+      "options": [
+        { "letter": "A", "text": "1250", "correct": true },
+        { "letter": "B", "text": "999", "correct": false },
+        { "letter": "C", "text": "850", "correct": false },
+        { "letter": "D", "text": "750", "correct": false }
+      ],
+      "steps": [
+        { "delay": 1000, "type": "ai", "message": "Merhaba! Bu soruyu birlikte çözelim. Hangi seçeneği düşünüyorsun?" },
+        { "delay": 2000, "type": "select", "option": "B" },
+        { "delay": 1000, "type": "ai", "message": "B seçeneğini seçtin. 999 sayısını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "İlginç bir seçim! 999 sayısı büyük görünebilir, ama diğer sayılarla karşılaştıralım..." },
+        { "delay": 2000, "type": "ai", "message": "999 < 1250 olduğu için 999 en büyük değil. Muhtemelen sayıları karşılaştırırken 999'un büyük görünmesine aldanmış olabilirsin." },
+        { "delay": 2000, "type": "ai", "message": "Şimdi doğru cevabı bulalım. Hangi sayı en büyük?" },
+        { "delay": 1500, "type": "select", "option": "A" },
+        { "delay": 1000, "type": "ai", "message": "A seçeneğini seçtin. 1250 sayısını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Mükemmel! 1250 en büyük sayıdır. Çünkü:" },
+        { "delay": 2000, "type": "ai", "message": "• 1250 > 999 (250 birim fark)\n• 1250 > 850 (400 birim fark)\n• 1250 > 750 (500 birim fark)" },
+        { "delay": 2000, "type": "ai", "message": "Bu tür sorularda sayıları sıraya koymak yardımcı olur: 750 < 850 < 999 < 1250" },
+        { "delay": 2000, "type": "ai", "message": "Harika! Birlikte doğru cevabı bulduk. İşte Daima'nın nasıl çalıştığını gördün!" }
+      ]
+    },
+    {
+      "id": "history_ottoman",
+      "title": "Osmanlı Tarihi",
+      "subject": "Tarih",
+      "difficulty": "Orta",
+      "question": "Osmanlı İmparatorluğu'nun başkenti İstanbul'a ne zaman taşındı?",
+      "options": [
+        { "letter": "A", "text": "1453", "correct": true },
+        { "letter": "B", "text": "1299", "correct": false },
+        { "letter": "C", "text": "1517", "correct": false },
+        { "letter": "D", "text": "1683", "correct": false }
+      ],
+      "steps": [
+        { "delay": 1000, "type": "ai", "message": "Merhaba! Bu tarih sorusunu birlikte çözelim. Ne düşünüyorsun?" },
+        { "delay": 2000, "type": "select", "option": "B" },
+        { "delay": 1000, "type": "ai", "message": "B seçeneğini seçtin. 1299 yılını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "1299, Osmanlı Devleti'nin kuruluş yılıdır. Muhtemelen kuruluş ile başkent taşınmasını karıştırmış olabilirsin." },
+        { "delay": 2000, "type": "ai", "message": "Kuruluş yılında başkent Bursa'daydı. İstanbul'un fethi çok sonra gerçekleşti." },
+        { "delay": 2000, "type": "ai", "message": "Şimdi doğru cevabı bulalım. İstanbul ne zaman fethedildi?" },
+        { "delay": 1500, "type": "select", "option": "A" },
+        { "delay": 1000, "type": "ai", "message": "A seçeneğini seçtin. 1453 yılını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Mükemmel! 1453'te İstanbul fethedildi ve başkent yapıldı." },
+        { "delay": 2000, "type": "ai", "message": "Tarih sırası: 1299 (kuruluş) → 1453 (İstanbul'un fethi) → 1517 (halifelik) → 1683 (Viyana kuşatması)" },
+        { "delay": 2000, "type": "ai", "message": "Bu tür sorularda tarih sırasını hatırlamak yardımcı olur." },
+        { "delay": 2000, "type": "ai", "message": "Harika! Birlikte doğru cevabı bulduk. İşte Daima'nın nasıl çalıştığını gördün!" }
+      ]
+    },
+    {
+      "id": "literature_author",
+      "title": "Edebiyat",
+      "subject": "Edebiyat",
+      "difficulty": "Orta",
+      "question": "Aşağıdaki eserlerden hangisi Orhan Pamuk'a aittir?",
+      "options": [
+        { "letter": "A", "text": "Kara Kitap", "correct": true },
+        { "letter": "B", "text": "Tutunamayanlar", "correct": false },
+        { "letter": "C", "text": "Çalıkuşu", "correct": false },
+        { "letter": "D", "text": "Kürk Mantolu Madonna", "correct": false }
+      ],
+      "steps": [
+        { "delay": 1000, "type": "ai", "message": "Merhaba! Bu edebiyat sorusunu birlikte çözelim. Hangi eseri biliyorsun?" },
+        { "delay": 2000, "type": "select", "option": "B" },
+        { "delay": 1000, "type": "ai", "message": "B seçeneğini seçtin. Tutunamayanlar'ı düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Tutunamayanlar, Oğuz Atay'ın eseridir. Muhtemelen modern Türk edebiyatının önemli eserlerini karıştırmış olabilirsin." },
+        { "delay": 2000, "type": "ai", "message": "Her iki eser de önemli, ama farklı yazarlara ait." },
+        { "delay": 2000, "type": "ai", "message": "Şimdi doğru cevabı bulalım. Orhan Pamuk'un eseri hangisi?" },
+        { "delay": 1500, "type": "select", "option": "A" },
+        { "delay": 1000, "type": "ai", "message": "A seçeneğini seçtin. Kara Kitap'ı düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Mükemmel! Kara Kitap, Orhan Pamuk'un önemli eserlerinden biridir." },
+        { "delay": 2000, "type": "ai", "message": "Diğer eserler:\n• Tutunamayanlar → Oğuz Atay\n• Çalıkuşu → Reşat Nuri Güntekin\n• Kürk Mantolu Madonna → Sabahattin Ali" },
+        { "delay": 2000, "type": "ai", "message": "Bu tür sorularda eser-yazar eşleştirmelerini hatırlamak yardımcı olur." },
+        { "delay": 2000, "type": "ai", "message": "Harika! Birlikte doğru cevabı bulduk. İşte Daima'nın nasıl çalıştığını gördün!" }
+      ]
+    },
+    {
+      "id": "science_photosynthesis",
+      "title": "Fotosentez",
+      "subject": "Fen",
+      "difficulty": "Orta",
+      "question": "Bitkiler, fotosentez süreci sonunda atmosfere hangi gazı salarlar?",
+      "options": [
+        { "letter": "A", "text": "Oksijen", "correct": true },
+        { "letter": "B", "text": "Karbondioksit", "correct": false },
+        { "letter": "C", "text": "Azot", "correct": false },
+        { "letter": "D", "text": "Hidrojen", "correct": false }
+      ],
+      "steps": [
+        { "delay": 1000, "type": "ai", "message": "Merhaba! Bu temel bilim sorusuna birlikte bakalım. Ne düşünüyorsun?" },
+        { "delay": 2000, "type": "select", "option": "B" },
+        { "delay": 1000, "type": "ai", "message": "B seçeneğini seçtin. Karbondioksit cevabını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Anlaşılır bir seçim! Karbondioksit fotosentez için hayati öneme sahiptir. Muhtemelen sürecin girdisi ile çıktısını karıştırmış olabilirsin." },
+        { "delay": 2000, "type": "ai", "message": "Bitkiler yaşamak için havadan karbondioksit alırlar, yani onu 'tüketirler'. Sürecin sonunda ise farklı bir gaz 'üretirler'." },
+        { "delay": 2000, "type": "ai", "message": "Şimdi tekrar düşünelim. Bitkiler hangi gazı üretip atmosfere salar?" },
+        { "delay": 1500, "type": "select", "option": "A" },
+        { "delay": 1000, "type": "ai", "message": "A seçeneğini seçtin. Oksijen cevabını düşünmüşsün." },
+        { "delay": 1500, "type": "ai", "message": "Kesinlikle doğru! Bitkiler fotosentez ile besin üretirken, bir yan ürün olarak oksijen gazı ortaya çıkarır." },
+        { "delay": 2000, "type": "ai", "message": "Süreci özetlersek:\n• Girenler: Karbondioksit (CO₂), Su (H₂O), Güneş Işığı\n• Çıkanlar: Besin (Glikoz), Oksijen (O₂)" },
+        { "delay": 2000, "type": "ai", "message": "İpucu: Bitkileri 'havayı temizler' diye düşünmek, onların karbondioksit alıp oksijen verdiğini hatırlamana yardımcı olur." },
+        { "delay": 2000, "type": "ai", "message": "Harika! Birlikte doğru cevabı bulduk. İşte Daima'nın nasıl çalıştığını gördün!" }
+      ]
+    }
+  ]
+} 

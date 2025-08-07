@@ -1,0 +1,189 @@
+/* =============================================================================
+ * LOGIN/REGISTER AI CHAT PANEL SECTION STYLES
+ * ============================================================================= */
+
+.login-ai-chat-panel, .register-ai-chat-panel {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem 2.2rem 2.2rem 2.2rem; /* Increase horizontal padding */
+  
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  max-width: 540px;
+  width: 100%;
+  min-width: 340px;
+  border: 1px solid var(--color-border);
+  /* Remove forced height, let content define height */
+  flex: 1 1 0;
+  justify-content: flex-start;
+  align-self: stretch;
+  gap: 1.5rem; /* Add vertical gap between children */
+}
+
+/* Kart ve AI paneli aynı yükseklikte olsun diye row'a align-items-stretch eklenmeli (HTML'de var) */
+
+.login-ai-chat-panel .chat-header,
+.register-ai-chat-panel .chat-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.login-ai-chat-panel .ai-avatar,
+.register-ai-chat-panel .ai-avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-gradient);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.login-ai-chat-panel .ai-info h4,
+.register-ai-chat-panel .ai-info h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-ai-chat-panel .ai-info span,
+.register-ai-chat-panel .ai-info span {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.login-ai-chat-panel .chat-messages,
+.register-ai-chat-panel .chat-messages {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-bottom: 1.2rem;
+  min-height: 90px;
+  max-height: 220px;
+  padding-right: 4px;
+  padding-bottom: 0.5rem;
+  background: none;
+}
+
+.login-ai-chat-panel .message,
+.register-ai-chat-panel .message {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-ai-chat-panel .ai-message .message-content,
+.register-ai-chat-panel .ai-message .message-content {
+  background: var(--secondary-gradient);
+  color: var(--color-text-primary);
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1.1rem;
+  font-size: 1rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0.2rem;
+}
+
+.login-ai-chat-panel .message-time,
+.register-ai-chat-panel .message-time {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-left: 0.2rem;
+}
+
+.login-ai-chat-panel .chat-input,
+.register-ai-chat-panel .chat-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.7rem;
+  margin-top: 0.5rem;
+}
+
+.login-ai-chat-panel .chat-input input,
+.register-ai-chat-panel .chat-input input {
+  flex: 1 1 auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s;
+}
+
+.login-ai-chat-panel .chat-input input:focus,
+.register-ai-chat-panel .chat-input input:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px var(--color-accent-secondary);
+}
+
+.login-ai-chat-panel .chat-input button,
+.register-ai-chat-panel .chat-input button {
+  background: var(--accent-gradient);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 0.6rem 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-ai-chat-panel .chat-input button:hover:not(:disabled),
+.register-ai-chat-panel .chat-input button:hover:not(:disabled) {
+  background: var(--color-accent-primary);
+}
+
+/* =============================================================================
+ * ENSURE AI PANEL FILLS WRAPPER HEIGHT
+ * ============================================================================= */
+
+.login-panels-wrapper {
+  height: 100%;
+  min-height: 540px;
+}
+
+.login-panels-wrapper > .col-lg-6 {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-ai-chat-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (max-width: 1200px) {
+  .login-panels-wrapper {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .login-panels-wrapper > .col-lg-6 {
+    min-height: 0;
+  }
+  .login-ai-chat-panel {
+    min-height: 220px;
+    height: auto;
+  }
+} 

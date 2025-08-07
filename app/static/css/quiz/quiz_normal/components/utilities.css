@@ -1,0 +1,50 @@
+/* ===== ACCESSIBILITY & UTILITIES ===== */
+
+/* Focus states */
+.nav-btn:focus,
+.option-item:focus,
+.question-nav-item:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .quiz-header,
+    .quiz-navigation,
+    .quiz-footer {
+        border-color: #000;
+    }
+    
+    .timer-widget,
+    .question-nav-item {
+        border-color: #000;
+    }
+}
+
+/* Print styles */
+@media print {
+    .quiz-header,
+    .quiz-navigation,
+    .quiz-footer {
+        display: none !important;
+    }
+    
+    .quiz-main {
+        padding: 0;
+    }
+    
+    .question-wrapper {
+        box-shadow: none;
+        border: none;
+    }
+}

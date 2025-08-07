@@ -1,0 +1,13 @@
+/* Compact Header Styles */
+.quiz-start-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin-top: 76px; /* Navbar height */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quiz-start-container {
+        margin-top: 66px; /* Smaller navbar height on mobile */
+    }
+} 

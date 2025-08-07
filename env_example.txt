@@ -1,0 +1,22 @@
+# =============================================================================
+# ENVIRONMENT VARIABLES EXAMPLE
+# =============================================================================
+# Bu dosyayı .env olarak kopyalayın ve değerleri kendi projenize göre ayarlayın
+# =============================================================================
+
+# Flask Configuration
+SECRET_KEY=your-secret-key-here
+FLASK_ENV=development
+
+# Database Configuration
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your-mysql-password
+MYSQL_DB=btk_app
+MYSQL_PORT=3306
+
+# AI Chat Configuration
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Logging
+LOG_LEVEL=INFO

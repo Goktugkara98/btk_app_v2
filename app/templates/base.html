@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!--Title-->
+    <title>{% block title %}Daima{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
+    <!--CSS-->
+    <!---Plugins-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins/bootstrap-grid.css') }}">
+    <!---Base-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <!---Components-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/footer.css') }}">
+    <!---Extra Styles-->
+    {% block head_extra_styles %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+
+    <!-- Google Fonts: Bruno Ace SC & Inter - Optimized -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Font Loading Optimization -->
+    <style>
+        /* Font fallback to prevent FOUT */
+        .font-loading {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        /* Hide content until font is loaded */
+        .font-loading {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .font-loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="font-loading">
+
+    <!--Navbar-->
+    <header class="navbar">
+        <div class="navbar-container wide-container">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <a href="/" class="navbar-brand">
+                            <span class="logo-black">d</span><span class="logo-purple">a</span><span class="logo-purple">i</span><span class="logo-black">m</span><span class="logo-black">a</span>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <nav class="navbar-nav">
+                            <a href="/" class="nav-link active">Ana Sayfa</a>
+                            {% if session.get('logged_in') %}
+                                <div class="nav-user-menu">
+                                    <a href="/profile" class="nav-button" data-username>{{ session.get('username', 'Profil') }}</a>
+                                    <button class="nav-logout-btn" data-logout>
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </button>
+                                </div>
+                            {% else %}
+                                <a href="/login" class="nav-button">Giriş Yap</a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!--Main Content-->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!--Footer-->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="container">
+                <!-- Main Footer Content -->
+                <div class="footer-main">
+                    <div class="row">
+                        <div class="col-12 col-lg-4 mb-4 mb-lg-0">
+                            <div class="footer-brand-section">
+                                <div class="footer-brand">
+                                    <a href="/" class="footer-logo">
+                                        <span class="logo-text">D<span class="logo-accent">ai</span>ma</span>
+                                    </a>
+                                    <p class="footer-desc">Yapay zeka destekli modern öğrenme platformu. Kişiselleştirilmiş quizler, anında analiz ve aktif öğrenme deneyimi ile öğrenmeyi yeniden keşfedin.</p>
+                                    <div class="footer-social">
+                                        <h5>Bizi Takip Edin</h5>
+                                        <div class="social-icons">
+                                            <a href="#" class="social-icon" aria-label="Twitter">
+                                                <i class="bi bi-twitter-x"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" aria-label="Instagram">
+                                                <i class="bi bi-instagram"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" aria-label="LinkedIn">
+                                                <i class="bi bi-linkedin"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" aria-label="YouTube">
+                                                <i class="bi bi-youtube"></i>
+                                            </a>
+                                            <a href="#" class="social-icon" aria-label="GitHub">
+                                                <i class="bi bi-github"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-4 mb-4 mb-lg-0">
+                            <div class="footer-links-section">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="footer-links-group">
+                                            <h4>Hızlı Linkler</h4>
+                                            <ul>
+                                                <li><a href="/">Ana Sayfa</a></li>
+                                                <li><a href="/login">Giriş Yap</a></li>
+                                                <li><a href="/register">Kaydol</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="footer-links-group">
+                                            <h4>Yasal</h4>
+                                            <ul>
+                                                <li><a href="/privacy">Gizlilik Politikası</a></li>
+                                                <li><a href="/terms">Kullanım Şartları</a></li>
+                                                <li><a href="/cookies">Çerez Politikası</a></li>
+                                                <li><a href="/security">Güvenlik</a></li>
+                                                <li><a href="/gdpr">KVKK</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-4">
+                            <div class="footer-newsletter-section">
+                                <div class="newsletter-card">
+                                    <h4>Güncel Kalın</h4>
+                                    <p>En son özellikler ve güncellemeler için bültenimize abone olun.</p>
+                                    <form class="newsletter-form" id="newsletter-form">
+                                        <div class="input-group">
+                                            <input type="email" placeholder="E-posta adresiniz" required>
+                                            <button type="submit" class="newsletter-btn">
+                                                <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <div class="newsletter-success" id="newsletter-success" style="display: none;">
+                                        <i class="bi bi-check-circle"></i>
+                                        <span>Başarıyla abone oldunuz!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Bottom -->
+                <div class="footer-bottom">
+                    <div class="footer-bottom-content">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                <div class="footer-copyright">
+                                    <p>&copy; 2024 Daima. Tüm hakları saklıdır.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="footer-stats">
+                                    <span class="stat-item">
+                                        <i class="bi bi-people"></i>
+                                        <span>10K+ Kullanıcı</span>
+                                    </span>
+                                    <span class="stat-item">
+                                        <i class="bi bi-graph-up"></i>
+                                        <span>50K+ Quiz</span>
+                                    </span>
+                                    <span class="stat-item">
+                                        <i class="bi bi-star"></i>
+                                        <span>4.9/5 Puan</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!--Scripts-->
+    <!---Plugins-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!---Main-->
+    <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+    <!---Auth Utils-->
+    <script src="{{ url_for('static', filename='js/utils/auth.js') }}"></script>
+    <!---Components-->
+    {% block body_extra_scripts %}{% endblock %}
+    
+    <!-- Page Specific Scripts -->
+    {% block page_scripts %}{% endblock %}
+    
+    <!-- Font Loading Script -->
+    <script>
+        // Font loading optimization
+        if ('fonts' in document) {
+            document.fonts.ready.then(function() {
+                document.body.classList.add('font-loaded');
+            });
+        } else {
+            // Fallback for browsers that don't support Font Loading API
+            setTimeout(function() {
+                document.body.classList.add('font-loaded');
+            }, 100);
+        }
+        
+        // Scroll to top on page load
+        window.addEventListener('load', function() {
+            if (window.scrollY > 0) {
+                window.scrollTo(0, 0);
+            }
+        });
+        
+        // Initialize authentication UI
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.authUtils && window.authUtils.initAuthUI) {
+                window.authUtils.initAuthUI();
+            }
+        });
+    </script>
+</body>
+</html>

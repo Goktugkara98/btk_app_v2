@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Sonuçları - Daima{% endblock %}
+
+{% block head_extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz_results/quiz_results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<!-- Quiz Results Hero Section -->
+<section class="results-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="results-header">
+                    <div class="results-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <h1 class="results-title">Quiz Tamamlandı!</h1>
+                    <p class="results-subtitle">Performansınızı analiz edelim ve gelişim alanlarınızı keşfedelim.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Results Summary Section -->
+<section class="results-summary">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="summary-cards">
+                    <!-- Overall Score Card -->
+                    <div class="summary-card score-card">
+                        <div class="card-icon">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">Genel Puan</h3>
+                            <div class="score-display">
+                                <span class="score-value" id="overall-score">85</span>
+                                <span class="score-max">/100</span>
+                            </div>
+                            <div class="score-percentage">
+                                <span id="score-percentage">85%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Correct Answers Card -->
+                    <div class="summary-card correct-card">
+                        <div class="card-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">Doğru Cevaplar</h3>
+                            <div class="score-display">
+                                <span class="score-value" id="correct-answers">8</span>
+                                <span class="score-max" id="total-questions-display">/10</span>
+                            </div>
+                            <div class="score-percentage">
+                                <span id="correct-percentage">80%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Card -->
+                    <div class="summary-card time-card">
+                        <div class="card-icon">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">Süre</h3>
+                            <div class="score-display">
+                                <span class="score-value" id="completion-time">12:45</span>
+                            </div>
+                            <div class="score-percentage">
+                                <span id="time-efficiency">Hızlı</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rank Card -->
+                    <div class="summary-card rank-card">
+                        <div class="card-icon">
+                            <i class="bi bi-award"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">Sıralama</h3>
+                            <div class="score-display">
+                                <span class="score-value" id="rank">#3</span>
+                            </div>
+                            <div class="score-percentage">
+                                <span id="total-participants">Top 10%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Detailed Analysis Section -->
+<section class="results-analysis">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="analysis-tabs">
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="questions">
+                            <i class="bi bi-list-check"></i>
+                            Soru Analizi
+                        </button>
+                        <button class="tab-btn" data-tab="subjects">
+                            <i class="bi bi-book"></i>
+                            Ders Analizi
+                        </button>
+                        <button class="tab-btn" data-tab="difficulty">
+                            <i class="bi bi-graph-up"></i>
+                            Zorluk Analizi
+                        </button>
+                        <button class="tab-btn" data-tab="progress">
+                            <i class="bi bi-trending-up"></i>
+                            Gelişim
+                        </button>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Questions Tab -->
+                        <div class="tab-pane active" id="questions-tab">
+                            <div class="questions-analysis">
+                                <h3>Soru Bazlı Performans</h3>
+                                <div class="questions-list" id="questions-list">
+                                    <!-- Questions will be loaded by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subjects Tab -->
+                        <div class="tab-pane" id="subjects-tab">
+                            <div class="subjects-analysis">
+                                <h3>Ders Bazlı Performans</h3>
+                                <div class="subjects-chart" id="subjects-chart">
+                                    <!-- Chart will be loaded by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Difficulty Tab -->
+                        <div class="tab-pane" id="difficulty-tab">
+                            <div class="difficulty-analysis">
+                                <h3>Zorluk Seviyesi Analizi</h3>
+                                <div class="difficulty-breakdown" id="difficulty-breakdown">
+                                    <!-- Difficulty breakdown will be loaded by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Tab -->
+                        <div class="tab-pane" id="progress-tab">
+                            <div class="progress-analysis">
+                                <h3>Gelişim Grafiği</h3>
+                                <div class="progress-chart" id="progress-chart">
+                                    <!-- Progress chart will be loaded by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recommendations Section -->
+<section class="results-recommendations">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="recommendations-header">
+                    <h2>Kişisel Öneriler</h2>
+                    <p>Yapay zeka analizinize dayanarak size özel öneriler</p>
+                </div>
+                <div class="recommendations-grid" id="recommendations-grid">
+                    <!-- Recommendations will be loaded by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Action Buttons Section -->
+<section class="results-actions">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="action-buttons">
+                    <a href="/quiz/start" class="btn btn-primary btn-large">
+                        <i class="bi bi-play-circle"></i>
+                        Yeni Quiz Başlat
+                    </a>
+                    <a href="/profile" class="btn btn-outline-primary btn-large">
+                        <i class="bi bi-person-circle"></i>
+                        Profilime Git
+                    </a>
+                    <button class="btn btn-outline-secondary btn-large" id="share-results">
+                        <i class="bi bi-share"></i>
+                        Sonuçları Paylaş
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block page_scripts %}
+    <!-- Quiz Results Page Specific Scripts -->
+    <script>
+        // Global configuration
+        window.QUIZ_RESULTS_CONFIG = {
+            sessionId: '{{ session_id }}',
+            debug: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/quiz_results/quiz_results.js') }}" type="module"></script>
+{% endblock %} 

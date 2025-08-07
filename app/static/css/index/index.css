@@ -1,0 +1,15 @@
+/* =============================================================================
+ * INDEX PAGE - MAIN CSS FILE
+ * Sadece import'ları içerir
+ * ============================================================================= */
+
+/* Import Components */
+@import url('../components/buttons.css');
+@import url('../components/shared.css');
+
+/* Import Sections */
+@import url('./sections/hero.css');
+@import url('./sections/demo-simulation.css');
+@import url('./sections/advantages.css');
+@import url('./sections/features.css');
+@import url('./sections/cta.css'); 

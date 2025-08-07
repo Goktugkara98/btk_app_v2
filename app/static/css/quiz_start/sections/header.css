@@ -1,0 +1,55 @@
+/* Quiz Start Header Styles */
+.quiz-start-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem 0;
+    color: white;
+    text-align: center;
+}
+
+.quiz-start-header-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quiz-start-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quiz-start-title i {
+    font-size: 2rem;
+    color: #ffd700;
+}
+
+.quiz-start-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quiz-start-header {
+        padding: 2rem 0;
+    }
+    
+    .quiz-start-title {
+        font-size: 2rem;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .quiz-start-title i {
+        font-size: 1.5rem;
+    }
+    
+    .quiz-start-subtitle {
+        font-size: 1rem;
+    }
+} 

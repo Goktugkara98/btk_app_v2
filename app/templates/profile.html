@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - BTK Quiz{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile/sections/profile-info.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Sol Sidebar - Profil Menüsü -->
+    <aside class="profile-sidebar">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <img src="{{ user.avatar_path if user and user.avatar_path else url_for('static', filename='favicon.svg') }}" alt="Profil Avatar" class="avatar-img">
+                <div class="avatar-edit">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+            <h2 class="profile-name">{{ user.username if user else 'Kullanıcı Adı' }}</h2>
+            <p class="profile-email">{{ user.email if user else 'kullanici@email.com' }}</p>
+        </div>
+        
+        <nav class="profile-nav">
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="#profile" class="nav-link">
+                        <i class="fas fa-user"></i>
+                        <span>Profil Bilgileri</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Ayarlar</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#statistics" class="nav-link">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>İstatistikler</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#security" class="nav-link">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Güvenlik</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#notifications" class="nav-link">
+                        <i class="fas fa-bell"></i>
+                        <span>Bildirimler</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="profile-footer">
+            <button class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Çıkış Yap</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Sağ Ana İçerik Alanı -->
+    <main class="profile-main">
+        <div class="content-header">
+            <h1 class="page-title">Profil Bilgileri</h1>
+            <p class="page-description">Hesap bilgilerinizi görüntüleyin ve düzenleyin</p>
+        </div>
+
+        <div class="content-body">
+            <!-- Profil Bilgileri Sekmesi -->
+            <div id="profile" class="content-tab active">
+                <div class="profile-info-section">
+
+                                         <!-- Profile Information Form -->
+                     <form class="profile-info-form">
+                         <!-- Personal Information Section -->
+                         <div class="form-section" data-section="personal">
+                                                           <div class="form-section-header">
+                                  <i class="fas fa-user"></i>
+                                  <div>
+                                      <h3>Kişisel Bilgiler</h3>
+                                      <p>Temel kişisel bilgilerinizi güncelleyin</p>
+                                  </div>
+                              </div>
+                             
+                                                           <div class="form-grid">
+                                                                     <div class="form-group">
+                                       <label for="username">Kullanıcı Adı *</label>
+                                       <input type="text" id="username" name="username" value="{{ user.username if user else '' }}" required disabled>
+                                       <div class="form-help">3-20 karakter, sadece harf, rakam ve alt çizgi</div>
+                                   </div>
+                                  
+                                                                     <div class="form-group">
+                                       <label for="email">E-posta Adresi *</label>
+                                       <input type="email" id="email" name="email" value="{{ user.email if user else '' }}" required disabled>
+                                   </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="firstName">Ad *</label>
+                                      <div class="input-with-edit">
+                                          <input type="text" id="firstName" name="firstName" value="{{ user.first_name if user else '' }}" required disabled>
+                                          <button type="button" class="btn-edit-field" data-field="firstName">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="lastName">Soyad *</label>
+                                      <div class="input-with-edit">
+                                          <input type="text" id="lastName" name="lastName" value="{{ user.last_name if user else '' }}" required disabled>
+                                          <button type="button" class="btn-edit-field" data-field="lastName">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="phone">Telefon</label>
+                                      <div class="input-with-edit">
+                                          <input type="tel" id="phone" name="phone" value="{{ user.phone if user else '' }}" disabled>
+                                          <button type="button" class="btn-edit-field" data-field="phone">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="birthDate">Doğum Tarihi</label>
+                                      <div class="input-with-edit">
+                                          <input type="date" id="birthDate" name="birthDate" value="{{ user.birth_date if user and user.birth_date else '' }}" disabled>
+                                          <button type="button" class="btn-edit-field" data-field="birthDate">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="gender">Cinsiyet</label>
+                                      <div class="input-with-edit">
+                                          <select id="gender" name="gender" disabled>
+                                              <option value="">Seçiniz</option>
+                                              <option value="male" {{ 'selected' if user and user.gender == 'male' else '' }}>Erkek</option>
+                                              <option value="female" {{ 'selected' if user and user.gender == 'female' else '' }}>Kadın</option>
+                                              <option value="other" {{ 'selected' if user and user.gender == 'other' else '' }}>Diğer</option>
+                                          </select>
+                                          <button type="button" class="btn-edit-field" data-field="gender">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+
+                                  
+                                  <div class="form-group">
+                                      <label for="school">Okul</label>
+                                      <div class="input-with-edit">
+                                          <input type="text" id="school" name="school" placeholder="Okul adı" value="{{ user.school if user else '' }}" disabled>
+                                          <button type="button" class="btn-edit-field" data-field="school">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="form-group">
+                                      <label for="gradeLevel">Sınıf</label>
+                                      <div class="input-with-edit">
+                                          <select id="gradeLevel" name="gradeLevel" disabled>
+                                              <option value="">Sınıf seçiniz</option>
+                                              <option value="1" {{ 'selected' if user and user.grade_level_id and user.grade_level_id == 1 else '' }}>8. Sınıf</option>
+                                              <option value="2" {{ 'selected' if user and user.grade_level_id and user.grade_level_id == 2 else '' }}>9. Sınıf</option>
+                                          </select>
+                                          <button type="button" class="btn-edit-field" data-field="gradeLevel">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                              </div>
+                             
+                                                           <!-- Bio Section -->
+                              <div class="form-section-header" style="margin-top: 1.5rem;">
+                                  <i class="fas fa-info-circle"></i>
+                                  <div>
+                                      <h3>Hakkımda</h3>
+                                      <p>Kendiniz hakkında kısa bir açıklama yazın</p>
+                                  </div>
+                              </div>
+                             
+                                                           <div class="form-group full-width">
+                                  <label for="bio">Biyografi</label>
+                                  <div class="input-with-edit">
+                                      <textarea id="bio" name="bio" rows="3" placeholder="Kendiniz hakkında kısa bir açıklama..." disabled>{{ user.bio if user else '' }}</textarea>
+                                      <button type="button" class="btn-edit-field" data-field="bio">
+                                          <i class="fas fa-edit"></i>
+                                      </button>
+                                  </div>
+                                  <div class="form-help">Maksimum 500 karakter</div>
+                              </div>
+                             
+
+                             
+                                                           <!-- Account Information Section -->
+                              <div class="form-section-header" style="margin-top: 1.5rem;">
+                                  <i class="fas fa-shield-alt"></i>
+                                  <div>
+                                      <h3>Hesap Bilgileri</h3>
+                                      <p>Hesap durumunuz ve istatistikler</p>
+                                  </div>
+                              </div>
+                             
+                                                           <div class="form-grid">
+                                                                     <div class="form-group">
+                                       <label>Üyelik Tarihi</label>
+                                       <input type="text" value="{{ user.created_at if user and user.created_at else 'Bilinmiyor' }}" readonly>
+                                   </div>
+                                  
+                                                                     <div class="form-group">
+                                       <label>Son Güncelleme</label>
+                                       <input type="text" value="{{ user.updated_at if user and user.updated_at else 'Bilinmiyor' }}" readonly>
+                                   </div>
+                                  
+                                                                     <div class="form-group">
+                                       <label>Hesap Durumu</label>
+                                       <input type="text" value="Aktif" readonly>
+                                   </div>
+                                  
+                                                                     <div class="form-group">
+                                       <label>Profil Fotoğrafı</label>
+                                       <input type="file" class="avatar-upload" accept="image/*" style="padding: 0.5rem;">
+                                       <div class="form-help">Maksimum 5MB, JPG, PNG veya GIF</div>
+                                   </div>
+                              </div>
+                             
+                             <!-- Global Action Buttons (Legacy - can be removed later) -->
+                             <div class="form-actions" style="display: none;">
+                                 <button type="button" class="btn btn-secondary btn-cancel-edit" style="display: none;">
+                                     <i class="fas fa-times"></i>
+                                     İptal
+                                 </button>
+                                 <button type="button" class="btn btn-primary btn-save-profile" style="display: none;">
+                                     <i class="fas fa-save"></i>
+                                     Kaydet
+                                 </button>
+                                 <button type="button" class="btn btn-primary btn-edit-profile">
+                                     <i class="fas fa-edit"></i>
+                                     Düzenle
+                                 </button>
+                             </div>
+                         </div>
+                     </form>
+                </div>
+            </div>
+
+            <!-- Ayarlar Sekmesi -->
+            <div id="settings" class="content-tab">
+                <div class="tab-content">
+                    <h3>Ayarlar İçeriği</h3>
+                    <p>Bu alan ayarlar için ayrılmıştır.</p>
+                </div>
+            </div>
+
+            <!-- İstatistikler Sekmesi -->
+            <div id="statistics" class="content-tab">
+                <div class="tab-content">
+                    <h3>İstatistikler İçeriği</h3>
+                    <p>Bu alan istatistikler için ayrılmıştır.</p>
+                </div>
+            </div>
+
+            <!-- Güvenlik Sekmesi -->
+            <div id="security" class="content-tab">
+                <div class="tab-content">
+                    <h3>Güvenlik İçeriği</h3>
+                    <p>Bu alan güvenlik ayarları için ayrılmıştır.</p>
+                </div>
+            </div>
+
+            <!-- Bildirimler Sekmesi -->
+            <div id="notifications" class="content-tab">
+                <div class="tab-content">
+                    <h3>Bildirimler İçeriği</h3>
+                    <p>Bu alan bildirim ayarları için ayrılmıştır.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/profile/profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/profile/sections/profile-info.js') }}"></script>
+{% endblock %} 

@@ -1,0 +1,584 @@
+/* =============================================================================
+   EDUCATIONAL QUIZ STYLES - COMPLETE REWRITE
+   ============================================================================= */
+
+/* Import base quiz styles */
+@import url('quiz_normal.css');
+
+/* =============================================================================
+   EDUCATIONAL QUIZ LAYOUT SYSTEM
+   ============================================================================= */
+
+/* Root container - full viewport height */
+.quiz-body.educational {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.quiz-body.educational .quiz-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header - fixed height */
+.quiz-body.educational .quiz-header {
+    flex: 0 0 auto;
+    height: 80px;
+}
+
+.quiz-body.educational .quiz-header .container-fluid {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.quiz-body.educational .quiz-header .row {
+    width: 100%;
+    align-items: center;
+}
+
+/* Header column alignments */
+.quiz-body.educational .quiz-header .col-md-4:first-child {
+    text-align: left;
+}
+
+.quiz-body.educational .quiz-header .col-md-4:nth-child(2) {
+    text-align: center;
+}
+
+.quiz-body.educational .quiz-header .col-md-4:last-child {
+    text-align: right;
+}
+
+/* Navigation - fixed height */
+.quiz-body.educational .quiz-navigation {
+    flex: 0 0 auto;
+    height: 60px;
+}
+
+.quiz-body.educational .quiz-navigation .container-fluid {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quiz-body.educational .quiz-navigation .row {
+    align-items: center;
+}
+
+/* Main content - takes remaining space */
+.quiz-body.educational .quiz-main {
+    flex: 1;
+    min-height: 0;
+    padding: 16px;
+}
+
+/* Row and columns - full height */
+.quiz-body.educational .quiz-main .row {
+    height: 100%;
+    margin: 0;
+}
+
+.quiz-body.educational .quiz-main .col-md-6 {
+    height: 100%;
+    padding: 0 8px;
+}
+
+/* Quiz Panel */
+.quiz-body.educational .question-wrapper {
+    height: 100%;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.quiz-body.educational .question-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* Question text - compact */
+.quiz-body.educational .question-text-wrapper {
+    flex: 0 0 auto;
+    margin-bottom: 16px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.quiz-body.educational .question-text {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Options - takes remaining space */
+.quiz-body.educational .options-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* AI Chat Panel */
+.quiz-body.educational .ai-chat-wrapper {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.quiz-body.educational .ai-chat-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    border-radius: 16px;
+}
+
+/* AI Chat Header */
+.ai-chat-header {
+    flex: 0 0 auto;
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.ai-chat-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ai-chat-title i {
+    font-size: 1.5rem;
+    color: #fbbf24;
+    filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.3));
+    animation: pulse 2s infinite;
+}
+
+.ai-chat-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+/* AI Chat Messages */
+.ai-chat-messages {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.ai-message {
+    display: flex;
+    gap: 16px;
+    animation: slideInUp 0.4s ease-out;
+}
+
+.ai-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.ai-avatar i {
+    color: #ffffff;
+    font-size: 1.3rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.ai-message-content {
+    flex: 1;
+    max-width: calc(100% - 48px);
+}
+
+.ai-message-text {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    line-height: 1.6;
+    color: #1e293b;
+    font-size: 0.95rem;
+    position: relative;
+    backdrop-filter: blur(5px);
+}
+
+.ai-message-text::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 18px;
+    pointer-events: none;
+}
+
+.ai-message-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* AI Chat Input */
+.ai-chat-input {
+    flex: 0 0 auto;
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ai-chat-textarea {
+    flex: 1;
+    padding: 16px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: none;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #1e293b;
+}
+
+.ai-chat-textarea:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.ai-send-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-send-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.ai-send-btn:hover::before {
+    left: 100%;
+}
+
+.ai-send-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.ai-send-btn i {
+    font-size: 1.1rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 24px;
+}
+
+.quick-action-btn:hover::before {
+    opacity: 1;
+}
+
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.quick-action-btn i {
+    font-size: 0.9rem;
+}
+
+/* Footer - fixed height */
+.quiz-body.educational .quiz-footer {
+    flex: 0 0 auto;
+    height: 80px;
+}
+
+.quiz-body.educational .quiz-footer .row {
+    align-items: center;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+@media (max-width: 991px) {
+    .quiz-body.educational .quiz-main {
+        padding: 12px;
+    }
+    
+    .quiz-body.educational .quiz-main .col-md-6 {
+        padding: 0 6px;
+    }
+    
+    .quiz-body.educational .question-content {
+        padding: 16px;
+    }
+    
+    .ai-chat-wrapper {
+        margin-top: 12px;
+        height: 400px;
+    }
+    
+    .ai-chat-header {
+        padding: 12px 16px;
+    }
+    
+    .ai-chat-messages {
+        padding: 12px 16px;
+    }
+    
+    .ai-chat-input {
+        padding: 12px 16px;
+    }
+    
+    .quick-action-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .quiz-body.educational .quiz-main {
+        padding: 8px;
+    }
+    
+    .quiz-body.educational .quiz-main .col-md-6 {
+        padding: 0 4px;
+    }
+    
+    .quiz-body.educational .question-content {
+        padding: 12px;
+    }
+    
+    .quiz-body.educational .question-text-wrapper {
+        max-height: 100px;
+    }
+    
+    .quiz-body.educational .question-text {
+        font-size: 1rem;
+    }
+    
+    .ai-chat-wrapper {
+        height: 350px;
+    }
+    
+    .ai-chat-header {
+        padding: 10px 12px;
+    }
+    
+    .ai-chat-title {
+        font-size: 1rem;
+    }
+    
+    .ai-chat-messages {
+        padding: 10px 12px;
+    }
+    
+    .ai-message {
+        gap: 8px;
+    }
+    
+    .ai-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .ai-avatar i {
+        font-size: 1rem;
+    }
+    
+    .ai-message-text {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .ai-chat-input {
+        padding: 10px 12px;
+    }
+    
+    .input-wrapper {
+        gap: 8px;
+    }
+    
+    .ai-chat-textarea {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .ai-send-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .ai-send-btn i {
+        font-size: 1rem;
+    }
+    
+    .quick-action-btn {
+        padding: 5px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .quick-action-btn i {
+        font-size: 0.8rem;
+    }
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-chat-wrapper {
+    animation: slideInUp 0.5s ease-out;
+}
+
+/* =============================================================================
+   EDUCATIONAL MODE INDICATORS
+   ============================================================================= */
+
+.quiz-body.educational .mode-name {
+    color: #8b5cf6;
+    font-weight: 700;
+} 

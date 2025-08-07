@@ -1,0 +1,184 @@
+/* =============================================================================
+ * BASE STYLES (GLOBAL VARIABLES & CORE SETUP)
+ * =============================================================================
+ * Bu dosya projenin temelini oluşturur. Sadece global değişkenleri,
+ * temel reset kodlarını ve <body> stilini içerir.
+ * Bileşen (component) stilleri burada yer almaz.
+ *
+ * Açık Mod: Beyaz arka plan, siyah yazı
+ * Koyu Mod: Siyah arka plan, beyaz yazı
+ * Vurgu (accent) rengi: Mor
+ * =============================================================================
+ */
+
+:root {
+    /* -------------------------------------------------------------------------
+     * RENK PALETİ (AÇIK MOD - VARSAYILAN)
+     * ------------------------------------------------------------------------- */
+    --color-text-primary: #181818;         /* Ana metin rengi (siyah) */
+    --color-text-secondary: #444444;       /* İkincil metin rengi */
+    --color-background-primary: #fff;      /* Ana arka plan (beyaz) */
+    --color-background-secondary: #f7f7fa; /* Kart, bölüm gibi ikincil arka planlar */
+    --color-border: #e2e8f0;               /* Kenarlıklar için kullanılan renk */
+    --color-success: #43e97b;              /* Başarı durumları için */
+    --color-error: #dc3545;                /* Hata durumları için */
+    --color-accent-primary: #7c3aed;       /* Vurgu, link ve ana eylem rengi (mor) */
+    --color-accent-secondary: #a78bfa;     /* Vurgu renginin hover durumu (açık mor) */
+    --text-light: #a0aec0;                 /* Açık metin rengi */
+    --bg-primary: #fff;                    /* Modern arka plan (beyaz) */
+    --bg-secondary: #f7f7fa;               /* Modern ikincil arka plan */
+    /* Gradientler */
+    --primary-gradient: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    --secondary-gradient: linear-gradient(135deg, #f3e8ff 0%, #a78bfa 100%);
+    --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+
+    /* -------------------------------------------------------------------------
+     * TİPOGRAFİ
+     * ------------------------------------------------------------------------- */
+    --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-family-monospace: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+    --font-family: 'Inter', sans-serif; /* Modern ek font */
+    --font-family-bruno: 'Bruno Ace SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    /* Font Boyutları */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-md: 1.125rem;   /* 18px */
+    --font-size-lg: 1.25rem;    /* 20px */
+    --font-size-xl: 1.5rem;     /* 24px */
+    --font-size-xxl: 2rem;      /* 32px */
+    --font-size-xxxl: 2.5rem;   /* 40px */
+    /* Font Ağırlıkları */
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+    /* Satır Yüksekliği */
+    --line-height-base: 1.6;
+    --line-height-heading: 1.3;
+
+    /* -------------------------------------------------------------------------
+     * BOŞLUKLAR (SPACING)
+     * ------------------------------------------------------------------------- */
+    --spacing-1: 0.25rem;  /* 4px */
+    --spacing-2: 0.5rem;   /* 8px */
+    --spacing-3: 1rem;     /* 16px */
+    --spacing-4: 1.5rem;   /* 24px */
+    --spacing-5: 2rem;     /* 32px */
+    --spacing-6: 3rem;     /* 48px */
+
+    /* -------------------------------------------------------------------------
+     * KENARLIK, GÖLGE, GEÇİŞLER
+     * ------------------------------------------------------------------------- */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius: 12px;
+    --border-radius-lg: 20px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+    --transition-base: all 0.3s ease-in-out;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* -------------------------------------------------------------------------
+     * LAYOUT & CONTAINER
+     * ------------------------------------------------------------------------- */
+    --max-width-container: 1240px;
+    --nav-height: 60px;
+    --question-nav-height: 70px;
+    --bg-main: #fff;
+    --bg-element: #fff;
+    --text-on-accent: #fff;
+    
+    /* Quiz Start Page Variables */
+    --primary-color: #7c3aed;
+    --secondary-color: #a78bfa;
+    --primary-light: #f3e8ff;
+    --white: #ffffff;
+    --text-primary: #181818;
+    
+    /* Profile Page Variables */
+    --primary-rgb: 124, 58, 237;
+    --surface-color: #f8fafc;
+    --border-color: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-disabled: #94a3b8;
+    --success-color: #10b981;
+    --success-rgb: 16, 185, 129;
+    --error-color: #ef4444;
+    --error-rgb: 239, 68, 68;
+    --text-secondary: #444444;
+    --background-light: #f7f7fa;
+    --border-color: #e2e8f0;
+    
+    /* -------------------------------------------------------------------------
+     * VIEWPORT & SCROLLBAR
+     * JavaScript ile hesaplanacak
+     * ------------------------------------------------------------------------- */
+    --scrollbar-width: 0px;
+    --viewport-width: 100vw;
+    --full-width: 100vw;
+}
+
+/* =============================================================================
+ * CONTAINER OVERRIDE
+ * Bootstrap container'ın padding'ini sıfırla (navbar hariç)
+ * ============================================================================= */
+.container:not(.navbar-container .container) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+
+
+/* =============================================================================
+ * TEMEL RESET VE BODY STİLLERİ
+ * Tarayıcı varsayılanlarını sıfırlar ve projenin temelini ayarlar.
+ * =============================================================================
+ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    /* Daha akıcı kaydırma (scroll) davranışı */
+    scroll-behavior: smooth;
+    /* Font boyutunun kullanıcı ayarlarına göre ölçeklenmesini sağlar */
+    font-size: var(--font-size-base);
+}
+
+body {
+    font-family: var(--font-family-main);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-base);
+
+    /* Renk değişkenleri sayesinde temaya otomatik adapte olur */
+    color: var(--color-text-primary);
+    background-color: var(--color-background-primary);
+    
+    /* Metinlerin daha okunaklı render edilmesini sağlar */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+
+    /* Sayfanın minimum yüksekliğinin ekran kadar olmasını sağlar */
+    min-height: 100vh;
+    
+    /* Scroll davranışını iyileştir */
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Medya elementlerinin varsayılan davranışlarını iyileştirme */
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+}

@@ -1,0 +1,488 @@
+/* Profile Information Section Styles */
+
+.profile-info-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+    overflow-y: auto; /* İçerik scroll edilebilir olsun */
+    scrollbar-width: thin; /* Firefox için */
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent; /* Firefox için */
+}
+
+/* Webkit scrollbar stilleri */
+.profile-info-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.profile-info-section::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.profile-info-section::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 3px;
+}
+
+.profile-info-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+
+
+/* Form Sections */
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    flex: 1;
+    overflow-y: auto; /* Form section scroll edilebilir olsun */
+    min-height: 0; /* Flexbox için önemli */
+    scrollbar-width: thin; /* Firefox için */
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent; /* Firefox için */
+}
+
+/* Form section scrollbar stilleri */
+.form-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.form-section::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.form-section::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 3px;
+}
+
+.form-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0; /* Header'ın küçülmesini engelle */
+}
+
+.form-section-header i {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.form-section-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.form-section-header p {
+    margin: 0;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Input with Edit Button Container */
+.input-with-edit {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-edit input,
+.input-with-edit select,
+.input-with-edit textarea {
+    flex: 1;
+    padding: 0.75rem;
+    padding-right: 3.5rem; /* Space for edit button */
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background: #f7fafc;
+}
+
+/* Input container border radius adjustment for edit button */
+.input-with-edit input,
+.input-with-edit select {
+    border-radius: 8px 0 0 8px;
+}
+
+.input-with-edit textarea {
+    border-radius: 8px 0 0 8px;
+}
+
+.input-with-edit textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Edit Field Button */
+.btn-edit-field {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    border-left: 1px solid #e2e8f0;
+}
+
+.btn-edit-field:hover {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    color: #475569;
+}
+
+.btn-edit-field:active {
+    background: linear-gradient(135deg, #cbd5e0 0%, #94a3b8 100%);
+    color: #334155;
+}
+
+.btn-edit-field:disabled {
+    background: #f1f5f9;
+    color: #cbd5e0;
+    cursor: not-allowed;
+}
+
+.btn-edit-field:disabled:hover {
+    background: #f1f5f9;
+    color: #cbd5e0;
+}
+
+/* Legacy form group styles for backward compatibility */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background: #f7fafc;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.form-group .form-help {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+.form-group .form-error {
+    font-size: 0.75rem;
+    color: #e53e3e;
+    margin-top: 0.25rem;
+}
+
+/* Full Width Form Groups */
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Action Buttons */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0; /* Buttons'ın küçülmesini engelle */
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.btn-danger {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+    transform: translateY(-1px);
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.status-inactive {
+    background: #fed7d7;
+    color: #742a2a;
+}
+
+.status-pending {
+    background: #fef5e7;
+    color: #744210;
+}
+
+/* Editing State Styles */
+.input-with-edit.editing {
+    position: relative;
+}
+
+.input-with-edit.editing input,
+.input-with-edit.editing select,
+.input-with-edit.editing textarea {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    padding-right: 6.5rem; /* Space for save and cancel buttons */
+}
+
+.input-with-edit.editing .btn-edit-field {
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+.input-with-edit.editing .btn-edit-field:hover {
+    background: #059669;
+}
+
+/* Save and Cancel buttons for editing state */
+.input-with-edit.editing .btn-edit-field {
+    display: none;
+}
+
+.input-with-edit.editing::after {
+    content: '';
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.25rem;
+}
+
+.input-with-edit.editing .btn-save-field,
+.input-with-edit.editing .btn-cancel-field {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 50px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.input-with-edit.editing .btn-save-field {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    right: 50px;
+    border-radius: 0;
+    border-left: 1px solid #e2e8f0;
+}
+
+.input-with-edit.editing .btn-save-field:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: scale(1.02);
+}
+
+.input-with-edit.editing .btn-cancel-field {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-radius: 0 8px 8px 0;
+}
+
+.input-with-edit.editing .btn-cancel-field:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: scale(1.02);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .form-section {
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .form-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .section-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .section-actions .btn {
+        width: auto;
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-info-section {
+        gap: 0.75rem;
+    }
+    
+    .form-section {
+        padding: 0.75rem;
+    }
+    
+    .form-grid {
+        gap: 0.75rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.625rem;
+    }
+} 

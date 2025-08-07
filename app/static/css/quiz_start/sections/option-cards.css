@@ -1,0 +1,162 @@
+/* Option Cards Styles */
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.option-card {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-card input[type="radio"] {
+    display: none;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.option-card:hover .option-content {
+    border-color: #667eea;
+    background: #f7fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.option-card input[type="radio"]:checked + .option-content {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.3);
+}
+
+.option-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Difficulty Icons */
+.option-icon.easy {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.option-icon.medium {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ed8936;
+}
+
+.option-icon.hard {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+/* Mode Icons */
+.option-icon.practice {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.option-icon.exam {
+    background: rgba(159, 122, 234, 0.1);
+    color: #9f7aea;
+}
+
+.option-card input[type="radio"]:checked + .option-content .option-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.option-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+    transition: all 0.3s ease;
+}
+
+.option-desc {
+    font-size: 0.85rem;
+    color: #718096;
+    transition: all 0.3s ease;
+}
+
+.option-card input[type="radio"]:checked + .option-content .option-title,
+.option-card input[type="radio"]:checked + .option-content .option-desc {
+    color: white;
+}
+
+/* Mode Cards - Larger */
+.mode-card .option-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+}
+
+.mode-card .option-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 1.5rem;
+}
+
+.mode-card .option-title {
+    font-size: 1.1rem;
+}
+
+.mode-card .option-desc {
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .option-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .option-content {
+        padding: 1rem;
+    }
+    
+    .option-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .mode-card .option-content {
+        padding: 1.25rem;
+    }
+    
+    .mode-card .option-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+} 

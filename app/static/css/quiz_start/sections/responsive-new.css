@@ -1,0 +1,302 @@
+/* Responsive Design - New */
+@media (max-width: 1200px) {
+    .col-lg-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 2rem;
+    }
+    
+    .col-lg-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 991px) {
+    .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .settings-panel,
+    .preview-panel {
+        height: auto;
+        margin-bottom: 2rem;
+    }
+    
+    .panel-header {
+        padding: 1.5rem;
+    }
+    
+    .panel-header h2 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .quiz-start-container {
+        margin-top: 66px;
+        padding: 1rem 0;
+    }
+    
+    .container-fluid {
+        padding: 0 0.5rem;
+    }
+    
+    .panel-header {
+        padding: 1.25rem;
+    }
+    
+    .panel-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .panel-header p {
+        font-size: 0.9rem;
+    }
+    
+    .settings-content {
+        padding: 1.5rem;
+    }
+    
+    .step-content h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-size: 1rem;
+    }
+    
+    .form-control {
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .step-actions {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+    }
+    
+    .btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .preview-content {
+        padding: 1.5rem;
+    }
+    
+    .preview-item {
+        padding: 0.75rem 0;
+    }
+    
+    .preview-label {
+        font-size: 0.85rem;
+    }
+    
+    .preview-value {
+        font-size: 0.85rem;
+    }
+    
+    .preview-actions {
+        padding: 1.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .options-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .option-content {
+        padding: 1rem;
+    }
+    
+    .option-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .mode-card .option-content {
+        padding: 1.25rem;
+    }
+    
+    .mode-card .option-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .timer-toggle {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .toggle-option {
+        padding: 0.625rem 0.875rem;
+    }
+    
+    .timer-input {
+        padding: 0.875rem;
+    }
+    
+    .step-indicator {
+        margin-bottom: 1.5rem;
+        padding: 0.75rem 0;
+    }
+    
+    .step-number {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .step-text {
+        font-size: 0.75rem;
+    }
+    
+    .step-line {
+        width: 60px;
+        margin: 0 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container-fluid {
+        padding: 0 0.25rem;
+    }
+    
+    .panel-header {
+        padding: 1rem;
+    }
+    
+    .panel-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .panel-header p {
+        font-size: 0.8rem;
+    }
+    
+    .settings-content {
+        padding: 1rem;
+    }
+    
+    .step-content h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.75rem 0.875rem;
+        font-size: 0.9rem;
+    }
+    
+    .step-actions {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .preview-content {
+        padding: 1rem;
+    }
+    
+    .preview-item {
+        padding: 0.5rem 0;
+    }
+    
+    .preview-label {
+        font-size: 0.8rem;
+    }
+    
+    .preview-value {
+        font-size: 0.8rem;
+    }
+    
+    .preview-actions {
+        padding: 1rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .option-content {
+        padding: 0.875rem;
+    }
+    
+    .option-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    
+    .option-title {
+        font-size: 0.9rem;
+    }
+    
+    .option-desc {
+        font-size: 0.8rem;
+    }
+    
+    .mode-card .option-content {
+        padding: 1rem;
+    }
+    
+    .mode-card .option-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .mode-card .option-title {
+        font-size: 1rem;
+    }
+    
+    .mode-card .option-desc {
+        font-size: 0.85rem;
+    }
+    
+    .step-indicator {
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .step-text {
+        font-size: 0.7rem;
+    }
+    
+    .step-line {
+        width: 50px;
+        margin: 0 0.75rem;
+    }
+} 
