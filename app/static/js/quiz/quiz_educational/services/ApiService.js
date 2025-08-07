@@ -66,6 +66,17 @@ export class ApiService {
   }
 
   /**
+   * Oturum (session) detay bilgisini getirir.
+   * Meta (grade/subject/unit/topic/difficulty/timer vb.) için kullanılır.
+   */
+  async getSessionInfo(sessionId) {
+    return this._fetch({
+      endpoint: `/quiz/session/${sessionId}`,
+      method: 'GET'
+    });
+  }
+
+  /**
    * Bir cevabı sunucuya gönderir.
    */
   async submitAnswer({ sessionId, questionId, answer }) {

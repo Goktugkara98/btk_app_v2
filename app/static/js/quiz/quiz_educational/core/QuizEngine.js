@@ -109,8 +109,13 @@ export class QuizEngine {
       if (!sessionId) {
         throw new Error('Geçerli bir oturum ID bulunamadı. Lütfen sayfayı yenileyin.');
       }
-      
-      const response = await this.apiService.fetchQuestions({ sessionId });
+      // Sorular ve oturum bilgisini aynı anda al
+      const [questionsResp, sessionInfoResp] = await Promise.all([
+        this.apiService.fetchQuestions({ sessionId }),
+        this.apiService.getSessionInfo(sessionId).catch(() => ({ data: null }))
+      ]);
+
+      const response = questionsResp;
 
       if (!response.data || !Array.isArray(response.data.questions)) {
         throw new Error('API yanıtı geçersiz formatta.');
@@ -137,6 +142,8 @@ export class QuizEngine {
       });
       
       stateManager.setQuestions(questions);
+      // Türetilmiş map'leri oluştur (yerel doğrulama ve hızlı erişim için)
+      stateManager.buildDerivedMaps();
       
       // Quiz modunu educational olarak ayarla
       stateManager.setState({ quizMode: 'educational' });
@@ -149,6 +156,29 @@ export class QuizEngine {
       // Timer bilgilerini güncelle
       if (response.data.total_questions) {
         stateManager.setState({ totalQuestions: response.data.total_questions });
+      }
+
+      // Session meta bilgisini state'e işle (varsa)
+      const sessionMeta = sessionInfoResp?.data || {};
+      if (sessionMeta) {
+        stateManager.setMetadata({
+          grade: sessionMeta.grade || sessionMeta.grade_name || null,
+          subject: sessionMeta.subject || sessionMeta.subject_name || null,
+          unit: sessionMeta.unit || sessionMeta.unit_name || null,
+          topic: sessionMeta.topic || sessionMeta.topic_name || null,
+          difficulty: sessionMeta.difficulty || sessionMeta.difficulty_level || null
+        });
+        // Timer başlangıç bilgileri (varsa)
+        if (typeof sessionMeta.remaining_time_seconds === 'number' || typeof sessionMeta.timer_duration === 'number') {
+          stateManager.setState({
+            timer: {
+              ...stateManager.getState('timer'),
+              enabled: !!sessionMeta.timer_enabled,
+              remainingTimeSeconds: sessionMeta.remaining_time_seconds ?? stateManager.getState('timer').remainingTimeSeconds,
+              totalTime: sessionMeta.timer_duration ?? stateManager.getState('timer').totalTime
+            }
+          }, 'INIT_TIMER_FROM_SESSION');
+        }
       }
       
       // Session status'u al ve timer bilgilerini güncelle
@@ -287,50 +317,24 @@ export class QuizEngine {
    * @returns {boolean} Cevap doğru mu?
    */
   checkAnswerLocally(questionId, userAnswer) {
+    // Önce türetilmiş haritaları kullan
+    const correctMap = stateManager.getState('correctOptionByQuestionId');
+    const correctFromMap = correctMap?.get(Number(questionId)) || correctMap?.get(String(questionId));
+    if (correctFromMap) {
+      return String(correctFromMap.id) === String(userAnswer);
+    }
+
+    // Geriye dönük uyumluluk: doğrudan sorulardan tara
     const { questions } = stateManager.getState();
     const question = questions.find(q => q.question.id === parseInt(questionId, 10));
-    
-    if (!question || !question.question.options) {
-      console.log(`[QuizEngine] Soru bulunamadı veya seçenekler yok: QuestionID=${questionId}`);
-      return false;
-    }
-    
-    // Soru seçeneklerinin yapısını debug et
-    console.log(`[QuizEngine] Soru seçenekleri yapısı:`, question.question.options);
-    
-    // Doğru cevabı bul - farklı alan adlarını dene
-    let correctOption = question.question.options.find(option => option.is_correct === true);
-    
-    // Eğer is_correct bulunamazsa, diğer olası alan adlarını dene
-    if (!correctOption) {
-      correctOption = question.question.options.find(option => option.isCorrect === true);
-    }
-    if (!correctOption) {
-      correctOption = question.question.options.find(option => option.correct === true);
-    }
-    if (!correctOption) {
-      correctOption = question.question.options.find(option => option.is_correct === 1);
-    }
-    if (!correctOption) {
-      correctOption = question.question.options.find(option => option.correct === 1);
-    }
-    
-    if (!correctOption) {
-      console.log(`[QuizEngine] Doğru cevap bulunamadı: QuestionID=${questionId}`);
-      console.log(`[QuizEngine] Tüm seçenekler:`, question.question.options);
-      return false;
-    }
-    
-    // Kullanıcının cevabı ile doğru cevabı karşılaştır
-    const isCorrect = String(correctOption.id) === String(userAnswer);
-    
-    console.log(`[QuizEngine] Cevap kontrolü detayları:`);
-    console.log(`  - QuestionID: ${questionId}`);
-    console.log(`  - UserAnswer: ${userAnswer} (${typeof userAnswer})`);
-    console.log(`  - CorrectAnswer: ${correctOption.id} (${typeof correctOption.id})`);
-    console.log(`  - IsCorrect: ${isCorrect}`);
-    
-    return isCorrect;
+    if (!question || !question.question.options) return false;
+    let correctOption = question.question.options.find(option => option.is_correct === true)
+      || question.question.options.find(option => option.isCorrect === true)
+      || question.question.options.find(option => option.correct === true)
+      || question.question.options.find(option => option.is_correct === 1)
+      || question.question.options.find(option => option.correct === 1);
+    if (!correctOption) return false;
+    return String(correctOption.id) === String(userAnswer);
   }
 
   /**
@@ -339,14 +343,19 @@ export class QuizEngine {
    * @returns {Object|null} Doğru cevap seçeneği
    */
   getCorrectAnswer(questionId) {
+    const correctMap = stateManager.getState('correctOptionByQuestionId');
+    const fromMap = correctMap?.get(Number(questionId)) || correctMap?.get(String(questionId));
+    if (fromMap) return fromMap;
     const { questions } = stateManager.getState();
     const question = questions.find(q => q.question.id === parseInt(questionId, 10));
-    
-    if (!question || !question.question.options) {
-      return null;
-    }
-    
-    return question.question.options.find(option => option.is_correct === true);
+    if (!question || !question.question.options) return null;
+    return (
+      question.question.options.find(option => option.is_correct === true)
+      || question.question.options.find(option => option.isCorrect === true)
+      || question.question.options.find(option => option.correct === true)
+      || question.question.options.find(option => option.is_correct === 1)
+      || question.question.options.find(option => option.correct === 1)
+    ) || null;
   }
 
   /**

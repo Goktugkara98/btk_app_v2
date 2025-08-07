@@ -35,13 +35,11 @@ class JSONDataLoader:
             Grade seviyesi -> veri sözlüğü
         """
         if not self.data_dir.exists():
-            print(f"❌ Veri dizini bulunamadı: {self.data_dir}")
             return {}
             
         grade_files = list(self.data_dir.glob("grade_*.json"))
         
         if not grade_files:
-            print(f"❌ Grade dosyası bulunamadı: {self.data_dir}")
             return {}
             
         for file_path in grade_files:
@@ -57,7 +55,7 @@ class JSONDataLoader:
                         self.grades_data[grade_level] = grade_info
                         
             except Exception as e:
-                print(f"❌ Dosya okuma hatası {file_path.name}: {e}")
+                pass
                 
         return self.grades_data
     
@@ -382,36 +380,92 @@ ON DUPLICATE KEY UPDATE
                     result = conn.cursor.fetchone()
                     if result:
                         subject_id_map[subject_code] = result['id']
-                        
-        except Exception as e:
-            print(f"❌ Subject ID map oluşturma hatası: {e}")
             
-        return subject_id_map
-    
-    def get_unit_id_map(self, db_connection) -> Dict[str, int]:
-        """
-        Veritabanından ünite ID'lerini veritabanı ID'lerine eşler.
+            return subject_id_map
+            
+        except Exception:
+            return {}
         
-        Args:
-            db_connection: Veritabanı bağlantısı
+        def get_grade_id_map(self, db_connection) -> Dict[int, int]:
+            """
+            Veritabanından grade seviyelerini ID'lere eşler.
             
-        Returns:
-            Ünite ID'si -> veritabanı ID eşlemesi
-        """
-        unit_id_map = {}
+            Args:
+                db_connection: Veritabanı bağlantısı
+                
+            Returns:
+                Grade seviyesi -> ID eşlemesi
+            """
+            grade_id_map = {}
+            
+            try:
+                with db_connection as conn:
+                    for grade_level in self.grades_data.keys():
+                        conn.cursor.execute(
+                            "SELECT id FROM grades WHERE level = %s",
+                            (grade_level,)
+                        )
+                        result = conn.cursor.fetchone()
+                        if result:
+                            grade_id_map[grade_level] = result['id']
+                            
+            except Exception as e:
+                return ""
+            
+            return grade_id_map
         
-        try:
-            with db_connection as conn:
-                for unit_id, unit_name, subject_code, description in self.units_data:
-                    conn.cursor.execute(
-                        "SELECT u.id FROM units u JOIN subjects s ON u.subject_id = s.id WHERE u.name_id = %s AND s.name_id = %s",
-                        (unit_id, subject_code.upper())
-                    )
-                    result = conn.cursor.fetchone()
-                    if result:
-                        unit_id_map[unit_id] = result['id']
-                        
-        except Exception as e:
-            print(f"❌ Unit ID map oluşturma hatası: {e}")
+        def get_subject_id_map(self, db_connection) -> Dict[str, int]:
+            """
+            Veritabanından ders kodlarını ID'lere eşler.
             
-        return unit_id_map 
+            Args:
+                db_connection: Veritabanı bağlantısı
+                
+            Returns:
+                Ders kodu -> ID eşlemesi
+            """
+            subject_id_map = {}
+            
+            try:
+                with db_connection as conn:
+                    for grade_level, subject_code, subject_name, description in self.subjects_data:
+                        conn.cursor.execute(
+                            "SELECT s.id FROM subjects s JOIN grades g ON s.grade_id = g.id WHERE s.name_id = %s AND g.level = %s",
+                            (subject_code.upper(), grade_level)
+                        )
+                        result = conn.cursor.fetchone()
+                        if result:
+                            subject_id_map[subject_code] = result['id']
+                            
+            except Exception as e:
+                return ""
+            
+            return subject_id_map
+        
+        def get_unit_id_map(self, db_connection) -> Dict[str, int]:
+            """
+            Veritabanından ünite ID'lerini veritabanı ID'lerine eşler.
+            
+            Args:
+                db_connection: Veritabanı bağlantısı
+                
+            Returns:
+                Ünite ID'si -> veritabanı ID eşlemesi
+            """
+            unit_id_map = {}
+            
+            try:
+                with db_connection as conn:
+                    for unit_id, unit_name, subject_code, description in self.units_data:
+                        conn.cursor.execute(
+                            "SELECT u.id FROM units u JOIN subjects s ON u.subject_id = s.id WHERE u.name_id = %s AND s.name_id = %s",
+                            (unit_id, subject_code.upper())
+                        )
+                        result = conn.cursor.fetchone()
+                        if result:
+                            unit_id_map[unit_id] = result['id']
+                            
+            except Exception as e:
+                return ""
+            
+            return unit_id_map 

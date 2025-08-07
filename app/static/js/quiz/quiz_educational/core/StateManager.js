@@ -14,6 +14,10 @@ class StateManager {
       answers: new Map(), // Soru ID'lerini ve verilen cevapları tutar.
       visitedQuestions: new Set(), // Ziyaret edilen soruları takip eder
       totalQuestions: 0,
+      // Hızlı erişim için türetilmiş yapılar
+      questionById: new Map(),
+      optionsByQuestionId: new Map(),
+      correctOptionByQuestionId: new Map(),
       
       // Oturum durumu
       sessionId: null,
@@ -24,6 +28,13 @@ class StateManager {
         totalTime: 0,
         remainingTimeSeconds: 0
       },
+      
+      // Quiz meta bilgileri (ders, ünite, konu, zorluk vb.)
+      grade: null,
+      subject: null,
+      unit: null,
+      topic: null,
+      difficulty: null,
       
       // Arayüz (UI) durumu
       isLoading: false,
@@ -146,6 +157,36 @@ class StateManager {
 
   setError(error) {
     this.setState({ error }, 'SET_ERROR');
+  }
+
+  /**
+   * Quiz meta bilgilerini ayarlar (ders, konu, zorluk vb.)
+   */
+  setMetadata({ grade = null, subject = null, unit = null, topic = null, difficulty = null } = {}) {
+    this.setState({ grade, subject, unit, topic, difficulty }, 'SET_METADATA');
+  }
+
+  /**
+   * Sorulardan hızlı erişim için yardımcı map'ler üretir.
+   */
+  buildDerivedMaps() {
+    const questionById = new Map();
+    const optionsByQuestionId = new Map();
+    const correctOptionByQuestionId = new Map();
+
+    for (const q of this.state.questions) {
+      const qid = q?.question?.id;
+      if (!qid) continue;
+      questionById.set(qid, q);
+
+      const options = Array.isArray(q?.question?.options) ? q.question.options : [];
+      optionsByQuestionId.set(qid, options);
+
+      const correct = options.find(o => o?.is_correct === true || o?.isCorrect === true || o?.correct === true || o?.is_correct === 1 || o?.correct === 1) || null;
+      if (correct) correctOptionByQuestionId.set(qid, correct);
+    }
+
+    this.setState({ questionById, optionsByQuestionId, correctOptionByQuestionId }, 'BUILD_DERIVED_MAPS');
   }
 }
 

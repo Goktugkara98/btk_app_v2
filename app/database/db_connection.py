@@ -76,8 +76,6 @@ class DatabaseConnection:
                 self.cursor = self.connection.cursor(dictionary=True)
             return True
         except MySQLError as e:
-            # Critical connection error - keep this print
-            print(f"Veritabanı bağlantı hatası: {e}")
             self.connection = None
             self.cursor = None
             return False
@@ -104,12 +102,9 @@ class DatabaseConnection:
         """5.2.3. Bağlantının aktif olup olmadığını kontrol eder. Değilse, yeniden bağlanır."""
         try:
             if not self.connection or not self.connection.is_connected():
-                # Keep only critical reconnection message
                 if not self.connect():
                     raise MySQLError("Veritabanına bağlanılamadı")
         except Exception as e:
-            # Critical connection error - keep this print
-            print(f"❌ Bağlantı kontrol hatası: {e}")
             raise MySQLError(f"Veritabanı bağlantı hatası: {e}")
 
     # -------------------------------------------------------------------------

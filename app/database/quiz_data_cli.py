@@ -75,13 +75,13 @@ def main():
     
     try:
         if args.dry_run:
-            print("🔍 DRY RUN MODU - Gerçek veritabanı işlemi yapılmayacak")
-        
+            # Dry run mode enabled, no database operations will be performed
+            pass
+            
         if args.file:
             # Tek dosya yükle
             file_path = Path(args.file)
             if not file_path.exists():
-                print(f"❌ Dosya bulunamadı: {file_path}")
                 return 1
             
             success, total = loader.process_question_file(str(file_path))
@@ -90,13 +90,11 @@ def main():
             # Belirli dizindeki dosyaları yükle
             dir_path = Path(args.dir)
             if not dir_path.exists():
-                print(f"❌ Dizin bulunamadı: {dir_path}")
                 return 1
             
             json_files = list(dir_path.rglob("*.json"))
             
             if not json_files:
-                print(f"❌ JSON dosyası bulunamadı: {dir_path}")
                 return 1
             
             total_success = 0
@@ -106,7 +104,7 @@ def main():
                 success, total = loader.process_question_file(str(file_path))
                 total_success += success
                 total_questions += total
-            
+        
         else:
             # Tüm dosyaları yükle
             results = loader.process_all_question_files()
@@ -122,10 +120,8 @@ def main():
         return 0
         
     except KeyboardInterrupt:
-        print("\n⚠️  İşlem kullanıcı tarafından durduruldu")
         return 1
     except Exception as e:
-        print(f"❌ Genel hata: {e}")
         if args.verbose:
             import traceback
             traceback.print_exc()

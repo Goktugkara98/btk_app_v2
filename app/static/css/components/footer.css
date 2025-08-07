@@ -347,14 +347,16 @@
     }
     
     .footer-bottom-content {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        text-align: left;
         gap: 12px;
+        flex-wrap: nowrap;
     }
     
     .footer-stats {
-        justify-content: center;
+        justify-content: flex-end;
         gap: 20px;
+        flex-wrap: nowrap;
     }
 }
 

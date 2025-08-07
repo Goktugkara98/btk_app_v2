@@ -104,8 +104,8 @@
     border-color: #6366f1;
 }
 .index-demo-option.selected {
-    background: #6366f1;
-    color: #fff;
+    background: #e0e7ff;
+    color: #1e293b;
     border-color: #6366f1;
     box-shadow: 0 2px 8px rgba(99,102,241,0.08);
 }

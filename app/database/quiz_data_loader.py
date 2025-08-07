@@ -46,7 +46,6 @@ class QuestionLoader:
                 data = json.load(f)
             return data
         except Exception as e:
-            print(f"❌ Dosya okuma hatası {file_path}: {e}")
             return None
     
     def get_topic_id(self, grade: int, subject: str, unit: str, topic: str) -> Optional[int]:
@@ -82,11 +81,9 @@ class QuestionLoader:
                 if result:
                     return result['id']
                 else:
-                    print(f"⚠️  Topic bulunamadı: Grade {grade}, {subject}, {unit}, {topic}")
                     return None
                 
         except Exception as e:
-            print(f"❌ Topic ID sorgulama hatası: {e}")
             return None
     
     def insert_question(self, question_data: Dict[str, Any], topic_id: int) -> Optional[int]:
@@ -150,7 +147,6 @@ class QuestionLoader:
                 return question_id
             
         except Exception as e:
-            print(f"❌ Question ekleme hatası: {e}")
             return None
     
     def process_question_file(self, file_path: str) -> Tuple[int, int]:
@@ -176,13 +172,11 @@ class QuestionLoader:
         topic = metadata.get('topic')
         
         if not all([grade, subject, unit, topic]):
-            print(f"❌ Eksik metadata: {file_path}")
             return 0, len(questions)
         
         # Topic ID'yi bul
         topic_id = self.get_topic_id(grade, subject, unit, topic)
         if not topic_id:
-            print(f"❌ Topic bulunamadı: {file_path}")
             return 0, len(questions)
         
         success_count = 0
@@ -201,7 +195,6 @@ class QuestionLoader:
             Dosya adı -> (başarılı, toplam) sözlüğü
         """
         if not self.data_dir.exists():
-            print(f"❌ Question data dizini bulunamadı: {self.data_dir}")
             return {}
         
         results = {}
@@ -210,7 +203,6 @@ class QuestionLoader:
         json_files = list(self.data_dir.rglob("*.json"))
         
         if not json_files:
-            print(f"❌ Question JSON dosyası bulunamadı: {self.data_dir}")
             return {}
         
 

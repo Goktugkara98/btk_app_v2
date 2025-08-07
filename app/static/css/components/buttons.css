@@ -72,6 +72,23 @@
     font-size: 18px;
 }
 
+/* CTA Button with white text and border */
+.btn-cta {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+    padding: 14px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-cta:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .btn {
