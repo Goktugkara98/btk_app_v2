@@ -401,12 +401,11 @@ def get_session_status(session_id):
         answered_questions = len([q for q in session_info['questions'] if q['user_answer_option_id'] is not None])
         progress_percentage = round((answered_questions / total_questions * 100) if total_questions > 0 else 0, 2)
         
-        # Calculate remaining time
-        remaining_time_seconds = 0
-        if session_info['session']['timer_enabled'] and session_info['session']['timer_duration']:
+        # Calculate remaining time (prefer persisted value, else compute)
+        remaining_time_seconds = session_info['session'].get('remaining_time_seconds') or 0
+        if (not remaining_time_seconds) and session_info['session']['timer_enabled'] and session_info['session']['timer_duration']:
             start_time = session_info['session']['start_time']
             timer_duration = session_info['session']['timer_duration']
-            
             if start_time:
                 try:
                     from datetime import datetime
@@ -417,18 +416,11 @@ def get_session_status(session_id):
                         start_datetime = datetime.fromisoformat(start_time_clean)
                     else:
                         start_datetime = start_time
-                    
                     current_datetime = datetime.now()
                     elapsed_seconds = int((current_datetime - start_datetime).total_seconds())
                     remaining_time_seconds = max(0, (timer_duration * 60) - elapsed_seconds)
-                    
-                    
                 except Exception as e:
                     remaining_time_seconds = 0
-            else:
-                pass
-        else:
-            pass
         
         # Aktif sorunun bilgilerini al
         current_question_info = None

@@ -4,7 +4,37 @@ import { eventBus } from './EventBus.js';
  * StateManager - Merkezi durum (state) yönetimi.
  * Değişiklik bildirimleri olan basit bir state container'ı uygular.
  */
-class StateManager {
+ /*
+  * İÇİNDEKİLER (Table of Contents)
+  * - [1] Kurulum
+  *   - [1.1] constructor()
+  * - [2] Okuma
+  *   - [2.1] getState(path)
+  * - [3] Yazma (Temel)
+  *   - [3.1] setState(newState, action)
+  * - [4] Quiz Durumu
+  *   - [4.1] setQuestions(questions)
+  *   - [4.2] setCurrentQuestionIndex(index)
+  * - [5] Cevap Yönetimi
+  *   - [5.1] setAnswer(questionId, answer)
+  *   - [5.2] removeAnswer(questionId)
+  * - [6] Zamanlayıcı
+  *   - [6.1] setTimer(remainingTime, totalTime)
+  * - [7] UI Durumu
+  *   - [7.1] setLoading(isLoading)
+  *   - [7.2] setError(error)
+  * - [8] Meta Bilgiler
+  *   - [8.1] setMetadata({...})
+  * - [9] Türetilmiş Veri
+  *   - [9.1] buildDerivedMaps()
+  * - [10] Dışa Aktarım
+  *   - [10.1] stateManager singleton
+  */
+ class StateManager {
+  /**
+   * [1.1] constructor - Başlangıç state'ini yükler ve sessionId tespit eder.
+   * Kategori: [1] Kurulum
+   */
   constructor(initialState = {}) {
     this.state = {
       // Quiz durumu
@@ -55,7 +85,8 @@ class StateManager {
   }
 
   /**
-   * Mevcut state'i veya state içindeki belirli bir değeri alır.
+   * [2.1] getState - Mevcut state'i veya state içindeki belirli bir değeri alır.
+   * Kategori: [2] Okuma
    * @param {string} [path] - State özelliğine giden nokta notasyonlu yol (örn: 'timer.remainingTime').
    * @returns {*} State veya state özelliği.
    */
@@ -68,7 +99,8 @@ class StateManager {
   }
 
   /**
-   * State'i günceller ve aboneleri bilgilendirir.
+   * [3.1] setState - State'i günceller ve aboneleri bilgilendirir.
+   * Kategori: [3] Yazma (Temel)
    * @param {Object} newState - Birleştirilecek yeni state parçası.
    * @param {string} [action] - Hata ayıklama için eylemin türünü belirten opsiyonel string.
    */
@@ -87,7 +119,11 @@ class StateManager {
   }
 
   // Sık kullanılan state güncellemeleri için yardımcı metotlar
-
+  
+  /**
+   * [4.1] setQuestions - Soruları ve başlangıç indeksini ayarlar; ziyaret edilenleri başlatır.
+   * Kategori: [4] Quiz Durumu
+   */
   setQuestions(questions) {
     // İlk soruyu ziyaret edilmiş olarak işaretle
     const initialVisitedQuestions = new Set();
@@ -104,6 +140,10 @@ class StateManager {
     }, 'SET_QUESTIONS');
   }
 
+  /**
+   * [4.2] setCurrentQuestionIndex - Aktif soruyu ve ziyaret edilenleri günceller.
+   * Kategori: [4] Quiz Durumu
+   */
   setCurrentQuestionIndex(index) {
     if (index >= 0 && index < this.state.questions.length) {
       // Ziyaret edilen soruları takip et
@@ -120,6 +160,10 @@ class StateManager {
     }
   }
 
+  /**
+   * [5.1] setAnswer - Kullanıcı cevabını state içinde saklar.
+   * Kategori: [5] Cevap Yönetimi
+   */
   setAnswer(questionId, answer) {
     // questionId'yi her zaman number olarak sakla
     const numericQuestionId = parseInt(questionId, 10);
@@ -130,6 +174,10 @@ class StateManager {
     this.setState({ answers: newAnswers }, 'SET_ANSWER');
   }
 
+  /**
+   * [5.2] removeAnswer - Kullanıcının cevabını kaldırır.
+   * Kategori: [5] Cevap Yönetimi
+   */
   removeAnswer(questionId) {
     // questionId'yi her zaman number olarak sakla
     const numericQuestionId = parseInt(questionId, 10);
@@ -140,34 +188,51 @@ class StateManager {
     this.setState({ answers: newAnswers }, 'REMOVE_ANSWER');
   }
 
+  /**
+   * [6.1] setTimer - Zamanlayıcı durumunu günceller.
+   * Kategori: [6] Zamanlayıcı
+   */
   setTimer(remainingTime, totalTime) {
+    // remainingTimeSeconds kanonik alan; remainingTime geriye dönük uyumluluk için korunur.
+    const remainingTimeSeconds = typeof remainingTime === 'number' ? remainingTime : this.state.timer.remainingTimeSeconds;
     this.setState({
       timer: {
         ...this.state.timer,
         enabled: true,
-        remainingTime,
-        totalTime: totalTime || this.state.timer.totalTime
+        remainingTime: remainingTimeSeconds, // backward compatibility
+        remainingTimeSeconds,
+        totalTime: (typeof totalTime === 'number') ? totalTime : this.state.timer.totalTime
       }
     }, 'SET_TIMER');
   }
 
+  /**
+   * [7.1] setLoading - Yükleniyor durumunu ayarlar.
+   * Kategori: [7] UI Durumu
+   */
   setLoading(isLoading) {
     this.setState({ isLoading }, 'SET_LOADING');
   }
 
+  /**
+   * [7.2] setError - Hata durumunu ayarlar.
+   * Kategori: [7] UI Durumu
+   */
   setError(error) {
     this.setState({ error }, 'SET_ERROR');
   }
 
   /**
-   * Quiz meta bilgilerini ayarlar (ders, konu, zorluk vb.)
+   * [8.1] setMetadata - Quiz meta bilgilerini ayarlar (ders, konu, zorluk vb.)
+   * Kategori: [8] Meta Bilgiler
    */
   setMetadata({ grade = null, subject = null, unit = null, topic = null, difficulty = null } = {}) {
     this.setState({ grade, subject, unit, topic, difficulty }, 'SET_METADATA');
   }
 
   /**
-   * Sorulardan hızlı erişim için yardımcı map'ler üretir.
+   * [9.1] buildDerivedMaps - Sorulardan hızlı erişim için yardımcı map'ler üretir.
+   * Kategori: [9] Türetilmiş Veri
    */
   buildDerivedMaps() {
     const questionById = new Map();
@@ -191,4 +256,8 @@ class StateManager {
 }
 
 // Uygulama genelinde tek bir örnek (singleton) olarak ihraç edilir.
+/**
+ * [10.1] stateManager - Singleton örneği.
+ * Kategori: [10] Dışa Aktarım
+ */
 export const stateManager = new StateManager();

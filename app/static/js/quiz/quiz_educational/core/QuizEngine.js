@@ -5,14 +5,43 @@ import { ApiService } from '../services/ApiService.js';
 /**
  * QuizEngine - Çekirdek quiz mantığını ve akış kontrolünü yönetir.
  */
-export class QuizEngine {
+ /*
+  * İÇİNDEKİLER (Table of Contents)
+  * - [1] Kurulum
+  *   - [1.1] constructor()
+  *   - [1.2] initializeEventListeners()
+  * - [2] Zamanlayıcı (Timer)
+  *   - [2.1] startTimerUpdate()
+  *   - [2.2] saveTimerToDatabase(remainingTimeSeconds)
+  * - [3] Veri ve Oturum
+  *   - [3.1] loadQuestions()
+  *   - [3.2] updateSessionStatus(sessionId)
+  * - [4] Navigasyon
+  *   - [4.1] nextQuestion()
+  *   - [4.2] previousQuestion()
+  *   - [4.3] goToQuestion(index)
+  * - [5] Cevap İşleme
+  *   - [5.1] submitAnswer({ questionId, answer })
+  *   - [5.2] removeAnswer({ questionId })
+  *   - [5.3] checkAnswerLocally(questionId, userAnswer)
+  *   - [5.4] getCorrectAnswer(questionId)
+  *   - [5.5] handleWrongAnswer(data)
+  * - [6] Tamamlama
+  *   - [6.1] completeQuiz()
+  */
+ export class QuizEngine {
+  /**
+   * [1.1] constructor - Kaynakları ve event dinleyicilerini başlatır.
+   * Kategori: [1] Kurulum
+   */
   constructor() {
     this.apiService = new ApiService();
     this.initializeEventListeners();
   }
 
   /**
-   * Quiz akışı için olay dinleyicilerini başlatır.
+   * [1.2] initializeEventListeners - Quiz akışı için olay dinleyicilerini başlatır.
+   * Kategori: [1] Kurulum
    */
   initializeEventListeners() {
     eventBus.subscribe('quiz:start', this.loadQuestions.bind(this));
@@ -36,7 +65,8 @@ export class QuizEngine {
   }
 
   /**
-   * Timer'ı otomatik olarak günceller.
+   * [2.1] startTimerUpdate - Timer'ı otomatik olarak günceller.
+   * Kategori: [2] Zamanlayıcı (Timer)
    */
   startTimerUpdate() {
     let saveCounter = 0; // 10 saniyede bir kaydetmek için sayaç
@@ -70,7 +100,8 @@ export class QuizEngine {
   }
   
   /**
-   * Timer'ı veritabanına kaydeder.
+   * [2.2] saveTimerToDatabase - Timer'ı veritabanına kaydeder.
+   * Kategori: [2] Zamanlayıcı (Timer)
    */
   async saveTimerToDatabase(remainingTimeSeconds) {
     try {
@@ -88,7 +119,8 @@ export class QuizEngine {
   }
 
   /**
-   * Quiz için soruları yükler.
+   * [3.1] loadQuestions - Quiz için soruları yükler.
+   * Kategori: [3] Veri ve Oturum
    */
   async loadQuestions() {
     try {
@@ -159,23 +191,24 @@ export class QuizEngine {
       }
 
       // Session meta bilgisini state'e işle (varsa)
-      const sessionMeta = sessionInfoResp?.data || {};
-      if (sessionMeta) {
+      const sessionMetaWrapper = sessionInfoResp?.data || null;
+      const sess = sessionMetaWrapper?.session || null;
+      if (sess) {
         stateManager.setMetadata({
-          grade: sessionMeta.grade || sessionMeta.grade_name || null,
-          subject: sessionMeta.subject || sessionMeta.subject_name || null,
-          unit: sessionMeta.unit || sessionMeta.unit_name || null,
-          topic: sessionMeta.topic || sessionMeta.topic_name || null,
-          difficulty: sessionMeta.difficulty || sessionMeta.difficulty_level || null
+          grade: sess.grade || sess.grade_name || null,
+          subject: sess.subject || sess.subject_name || null,
+          unit: sess.unit || sess.unit_name || null,
+          topic: sess.topic || sess.topic_name || null,
+          difficulty: sess.difficulty || sess.difficulty_level || null
         });
         // Timer başlangıç bilgileri (varsa)
-        if (typeof sessionMeta.remaining_time_seconds === 'number' || typeof sessionMeta.timer_duration === 'number') {
+        if (typeof sess.remaining_time_seconds === 'number' || typeof sess.timer_duration === 'number') {
           stateManager.setState({
             timer: {
               ...stateManager.getState('timer'),
-              enabled: !!sessionMeta.timer_enabled,
-              remainingTimeSeconds: sessionMeta.remaining_time_seconds ?? stateManager.getState('timer').remainingTimeSeconds,
-              totalTime: sessionMeta.timer_duration ?? stateManager.getState('timer').totalTime
+              enabled: !!sess.timer_enabled,
+              remainingTimeSeconds: (typeof sess.remaining_time_seconds === 'number') ? sess.remaining_time_seconds : stateManager.getState('timer').remainingTimeSeconds,
+              totalTime: (typeof sess.timer_duration === 'number') ? sess.timer_duration : stateManager.getState('timer').totalTime
             }
           }, 'INIT_TIMER_FROM_SESSION');
         }
@@ -184,6 +217,19 @@ export class QuizEngine {
       // Session status'u al ve timer bilgilerini güncelle
       await this.updateSessionStatus(sessionId);
       
+      // Sayfa ilk yüklendiğinde oluşan başlangıç durumunu tek bir info log ile kaydet
+      const initialLog = {
+        sessionId: stateManager.getState('sessionId'),
+        totalQuestions: stateManager.getState('totalQuestions') ?? stateManager.getState('questions')?.length,
+        quizMode: stateManager.getState('quizMode'),
+        timer: stateManager.getState('timer'),
+        metadata: stateManager.getState('metadata'),
+        currentQuestionIndex: stateManager.getState('currentQuestionIndex') ?? 0,
+        questionsCount: stateManager.getState('questions')?.length,
+        questions: stateManager.getState('questions')
+      };
+      console.info('[QuizEducational] Initial load state', initialLog);
+
       eventBus.publish('quiz:questionsLoaded');
       
     } catch (error) {
@@ -198,7 +244,8 @@ export class QuizEngine {
   }
 
   /**
-   * Sonraki soruya geçer.
+   * [4.1] nextQuestion - Sonraki soruya geçer.
+   * Kategori: [4] Navigasyon
    */
   nextQuestion() {
     const { currentQuestionIndex, questions } = stateManager.getState();
@@ -213,7 +260,8 @@ export class QuizEngine {
   }
 
   /**
-   * Önceki soruya geçer.
+   * [4.2] previousQuestion - Önceki soruya geçer.
+   * Kategori: [4] Navigasyon
    */
   previousQuestion() {
     const { currentQuestionIndex } = stateManager.getState();
@@ -224,7 +272,8 @@ export class QuizEngine {
   }
 
   /**
-   * Belirtilen index'teki soruya gider.
+   * [4.3] goToQuestion - Belirtilen index'teki soruya gider.
+   * Kategori: [4] Navigasyon
    * @param {number} index - Gidilecek sorunun index'i.
    */
   async goToQuestion(index) {
@@ -249,7 +298,8 @@ export class QuizEngine {
   }
 
   /**
-   * Bir cevabı sunucuya gönderir.
+   * [5.1] submitAnswer - Bir cevabı sunucuya gönderir.
+   * Kategori: [5] Cevap İşleme
    * @param {Object} answerData - { questionId, answer }
    */
   async submitAnswer({ questionId, answer }) {
@@ -263,17 +313,17 @@ export class QuizEngine {
       stateManager.setState({ isSubmitting: true }, 'SUBMIT_ANSWER_START');
       
       const sessionId = stateManager.getState('sessionId');
-      if (!sessionId || !questionId || !answer) {
+      if (sessionId == null || questionId == null || answer == null) {
         throw new Error('Cevap göndermek için gerekli bilgiler eksik.');
       }
       
       // Cevabı anında state'e kaydet (UI'ın hızlı güncellenmesi için).
       stateManager.setAnswer(questionId, answer);
       
-      // JavaScript tarafında cevap kontrolü yap
-      const isCorrect = this.checkAnswerLocally(questionId, answer);
-      
+      // Sunucuya gönder ve yanıta göre doğruluk belirle (sunucu yoksa yerel kontrol)
       const response = await this.apiService.submitAnswer({ sessionId, questionId, answer });
+      const serverIsCorrect = response?.data?.is_correct;
+      const isCorrect = (typeof serverIsCorrect === 'boolean') ? serverIsCorrect : this.checkAnswerLocally(questionId, answer);
       
       // Cevabı gönderdikten hemen sonra isSubmitting'i false yap
       stateManager.setState({ isSubmitting: false }, 'SUBMIT_ANSWER_END');
@@ -281,12 +331,8 @@ export class QuizEngine {
       // Educational modda yanlış cevap verilirse farklı event tetikle
       const isEducationalMode = stateManager.getState('quizMode') === 'educational';
       
-      // Debug log ekle
-      console.log(`[QuizEngine] Cevap kontrolü: QuestionID=${questionId}, UserAnswer=${answer}, IsCorrect=${isCorrect}, Mode=${isEducationalMode}`);
-      
       if (isEducationalMode && !isCorrect) {
         // Yanlış cevap - yeni event tetikle
-        console.log(`[QuizEngine] Yanlış cevap tespit edildi! answer:wrong event'i tetikleniyor...`);
         eventBus.publish('answer:wrong', {
           questionId: questionId,
           userAnswer: answer,
@@ -296,7 +342,6 @@ export class QuizEngine {
       }
       
       // Doğru cevap veya normal mod - kısa bir bekleme sonrası sonraki soruya geç
-      console.log(`[QuizEngine] Doğru cevap veya normal mod - sonraki soruya geçiliyor...`);
       setTimeout(() => this.nextQuestion(), 300);
       
     } catch (error) {
@@ -311,7 +356,8 @@ export class QuizEngine {
   }
 
   /**
-   * JavaScript tarafında cevap kontrolü yapar.
+   * [5.3] checkAnswerLocally - JavaScript tarafında cevap kontrolü yapar.
+   * Kategori: [5] Cevap İşleme
    * @param {number} questionId - Soru ID'si
    * @param {string} userAnswer - Kullanıcının cevabı
    * @returns {boolean} Cevap doğru mu?
@@ -338,7 +384,8 @@ export class QuizEngine {
   }
 
   /**
-   * Belirtilen sorunun doğru cevabını döndürür.
+   * [5.4] getCorrectAnswer - Belirtilen sorunun doğru cevabını döndürür.
+   * Kategori: [5] Cevap İşleme
    * @param {number} questionId - Soru ID'si
    * @returns {Object|null} Doğru cevap seçeneği
    */
@@ -359,20 +406,21 @@ export class QuizEngine {
   }
 
   /**
-   * Yanlış cevap verildiğinde çalışacak fonksiyon (şimdilik boş).
+   * [5.5] handleWrongAnswer - Yanlış cevap verildiğinde çalışacak fonksiyon (şimdilik boş).
+   * Kategori: [5] Cevap İşleme
    * @param {Object} data - { questionId, userAnswer, correctAnswer }
    */
   handleWrongAnswer(data) {
     // Şimdilik boş - buraya yanlış cevap işlemleri eklenecek
-    console.log('[QuizEngine] handleWrongAnswer çağrıldı!');
-    console.log('[QuizEngine] Yanlış cevap verildi:', data);
+    // info-level logs removed
     
     // TODO: Burada yanlış cevap için özel işlemler yapılacak
     // Örneğin: AI chat'e bilgi gönderme, UI güncelleme, vs.
   }
 
   /**
-   * Bir cevabı kaldırır.
+   * [5.2] removeAnswer - Bir cevabı kaldırır.
+   * Kategori: [5] Cevap İşleme
    * @param {Object} answerData - { questionId }
    */
   async removeAnswer({ questionId }) {
@@ -403,7 +451,8 @@ export class QuizEngine {
   }
 
   /**
-   * Session status'unu günceller ve timer bilgilerini alır.
+   * [3.2] updateSessionStatus - Session status'unu günceller ve timer bilgilerini alır.
+   * Kategori: [3] Veri ve Oturum
    */
   async updateSessionStatus(sessionId) {
     try {
@@ -426,7 +475,8 @@ export class QuizEngine {
   }
 
   /**
-   * Quizi tamamlar ve sonuçları gösterir.
+   * [6.1] completeQuiz - Quizi tamamlar ve sonuçları gösterir.
+   * Kategori: [6] Tamamlama
    */
   async completeQuiz() {
     if (stateManager.getState('isSubmitting')) return;

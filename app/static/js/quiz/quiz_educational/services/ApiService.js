@@ -1,7 +1,27 @@
 /**
  * ApiService - Tüm API iletişimlerini yönetir.
+ *
+ * İÇİNDEKİLER (Table of Contents)
+ * - [1] Kurulum
+ *   - [1.1] constructor()
+ * - [2] İç (Private)
+ *   - [2.1] _fetch(options)
+ * - [3] Quiz Uç Noktaları
+ *   - [3.1] fetchQuestions({ sessionId })
+ *   - [3.2] getSessionInfo(sessionId)
+ *   - [3.3] submitAnswer({ sessionId, questionId, answer })
+ *   - [3.4] completeQuiz({ sessionId, answers })
+ *   - [3.5] getSessionStatus(sessionId)
+ *   - [3.6] updateTimer({ sessionId, remainingTimeSeconds })
+ * - [4] Dışa Aktarım
+ *   - [4.1] Named export
+ *   - [4.2] CommonJS export
  */
 export class ApiService {
+  /**
+   * [1.1] constructor - Baz URL ve varsayılan header'ları ayarlar.
+   * Kategori: [1] Kurulum
+   */
   constructor() {
     this.baseUrl = '/api';  // /api/quiz yerine /api kullanıyoruz
     this.defaultHeaders = {
@@ -11,7 +31,8 @@ export class ApiService {
   }
 
   /**
-   * Gelişmiş hata yönetimi ve loglama ile bir API isteği yapar.
+   * [2.1] _fetch - Gelişmiş hata yönetimi ile API isteği yapar.
+   * Kategori: [2] İç (Private)
    * @private
    * @param {object} options - İstek seçenekleri
    * @param {string} options.endpoint - İstek yapılacak endpoint (örn: '/session/123')
@@ -56,7 +77,11 @@ export class ApiService {
   }
 
   /**
-   * Quiz için soruları getirir.
+   * [3.1] fetchQuestions - Quiz için soruları getirir.
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {Object} params
+   * @param {string|number} params.sessionId - Oturum ID
+   * @returns {Promise<any>} Soru listesi
    */
   async fetchQuestions({ sessionId }) {
     return await this._fetch({
@@ -66,8 +91,10 @@ export class ApiService {
   }
 
   /**
-   * Oturum (session) detay bilgisini getirir.
-   * Meta (grade/subject/unit/topic/difficulty/timer vb.) için kullanılır.
+   * [3.2] getSessionInfo - Oturum detay bilgisini getirir (meta için).
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {string|number} sessionId - Oturum ID
+   * @returns {Promise<any>} Oturum bilgisi
    */
   async getSessionInfo(sessionId) {
     return this._fetch({
@@ -77,7 +104,13 @@ export class ApiService {
   }
 
   /**
-   * Bir cevabı sunucuya gönderir.
+   * [3.3] submitAnswer - Bir cevabı sunucuya gönderir.
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {Object} params
+   * @param {string|number} params.sessionId - Oturum ID
+   * @param {string|number} params.questionId - Soru ID
+   * @param {string|number|null} params.answer - Seçilen şık ID (veya null)
+   * @returns {Promise<any>} Sunucu yanıtı
    */
   async submitAnswer({ sessionId, questionId, answer }) {
     return this._fetch({
@@ -91,7 +124,12 @@ export class ApiService {
   }
 
   /**
-   * Quizi tamamlar.
+   * [3.4] completeQuiz - Quizi tamamlar.
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {Object} params
+   * @param {string|number} params.sessionId - Oturum ID
+   * @param {Map<string|number, string|number|null>} params.answers - Cevaplar Map'i
+   * @returns {Promise<any>} Sonuç verisi
    */
   async completeQuiz({ sessionId, answers }) {
     // Map'i sunucuya göndermeden önce [key, value] dizisine dönüştür
@@ -104,7 +142,10 @@ export class ApiService {
   }
 
   /**
-   * Oturum durumunu alır.
+   * [3.5] getSessionStatus - Oturum durumunu alır.
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {string|number} sessionId - Oturum ID
+   * @returns {Promise<any>} Oturum durumu
    */
   async getSessionStatus(sessionId) {
     return this._fetch({
@@ -114,7 +155,12 @@ export class ApiService {
   }
   
   /**
-   * Timer'ı günceller.
+   * [3.6] updateTimer - Kalan süreyi günceller.
+   * Kategori: [3] Quiz Uç Noktaları
+   * @param {Object} params
+   * @param {string|number} params.sessionId - Oturum ID
+   * @param {number} params.remainingTimeSeconds - Kalan süre (saniye)
+   * @returns {Promise<any>} Sunucu yanıtı
    */
   async updateTimer({ sessionId, remainingTimeSeconds }) {
     return this._fetch({
@@ -123,4 +169,19 @@ export class ApiService {
       data: { remaining_time_seconds: remainingTimeSeconds }
     });
   }
+}
+
+// Exportlar
+/**
+ * [4.1] Named export - ES6 adlandırılmış export.
+ * Kategori: [4] Dışa Aktarım
+ */
+// export class ApiService { ... } satırındaki named export kullanılır
+
+/**
+ * [4.2] CommonJS export - Node.js uyumluluğu için.
+ * Kategori: [4] Dışa Aktarım
+ */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ApiService };
 }

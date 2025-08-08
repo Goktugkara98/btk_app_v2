@@ -75,7 +75,6 @@ class QuizService:
             }
             return quiz_data
         except Exception as e:
-            print(f"Error in get_quiz_data service: {e}")
             return {}
 
     def get_subjects(self) -> List[Dict[str, Any]]:
@@ -90,7 +89,6 @@ class QuizService:
             ]
             return subjects
         except Exception as e:
-            print(f"Error in get_subjects service: {e}")
             return []
 
     def get_topics(self, subject_id: int) -> List[Dict[str, Any]]:
@@ -111,7 +109,6 @@ class QuizService:
             filtered_topics = [topic for topic in all_topics if topic['subject_id'] == subject_id]
             return filtered_topics
         except Exception as e:
-            print(f"Error in get_topics service: {e}")
             return []
 
     # -------------------------------------------------------------------------
@@ -139,7 +136,6 @@ class QuizService:
             
             return True, quiz_session
         except Exception as e:
-            print(f"Error in start_quiz service: {e}")
             return False, {'message': 'Quiz başlatılırken bir hata oluştu'}
 
     def submit_quiz(self, user_id: int, quiz_data: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
@@ -164,7 +160,6 @@ class QuizService:
             
             return True, quiz_result
         except Exception as e:
-            print(f"Error in submit_quiz service: {e}")
             return False, {'message': 'Quiz gönderilirken bir hata oluştu'}
 
     def get_quiz_results(self, user_id: int) -> List[Dict[str, Any]]:
@@ -197,5 +192,4 @@ class QuizService:
             ]
             return results
         except Exception as e:
-            print(f"Error in get_quiz_results service: {e}")
-            return [] 
+            return []

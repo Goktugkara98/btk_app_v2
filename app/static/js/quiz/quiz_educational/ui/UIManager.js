@@ -4,16 +4,47 @@ import { eventBus } from '../core/EventBus.js';
 /**
  * UIManager - Tüm UI güncellemelerini ve kullanıcı etkileşimlerini yönetir.
  */
+/**
+ * İÇİNDEKİLER (Table of Contents)
+ * - [1] Kurulum
+ *   - [1.1] constructor()
+ *   - [1.2] initializeElements()
+ *   - [1.3] initializeEventListeners()
+ *   - [1.4] initializeStateSubscriptions()
+ *   - [1.5] initializeUiEventBus()
+ * - [2] Render ve Güncelleme
+ *   - [2.1] renderQuestion(question)
+ *   - [2.2] renderEducationalFeatures(question)
+ *   - [2.3] updateQuestionNavigation()
+ *   - [2.4] updateNavButtons()
+ *   - [2.5] updateQuestionNumber()
+ *   - [2.6] updateTimer(timer)
+ *   - [2.7] updateTotalQuestions(totalQuestions)
+ *   - [2.8] updateNavbarFromQuestion(question)
+ * - [3] Durum ve Hata
+ *   - [3.1] toggleLoading(isLoading)
+ *   - [3.2] showError(error)
+ * - [4] Yardımcılar
+ *   - [4.1] getDifficultyText(difficulty)
+ *   - [4.2] markIncorrectOption(data)
+ * - [5] Export
+ */
 export class UIManager {
+  /**
+   * [1.1] constructor - UI öğelerini ve abonelikleri başlatır.
+   * Kategori: [1] Kurulum
+   */
   constructor() {
     this.elements = {};
     this.initializeElements();
     this.initializeEventListeners();
     this.initializeStateSubscriptions();
+    this.initializeUiEventBus();
   }
 
   /**
-   * DOM eleman referanslarını başlatır.
+   * [1.2] initializeElements - DOM eleman referanslarını başlatır.
+   * Kategori: [1] Kurulum
    */
   initializeElements() {
     const $ = (selector) => document.querySelector(selector);
@@ -46,7 +77,46 @@ export class UIManager {
   }
 
   /**
-   * UI etkileşimleri için olay dinleyicilerini başlatır.
+   * [1.5] initializeUiEventBus - UI ile ilgili EventBus aboneliklerini başlatır.
+   * Kategori: [1] Kurulum
+   */
+  initializeUiEventBus() {
+    eventBus.subscribe('answer:wrong', this.markIncorrectOption.bind(this));
+  }
+
+  /**
+   * [4.2] markIncorrectOption - Yanlış cevap verildiğinde seçilen şıkkı kırmızı (incorrect) işaretler.
+   * Kategori: [4] Yardımcılar
+   * @param {{questionId: number|string, userAnswer: number|string}} data
+   */
+  markIncorrectOption(data) {
+    if (!data || !this.elements.optionsContainer) return;
+    const { questionId, userAnswer } = data;
+
+    // Sadece aktif soru için uygula (güvenlik amacıyla kontrol)
+    const current = stateManager.getState('currentQuestion');
+    const currentQuestionId = current?.question?.id;
+    if (String(currentQuestionId) !== String(questionId)) {
+      return;
+    }
+
+    // Önce var olan incorrect işaretlerini temizle
+    this.elements.optionsContainer.querySelectorAll('.option-item.incorrect')
+      .forEach(el => el.classList.remove('incorrect'));
+
+    // Kullanıcının seçtiği şıkkı bul ve incorrect olarak işaretle
+    const selector = `.option-item[data-question-id="${questionId}"][data-option-id="${userAnswer}"]`;
+    const selectedEl = this.elements.optionsContainer.querySelector(selector);
+    if (selectedEl) {
+      selectedEl.classList.add('incorrect');
+      // Erişilebilirlik için de ARIA durumu ekle
+      selectedEl.setAttribute('aria-invalid', 'true');
+    }
+  }
+
+  /**
+   * [1.3] initializeEventListeners - UI etkileşimleri için olay dinleyicilerini başlatır.
+   * Kategori: [1] Kurulum
    */
   initializeEventListeners() {
     // Sonraki Soru Butonu
@@ -111,7 +181,8 @@ export class UIManager {
   }
 
   /**
-   * State değişikliklerine abone olur ve UI'ı günceller.
+   * [1.4] initializeStateSubscriptions - State değişikliklerine abone olur ve UI'ı günceller.
+   * Kategori: [1] Kurulum
    */
   initializeStateSubscriptions() {
     eventBus.subscribe('state:changed', ({ currentState, prevState }) => {
@@ -159,7 +230,8 @@ export class UIManager {
   }
 
   /**
-   * Yükleniyor durumunu yönetir.
+   * [3.1] toggleLoading - Yükleniyor durumunu yönetir.
+   * Kategori: [3] Durum ve Hata
    */
   toggleLoading(isLoading) {
     if (this.elements.loadingState) {
@@ -171,7 +243,8 @@ export class UIManager {
   }
 
   /**
-   * Hata mesajını gösterir.
+   * [3.2] showError - Hata mesajını gösterir.
+   * Kategori: [3] Durum ve Hata
    */
   showError(error) {
     if (!this.elements.errorState || !this.elements.errorMessage) return;
@@ -189,7 +262,8 @@ export class UIManager {
   }
 
   /**
-   * Mevcut soruyu ve seçeneklerini ekrana çizer.
+   * [2.1] renderQuestion - Mevcut soruyu ve seçeneklerini ekrana çizer.
+   * Kategori: [2] Render ve Güncelleme
    * @param {Object} question - Soru nesnesi.
    */
   renderQuestion(question) {
@@ -244,7 +318,8 @@ export class UIManager {
   }
 
   /**
-   * Educational features'ları render eder.
+   * [2.2] renderEducationalFeatures - Educational features'ları render eder.
+   * Kategori: [2] Render ve Güncelleme
    * @param {Object} question - Soru nesnesi.
    */
   renderEducationalFeatures(question) {
@@ -252,7 +327,8 @@ export class UIManager {
   }
 
   /**
-   * Soru navigasyonunu günceller.
+   * [2.3] updateQuestionNavigation - Soru navigasyonunu günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateQuestionNavigation() {
     const { questions, currentQuestionIndex, answers, visitedQuestions } = stateManager.getState();
@@ -278,7 +354,8 @@ export class UIManager {
   }
 
   /**
-   * İleri/Geri butonlarının durumunu günceller.
+   * [2.4] updateNavButtons - İleri/Geri butonlarının durumunu günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateNavButtons() {
     const { currentQuestionIndex, questions, isSubmitting } = stateManager.getState();
@@ -297,7 +374,8 @@ export class UIManager {
   }
 
   /**
-   * Soru numarasını günceller.
+   * [2.5] updateQuestionNumber - Soru numarasını günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateQuestionNumber() {
     const { questions, currentQuestionIndex } = stateManager.getState();
@@ -310,7 +388,8 @@ export class UIManager {
   }
 
   /**
-   * Zamanlayıcıyı günceller.
+   * [2.6] updateTimer - Zamanlayıcıyı günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateTimer(timer) {
     if (!this.elements.timerElement) return;
@@ -329,7 +408,8 @@ export class UIManager {
 
 
   /**
-   * Zorluk seviyesini Türkçe metne çevirir.
+   * [4.1] getDifficultyText - Zorluk seviyesini Türkçe metne çevirir.
+   * Kategori: [4] Yardımcılar
    */
   getDifficultyText(difficulty) {
     const difficultyMap = {
@@ -342,7 +422,8 @@ export class UIManager {
   }
 
   /**
-   * Toplam soru sayısını günceller.
+   * [2.7] updateTotalQuestions - Toplam soru sayısını günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateTotalQuestions(totalQuestions) {
     if (this.elements.totalQuestionNumber) {
@@ -351,7 +432,8 @@ export class UIManager {
   }
 
   /**
-   * Aktif sorudan navbar bilgilerini günceller.
+   * [2.8] updateNavbarFromQuestion - Aktif sorudan navbar bilgilerini günceller.
+   * Kategori: [2] Render ve Güncelleme
    */
   updateNavbarFromQuestion(question) {
     if (!question || !question.question) {
@@ -382,4 +464,8 @@ export class UIManager {
       this.elements.difficultyBadge.classList.add(questionData.difficulty_level);
     }
   }
+}
+// Export [5] CommonJS (Node.js uyumluluğu)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { UIManager };
 }

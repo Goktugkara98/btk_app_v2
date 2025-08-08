@@ -238,7 +238,5 @@ if __name__ == "__main__":
             total_success += success
             total_questions += total
         
-    except Exception as e:
-        print(f"❌ Genel hata: {e}")
     finally:
-        loader.close() 
+        loader.close()

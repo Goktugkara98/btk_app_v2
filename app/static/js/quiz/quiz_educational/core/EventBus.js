@@ -3,7 +3,24 @@
  * Bileşenler arasında gevşek bağlı (loosely-coupled) iletişim için
  * yayınla-abone ol (publish-subscribe) desenini uygular.
  */
-class EventBus {
+ /*
+  * İÇİNDEKİLER (Table of Contents)
+  * - [1] Kurulum
+  *   - [1.1] constructor()
+  * - [2] Abonelik Yönetimi
+  *   - [2.1] subscribe(event, callback)
+  * - [3] Yayınlama
+  *   - [3.1] publish(event, data)
+  * - [4] Temizlik
+  *   - [4.1] clear(event)
+  * - [5] Dışa Aktarım
+  *   - [5.1] eventBus singleton
+  */
+ class EventBus {
+  /**
+   * [1.1] constructor - Olay depolama yapısını başlatır.
+   * Kategori: [1] Kurulum
+   */
   constructor() {
     // Olayları ve onlara abone olan callback fonksiyonlarını saklar.
     // Map<string, Set<Function>>
@@ -11,7 +28,8 @@ class EventBus {
   }
 
   /**
-   * Bir olaya abone olur.
+   * [2.1] subscribe - Bir olaya abone olur.
+   * Kategori: [2] Abonelik Yönetimi
    * @param {string} event - Abone olunacak olayın adı.
    * @param {Function} callback - Olay yayınlandığında çağrılacak fonksiyon.
    * @returns {Function} Aboneliği iptal etmek için kullanılabilecek bir fonksiyon.
@@ -35,7 +53,8 @@ class EventBus {
   }
 
   /**
-   * Bir olay yayınlar ve tüm aboneleri bilgilendirir.
+   * [3.1] publish - Bir olay yayınlar ve tüm aboneleri bilgilendirir.
+   * Kategori: [3] Yayınlama
    * @param {string} event - Yayınlanacak olayın adı.
    * @param {*} [data] - Abonelere gönderilecek veri.
    */
@@ -56,7 +75,8 @@ class EventBus {
   }
 
   /**
-   * Tüm abonelikleri temizler.
+   * [4.1] clear - Tüm abonelikleri temizler.
+   * Kategori: [4] Temizlik
    * @param {string} [event] - Belirtilirse sadece o olayın abonelerini,
    * belirtilmezse tüm aboneleri temizler.
    */
@@ -70,4 +90,8 @@ class EventBus {
 }
 
 // Uygulama genelinde tek bir örnek (singleton) olarak ihraç edilir.
+/**
+ * [5.1] eventBus - Singleton örneği.
+ * Kategori: [5] Dışa Aktarım
+ */
 export const eventBus = new EventBus();

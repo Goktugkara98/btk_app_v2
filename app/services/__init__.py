@@ -20,7 +20,6 @@ try:
     from .system_service import SystemService
     from .auth_service import AuthenticationService, auth_service
 except ImportError as e:
-    print(f"Warning: Could not import some service classes: {e}")
     UserService = None
     QuizService = None
     SystemService = None

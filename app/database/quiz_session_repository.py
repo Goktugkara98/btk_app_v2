@@ -81,8 +81,6 @@ class QuizSessionRepository:
                 return True, session_db_id
                 
         except Exception as e:
-            # Keep only critical error
-            print(f"❌ Quiz session oluşturma hatası: {e}")
             return False, None
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:

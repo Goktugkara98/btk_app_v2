@@ -282,6 +282,7 @@ def send_chat_message():
         chat_session_id = data['chat_session_id']
         question_id = data.get('question_id')
         question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
+        debug = bool(data.get('debug'))
         
         # Mesaj validasyonu
         is_valid, error_msg = chat_message_service.validate_message(message)
@@ -326,8 +327,6 @@ SORU İÇERİĞİ:
             
             context_message += f"\nKULLANICI MESAJI: {sanitized_message}"
             
-            print(f"[AI_CHAT_V2] First message with question context: {context_message}")
-            
             prompt = chat_session_service.build_prompt(chat_session_id, context_message, 'general')
         else:
             # Normal prompt oluştur
@@ -363,14 +362,19 @@ SORU İÇERİĞİ:
             metadata=ai_metadata
         )
         
-        return jsonify({
+        response_payload = {
             'status': 'success',
             'message': 'Chat message processed successfully',
             'data': {
                 'ai_response': formatted_response,
                 'chat_session_id': chat_session_id
             }
-        }), 200
+        }
+        if debug:
+            response_payload['data']['debug'] = {
+                'prompt_used': prompt
+            }
+        return jsonify(response_payload), 200
         
     except Exception as e:
         error_msg = chat_message_service.get_error_message('general_error') if chat_message_service else 'System error'
@@ -410,6 +414,7 @@ def quick_action():
         chat_session_id = data['chat_session_id']
         question_id = data['question_id']
         question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
+        debug = bool(data.get('debug'))
         
         # Chat session kontrol
         session_info = chat_session_service.get_session(chat_session_id)
@@ -481,7 +486,7 @@ def quick_action():
         ai_metadata = chat_message_service.create_message_metadata('ai', action=action, question_id=question_id)
         chat_session_service.add_message(chat_session_id, 'ai', formatted_response, ai_metadata)
         
-        return jsonify({
+        quick_response = {
             'status': 'success',
             'message': f'Quick action {action} processed successfully',
             'data': {
@@ -490,7 +495,12 @@ def quick_action():
                 'question_id': question_id,
                 'chat_session_id': chat_session_id
             }
-        }), 200
+        }
+        if debug:
+            quick_response['data']['debug'] = {
+                'prompt_used': full_prompt
+            }
+        return jsonify(quick_response), 200
         
     except Exception as e:
         error_msg = chat_message_service.get_error_message('general_error') if chat_message_service else 'System error'

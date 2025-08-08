@@ -354,7 +354,7 @@ ON DUPLICATE KEY UPDATE
                         grade_id_map[grade_level] = result['id']
                         
         except Exception as e:
-            print(f"❌ Grade ID map oluşturma hatası: {e}")
+            pass
             
         return grade_id_map
     

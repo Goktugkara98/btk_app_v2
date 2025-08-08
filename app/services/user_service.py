@@ -180,7 +180,6 @@ class UserService:
             }
 
         except Exception as e:
-            print(f"Error in register_user service: {e}")
             return False, {'message': 'Beklenmeyen bir hata oluştu'}
 
     def login_user(self, login_data: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
@@ -237,7 +236,6 @@ class UserService:
             }
 
         except Exception as e:
-            print(f"Error in login_user service: {e}")
             return False, {'message': 'Beklenmeyen bir hata oluştu'}
 
     def get_user_profile(self, user_id: int) -> Optional[Dict[str, Any]]:
@@ -285,14 +283,12 @@ class UserService:
             }
             
         except Exception as e:
-            print(f"Error in get_user_profile service: {e}")
             return None
 
     def update_user_profile(self, user_id: int, profile_data: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
         """
         4.2.6. Kullanıcının profil bilgilerini günceller.
         """
-        print(f"Updating user profile: user_id={user_id}, data={profile_data}")  # Debug log
         try:
             # Form alan adlarını veritabanı alan adlarına eşle
             field_mapping = {
@@ -337,7 +333,6 @@ class UserService:
                 return False, {'message': f'Veritabanı güncelleme hatası: {str(e)}'}
                 
         except Exception as e:
-            print(f"Error in update_user_profile service: {e}")
             return False, {'message': 'Beklenmeyen bir hata oluştu'}
 
     def upload_avatar(self, user_id: int, file) -> Tuple[bool, Dict[str, Any]]:
@@ -374,6 +369,5 @@ class UserService:
                 return False, {'message': 'Avatar güncellenirken bir hata oluştu'}
                 
         except Exception as e:
-            print(f"Error in upload_avatar service: {e}")
             return False, {'message': 'Beklenmeyen bir hata oluştu'}
 

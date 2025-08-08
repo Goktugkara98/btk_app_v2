@@ -3,7 +3,47 @@
  * Educational quiz modunda AI sohbet arayüzünü yönetir
  */
 
+/**
+ * İÇİNDEKİLER (Table of Contents)
+ * - [1] Kurulum
+ *   - [1.1] constructor(eventBus, aiChatService)
+ *   - [1.2] initialize()
+ *   - [1.3] setupEventListeners()
+ *   - [1.4] setupQuickActions()
+ *   - [1.5] setupMainEventListeners()
+ * - [2] Soru ve Oturum
+ *   - [2.1] onQuizLoaded()
+ *   - [2.2] onQuestionRendered(data)
+ *   - [2.3] checkAndLoadChatSession()
+ *   - [2.4] getSessionId()
+ *   - [2.5] initializeChatSession()
+ *   - [2.6] getContextFromState(key)
+ * - [3] Chat Etkileşimleri
+ *   - [3.1] onIncorrectAnswer(data)
+ *   - [3.2] onWrongAnswer(data)
+ * - [4] Servis Durumu
+ *   - [4.1] checkAIServiceStatus()
+ * - [5] UI Yardımcıları
+ *   - [5.1] addMessage(role, text, label)
+ *   - [5.2] showWelcomeMessage()
+ *   - [5.3] showServiceUnavailableMessage()
+ *   - [5.4] hideServiceUnavailableMessage()
+ *   - [5.5] clearChat()
+ *   - [5.6] enableChat()
+ *   - [5.7] disableChat()
+ *   - [5.8] scrollToBottom()
+ *   - [5.9] debugPendingRequests()
+ *   - [5.10] cleanupQuestionState()
+ * - [6] Export
+ */
+
 class AIChatManager {
+    /**
+     * [1.1] constructor - Başlatıcı, bağımlılıkları ve varsayılan durumları ayarlar.
+     * Kategori: [1] Kurulum
+     * @param {EventBus} eventBus
+     * @param {AIChatService} aiChatService
+     */
     constructor(eventBus, aiChatService) {
         this.eventBus = eventBus;
         this.aiChatService = aiChatService;
@@ -15,7 +55,14 @@ class AIChatManager {
         this.requestCounter = 0; // Unique request ID'ler için
         
         // İlk mesaj takibi için yeni özellikler
-        this.firstMessageSent = new Set(); // Her soru için ilk mesaj gönderilip gönderilmediğini takip eder
+        this.firstMessageSent = new Set(); // DEPRECATED: geriye dönük uyumluluk için tutuluyor
+        this.firstInteractionSent = new Set(); // Her soru için ilk etkileşim (kullanıcı veya hızlı eylem)
+        this.firstUserMessageSent = new Set(); // Her soru için ilk kullanıcı mesajı gönderildi mi
+        
+        // Aşırı mesajı engellemek için ek kontrol yapıları
+        this.cooldowns = new Map(); // questionId -> lastSentTimestamp
+        this.COOLDOWN_MS = 4000; // aynı soru için 4 sn cooldown
+        this.lastMessageByQuestion = new Map(); // questionId -> lastMessageText
         
         // UI elementleri
         this.chatContainer = document.getElementById('ai-chat-container');
@@ -24,7 +71,6 @@ class AIChatManager {
         this.sendButton = document.getElementById('ai-send-button');
         this.quickActionButtons = document.querySelectorAll('.quick-action-btn');
         
-        console.log('[AIChatManager] Constructor initialized');
         this.initialize();
     }
 
@@ -32,7 +78,6 @@ class AIChatManager {
      * AI Chat Manager'ı başlatır
      */
     initialize() {
-        console.log('[AIChatManager] Initializing...');
         this.setupEventListeners();
         this.setupQuickActions();
         
@@ -47,36 +92,25 @@ class AIChatManager {
         
         // Ana event listener'ları ayarla
         this.setupMainEventListeners();
-        console.log('[AIChatManager] Initialization completed');
     }
     
     /**
      * Ana event listener'ları ayarlar
      */
     setupMainEventListeners() {
-        console.log('[AIChatManager] Setting up main event listeners');
         
         // Quiz yüklendiğinde
         this.eventBus.subscribe('quiz:questionsLoaded', () => {
-            console.log('[AIChatManager] Quiz loaded event received');
             this.onQuizLoaded();
         });
         
         // Soru render edildiğinde (her soru değişikliğinde)
         this.eventBus.subscribe('question:rendered', (data) => {
-            console.log('[AIChatManager] Question rendered event received:', data);
             this.onQuestionRendered(data);
-        });
-        
-        // Yanlış cevap verildiğinde (eski event)
-        this.eventBus.subscribe('answer:incorrect', (data) => {
-            console.log('[AIChatManager] Incorrect answer event received:', data);
-            this.onIncorrectAnswer(data);
         });
         
         // Yanlış cevap verildiğinde (yeni event)
         this.eventBus.subscribe('answer:wrong', (data) => {
-            console.log('[AIChatManager] Wrong answer event received:', data);
             this.onWrongAnswer(data);
         });
     }
@@ -85,16 +119,13 @@ class AIChatManager {
      * Quiz yüklendiğinde çağrılır
      */
     onQuizLoaded() {
-        console.log('[AIChatManager] onQuizLoaded called');
         
         // İlk soru ID'sini al
         if (window.quizApp && window.quizApp.stateManager) {
             const state = window.quizApp.stateManager.getState();
-            console.log('[AIChatManager] StateManager state:', state);
             
             if (state && state.questions && state.questions.length > 0) {
                 this.currentQuestionId = state.questions[0].question.id;
-                console.log('[AIChatManager] First question ID set:', this.currentQuestionId);
             }
         }
     }
@@ -103,44 +134,34 @@ class AIChatManager {
      * Soru render edildiğinde çağrılır (her soru değişikliğinde)
      */
     async onQuestionRendered(data) {
-        console.log('[AIChatManager] onQuestionRendered called with data:', data);
         
         // StateManager'dan current question ID'yi al
         let newQuestionId = null;
         if (window.quizApp && window.quizApp.stateManager) {
             const state = window.quizApp.stateManager.getState();
-            console.log('[AIChatManager] Current state:', state);
             
             if (state && state.currentQuestion && state.currentQuestion.question) {
                 newQuestionId = state.currentQuestion.question.id;
-                console.log('[AIChatManager] Question ID from StateManager:', newQuestionId);
             }
         }
         
         // Eğer StateManager'dan alamadıysak, event data'dan al
         if (!newQuestionId) {
             newQuestionId = data.questionId || data.question?.id || data.id;
-            console.log('[AIChatManager] Question ID from event data:', newQuestionId);
         }
         
         // Eğer aynı soru için tekrar çağrılıyorsa, işlem yapma
         if (this.currentQuestionId === newQuestionId) {
-            console.log('[AIChatManager] Same question detected, skipping chat session check');
             return;
         }
         
         // Önceki soru için bekleyen request'leri temizle
         if (this.currentQuestionId && this.pendingRequests.has(this.currentQuestionId)) {
-            console.log('[AIChatManager] Clearing pending requests for previous question:', this.currentQuestionId);
             this.pendingRequests.delete(this.currentQuestionId);
         }
         
         // Yeni soru ID'sini güncelle
         this.currentQuestionId = newQuestionId;
-        console.log('[AIChatManager] Final question ID:', this.currentQuestionId);
-        
-        // Debug: Pending requests durumunu göster
-        this.debugPendingRequests();
         
         // Bu soru için chat session'ı kontrol et ve gerekirse yükle
         await this.checkAndLoadChatSession();
@@ -150,7 +171,6 @@ class AIChatManager {
      * Bu soru için chat session'ı kontrol eder ve gerekirse yükler
      */
     async checkAndLoadChatSession() {
-        console.log('[AIChatManager] checkAndLoadChatSession called for questionId:', this.currentQuestionId);
         
         if (!this.sessionId || !this.currentQuestionId) {
             console.warn('[AIChatManager] Cannot check chat session - missing sessionId or questionId');
@@ -160,31 +180,41 @@ class AIChatManager {
         try {
             // Bu soru için chat history'yi kontrol et
             const response = await this.aiChatService.getChatHistory(this.currentQuestionId);
-            console.log('[AIChatManager] Chat history check response:', response);
             
             if (response.success && response.messages && response.messages.length > 0) {
-                console.log('[AIChatManager] Chat history found, loading messages:', response.messages.length);
-                
+
                 // Chat'i temizle
                 this.clearChat();
-                
-                // Mesajları yükle
-                response.messages.forEach(msg => {
+
+                // Sadece kullanıcı/AI mesajlarını UI'da göster (system mesajlarını gizle)
+                const filtered = response.messages.filter(m => m.role === 'user' || m.role === 'ai');
+                filtered.forEach(msg => {
                     this.addMessage(msg.role, msg.content, msg.label);
                 });
-                
-                // Bu soru için ilk mesaj gönderilmiş olarak işaretle
-                this.firstMessageSent.add(this.currentQuestionId);
-                
-                console.log('[AIChatManager] Chat history loaded successfully');
+                if (filtered.length === 0) {
+                    // Yalnızca system mesajları varsa hoş geldin mesajını göster
+                    this.showWelcomeMessage();
+                }
+
+                // Bayrakları güncelle
+                const hasUser = filtered.some(m => m.role === 'user');
+                const hasAI = filtered.some(m => m.role === 'ai');
+                if (hasUser || hasAI) this.firstInteractionSent.add(this.currentQuestionId);
+                if (hasUser) {
+                    this.firstUserMessageSent.add(this.currentQuestionId);
+                    // Geriye dönük uyumluluk için
+                    this.firstMessageSent.add(this.currentQuestionId);
+                }
+
             } else {
-                console.log('[AIChatManager] No chat history found, showing welcome message');
                 
                 // Chat'i temizle
                 this.clearChat();
                 
                 // Bu soru için ilk mesaj gönderilmemiş olarak işaretle
                 this.firstMessageSent.delete(this.currentQuestionId);
+                this.firstInteractionSent.delete(this.currentQuestionId);
+                this.firstUserMessageSent.delete(this.currentQuestionId);
                 
                 // Karşılama mesajını göster
                 this.showWelcomeMessage();
@@ -202,13 +232,26 @@ class AIChatManager {
      * Yanlış cevap verildiğinde çağrılır (eski event)
      */
     async onIncorrectAnswer(data) {
-        console.log('[AIChatManager] onIncorrectAnswer called with data:', data);
         
         // Chat session'ı başlat (eğer başlatılmamışsa)
         await this.initializeChatSession();
         
         // Yanlış cevap bilgisini AI'ya gönder
-        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${data.userAnswer}, Doğru cevap: ${data.correctAnswer}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
+        // Kullanıcı ve doğru cevap ID'lerini seçenek metinlerine çevir
+        let userAnswerText = data.userAnswer;
+        let correctAnswerText = data.correctAnswer?.id || data.correctAnswer;
+        try {
+            const qData = this.aiChatService?.getCurrentQuestionData?.();
+            const options = qData?.options || [];
+            const userOpt = options.find(o => String(o.id) === String(data.userAnswer));
+            if (userOpt) userAnswerText = `${userOpt.option_text} (id:${userOpt.id})`;
+            const correctId = (data.correctAnswer && typeof data.correctAnswer === 'object') ? data.correctAnswer.id : data.correctAnswer;
+            const correctOpt = options.find(o => String(o.id) === String(correctId));
+            if (correctOpt) correctAnswerText = `${correctOpt.option_text} (id:${correctOpt.id})`;
+        } catch (e) {
+            console.warn('[AIChatManager] Could not map answer IDs to texts (incorrect):', e);
+        }
+        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${userAnswerText}, Doğru cevap: ${correctAnswerText}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
         
         try {
             // AI'dan yanıt al
@@ -217,7 +260,7 @@ class AIChatManager {
             if (response.success) {
                 this.addMessage('ai', response.message);
             } else {
-                this.addMessage('system', 'Yanlış cevap analizi yapılamadı.');
+                this.addMessage('system', `Üzgünüm, bir hata oluştu: ${response.error || 'Bilinmeyen hata'}`);
             }
         } catch (error) {
             console.error('[AIChatManager] Error in incorrect answer handling:', error);
@@ -226,25 +269,78 @@ class AIChatManager {
     }
 
     /**
-     * Yanlış cevap verildiğinde çağrılır (yeni event)
+     * [3.2] onWrongAnswer - Yanlış cevap verildiğinde tetiklenen otomatik analiz.
+     * Kategori: [3] Chat Etkileşimleri
+     * @param {Object} data
+     * @param {string|number} data.questionId
+     * @param {string|number} data.userAnswer
+     * @param {string|number|Object} data.correctAnswer
      */
     async onWrongAnswer(data) {
-        console.log('[AIChatManager] onWrongAnswer called with data:', data);
         
         // Chat session'ı başlat (eğer başlatılmamışsa)
         await this.initializeChatSession();
         
-        // Yanlış cevap bilgisini AI'ya gönder
-        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${data.userAnswer}, Doğru cevap: ${data.correctAnswer?.id || data.correctAnswer}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
+        // Yanlış cevap bilgisini AI'ya gönder - ID'leri metinlere çevir
+        let userAnswerText2 = data.userAnswer;
+        let correctAnswerText2 = data.correctAnswer?.id || data.correctAnswer;
+        try {
+            const qData = this.aiChatService?.getCurrentQuestionData?.();
+            const options = qData?.options || [];
+            const userOpt = options.find(o => String(o.id) === String(data.userAnswer));
+            if (userOpt) userAnswerText2 = `${userOpt.option_text} (id:${userOpt.id})`;
+            const correctId = (data.correctAnswer && typeof data.correctAnswer === 'object') ? data.correctAnswer.id : data.correctAnswer;
+            const correctOpt = options.find(o => String(o.id) === String(correctId));
+            if (correctOpt) correctAnswerText2 = `${correctOpt.option_text} (id:${correctOpt.id})`;
+        } catch (e) {
+            console.warn('[AIChatManager] Could not map answer IDs to texts (wrong):', e);
+        }
+        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${userAnswerText2}, Doğru cevap: ${correctAnswerText2}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
+
+        // Anti-spam: aynı soru için birden fazla otomatik analiz gönderimini engelle
+        const qId = data.questionId || this.currentQuestionId;
+        if (!qId) {
+            console.warn('[AIChatManager] Missing questionId for wrong answer event');
+            return;
+        }
+        // Eğer bu soru için zaten ilk etkileşim gönderildiyse, tekrar otomatik gönderme
+        if (this.firstInteractionSent.has(qId)) {
+            console.warn('[AIChatManager] Skipping auto-analysis: already sent for question', qId);
+            return;
+        }
+        // Cooldown kontrolü
+        const now = Date.now();
+        const lastSent = this.cooldowns.get(qId) || 0;
+        if (now - lastSent < this.COOLDOWN_MS) {
+            console.warn('[AIChatManager] Skipping due to cooldown for question', qId);
+            return;
+        }
+        // Aynı içeriği üst üste göndermeyi engelle
+        const lastMsg = this.lastMessageByQuestion.get(qId);
+        if (lastMsg && lastMsg === message) {
+            console.warn('[AIChatManager] Skipping duplicate message for question', qId);
+            return;
+        }
+        // Aynı soru için bekleyen istek varsa yeni istek başlatma
+        if (this.pendingRequests.has(qId)) {
+            console.warn('[AIChatManager] Skipping: request already pending for question', qId);
+            return;
+        }
+        this.pendingRequests.set(qId, ++this.requestCounter);
+        this.lastMessageByQuestion.set(qId, message);
         
         try {
             // AI'ya mesaj gönder
-            const response = await this.aiChatService.sendMessage(message, this.currentQuestionId);
+            // İlk etkileşimde soru bağlamını (question_context) ekle
+            const isFirstForInteraction = !this.firstInteractionSent.has(qId);
+            const response = await this.aiChatService.sendChatMessage(message, this.currentQuestionId, isFirstForInteraction);
             
             if (response.success) {
-                console.log('[AIChatManager] Wrong answer message sent successfully');
                 // AI yanıtını chat'e ekle
                 this.addMessage('ai', response.message || 'Yanlış cevabınızı analiz ediyorum...');
+                // Bu soru için ilk etkileşimi gönderilmiş say ve cooldown başlat
+                this.firstInteractionSent.add(qId);
+                this.cooldowns.set(qId, Date.now());
             } else {
                 console.error('[AIChatManager] Failed to send wrong answer message:', response.error);
                 this.addMessage('error', 'Yanlış cevap analizi başlatılamadı.');
@@ -252,6 +348,9 @@ class AIChatManager {
         } catch (error) {
             console.error('[AIChatManager] Error sending wrong answer message:', error);
             this.addMessage('error', 'Yanlış cevap bilgisi gönderilirken bir hata oluştu.');
+        } finally {
+            // Pending state'i temizle
+            this.pendingRequests.delete(qId);
         }
     }
     
@@ -259,12 +358,10 @@ class AIChatManager {
      * Session ID'yi window veya StateManager'dan alır
      */
     getSessionId() {
-        console.log('[AIChatManager] getSessionId called');
         
         // Önce window.QUIZ_CONFIG'den dene
         if (window.QUIZ_CONFIG && window.QUIZ_CONFIG.sessionId) {
             this.sessionId = window.QUIZ_CONFIG.sessionId;
-            console.log('[AIChatManager] Session ID from QUIZ_CONFIG:', this.sessionId);
             return;
         }
         
@@ -273,7 +370,6 @@ class AIChatManager {
             const state = window.quizApp.stateManager.getState();
             if (state && state.sessionId) {
                 this.sessionId = state.sessionId;
-                console.log('[AIChatManager] Session ID from StateManager:', this.sessionId);
                 return;
             }
         }
@@ -285,8 +381,6 @@ class AIChatManager {
      * Chat session'ını başlatır
      */
     async initializeChatSession() {
-        console.log('[AIChatManager] initializeChatSession called');
-        console.log('[AIChatManager] Parameters - sessionId:', this.sessionId, 'questionId:', this.currentQuestionId, 'serviceEnabled:', this.aiChatService.isServiceEnabled());
         
         if (!this.sessionId || !this.currentQuestionId || !this.aiChatService.isServiceEnabled()) {
             console.warn('[AIChatManager] Cannot initialize chat session - missing sessionId, questionId or service disabled');
@@ -301,13 +395,10 @@ class AIChatManager {
                 difficulty: this.getContextFromState('difficulty') || 'kolay'
             };
 
-            console.log('[AIChatManager] Starting chat session with context:', context);
             const result = await this.aiChatService.startChatSession(this.sessionId, this.currentQuestionId, context);
-            console.log('[AIChatManager] Chat session start result:', result);
             
             if (result.success) {
                 this.enableChat();
-                console.log('[AIChatManager] Chat session initialized successfully');
             } else {
                 this.disableChat();
                 console.error('[AIChatManager] Failed to initialize chat session:', result.error);
@@ -333,7 +424,6 @@ class AIChatManager {
      * AI servisinin durumunu kontrol eder ve UI'yı günceller
      */
     async checkAIServiceStatus() {
-        console.log('[AIChatManager] checkAIServiceStatus called');
         
         try {
             // AI service'in status check'ini bekle
@@ -343,14 +433,11 @@ class AIChatManager {
             await this.aiChatService.checkServiceStatus();
             const isEnabled = this.aiChatService.isServiceEnabled();
             
-            console.log('[AIChatManager] AI Service status:', isEnabled);
-            
             if (!isEnabled) {
                 console.warn('[AIChatManager] AI Chat Service is not available');
                 this.showServiceUnavailableMessage();
                 this.disableChat();
             } else {
-                console.log('[AIChatManager] AI Chat Service is available');
                 this.hideServiceUnavailableMessage();
                 this.enableChat();
             }
@@ -365,7 +452,6 @@ class AIChatManager {
      * Chat'i aktif hale getirir
      */
     enableChat() {
-        console.log('[AIChatManager] enableChat called');
         
         if (this.inputField) {
             this.inputField.disabled = false;
@@ -387,7 +473,6 @@ class AIChatManager {
      * Chat'i deaktif hale getirir
      */
     disableChat() {
-        console.log('[AIChatManager] disableChat called');
         
         if (this.inputField) {
             this.inputField.disabled = true;
@@ -439,7 +524,6 @@ class AIChatManager {
      * Event listener'ları ayarlar
      */
     setupEventListeners() {
-        console.log('[AIChatManager] setupEventListeners called');
         
         // Send butonu
         this.sendButton?.addEventListener('click', () => {
@@ -464,7 +548,6 @@ class AIChatManager {
      * Hızlı eylem butonlarını ayarlar
      */
     setupQuickActions() {
-        console.log('[AIChatManager] setupQuickActions called');
         
         this.quickActionButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -478,7 +561,6 @@ class AIChatManager {
      * Hoş geldin mesajını gösterir
      */
     showWelcomeMessage() {
-        console.log('[AIChatManager] showWelcomeMessage called');
         
         if (this.aiChatService.isServiceEnabled()) {
             this.addMessage('ai', 'Merhaba! Ben Daima, senin AI öğretmenin! Sorularınla ilgili yardıma ihtiyacın var mı? 🤖✨');
@@ -491,7 +573,6 @@ class AIChatManager {
      * Mesaj gönderir
      */
     async sendMessage() {
-        console.log('[AIChatManager] sendMessage called');
         
         const message = this.inputField?.value?.trim();
         
@@ -518,18 +599,14 @@ class AIChatManager {
         const requestId = ++this.requestCounter;
         this.pendingRequests.set(this.currentQuestionId, requestId);
         
-        console.log('[AIChatManager] Created request ID:', requestId, 'for question:', this.currentQuestionId);
-        console.log('[AIChatManager] Current pending requests:', Array.from(this.pendingRequests.entries()));
-        
         // Debug: Pending requests durumunu göster
-        this.debugPendingRequests();
+        // this.debugPendingRequests(); // no-op in production
         
         // Loading durumu göster
         this.showTyping();
         
-        // İlk mesaj kontrolü
-        const isFirstMessage = !this.firstMessageSent.has(this.currentQuestionId);
-        console.log('[AIChatManager] Is first message for this question:', isFirstMessage);
+        // İlk kullanıcı mesajı kontrolü (hızlı eylemlerden bağımsız)
+        const isFirstMessage = !this.firstUserMessageSent.has(this.currentQuestionId);
         
         try {
             // AI'dan yanıt al
@@ -544,19 +621,18 @@ class AIChatManager {
             // Request'in hala geçerli olup olmadığını kontrol et
             const currentRequestId = this.pendingRequests.get(this.currentQuestionId);
             if (currentRequestId !== requestId) {
-                console.log('[AIChatManager] Request outdated. Current:', currentRequestId, 'Response for:', requestId);
-                console.log('[AIChatManager] Ignoring response for outdated request');
                 return; // Bu request artık geçerli değil, cevabı gösterme
             }
             
             // Request'i temizle
             this.pendingRequests.delete(this.currentQuestionId);
-            console.log('[AIChatManager] Request completed and cleared for question:', this.currentQuestionId);
             
-            // İlk mesaj başarıyla gönderildiyse işaretle
+            // İlk kullanıcı mesajı başarıyla gönderildiyse işaretle
             if (isFirstMessage) {
+                this.firstUserMessageSent.add(this.currentQuestionId);
+                this.firstInteractionSent.add(this.currentQuestionId);
+                // Geriye dönük uyumluluk için
                 this.firstMessageSent.add(this.currentQuestionId);
-                console.log('[AIChatManager] First message sent for question:', this.currentQuestionId);
             }
             
             // AI cevabını göster
@@ -570,7 +646,6 @@ class AIChatManager {
             
             // Request'i temizle
             this.pendingRequests.delete(this.currentQuestionId);
-            console.log('[AIChatManager] Request failed and cleared for question:', this.currentQuestionId);
             
             this.addMessage('system', 'Bağlantı hatası. Lütfen tekrar deneyin. 😞');
         }
@@ -580,7 +655,6 @@ class AIChatManager {
      * Hızlı eylem işler
      */
     async handleQuickAction(action) {
-        console.log('[AIChatManager] handleQuickAction called with action:', action);
         
         if (!this.sessionId || !this.currentQuestionId) {
             this.addMessage('system', 'Önce bir soru yüklenmeli. 🤨');
@@ -593,16 +667,12 @@ class AIChatManager {
         // Bu soru için unique request ID oluştur
         const requestId = ++this.requestCounter;
         this.pendingRequests.set(this.currentQuestionId, requestId);
-        
-        console.log('[AIChatManager] Created quick action request ID:', requestId, 'for question:', this.currentQuestionId);
-        console.log('[AIChatManager] Current pending requests:', Array.from(this.pendingRequests.entries()));
 
         // Loading durumu göster
         this.showTyping();
         
-        // İlk mesaj kontrolü (hızlı eylemler de ilk mesaj sayılabilir)
-        const isFirstMessage = !this.firstMessageSent.has(this.currentQuestionId);
-        console.log('[AIChatManager] Is first message for quick action:', isFirstMessage);
+        // İlk etkileşim kontrolü (hızlı eylemler için)
+        const isFirstMessage = !this.firstInteractionSent.has(this.currentQuestionId);
         
         try {
             const response = await this.aiChatService.sendQuickAction(action, this.currentQuestionId, isFirstMessage);
@@ -612,19 +682,15 @@ class AIChatManager {
             // Request'in hala geçerli olup olmadığını kontrol et
             const currentRequestId = this.pendingRequests.get(this.currentQuestionId);
             if (currentRequestId !== requestId) {
-                console.log('[AIChatManager] Quick action request outdated. Current:', currentRequestId, 'Response for:', requestId);
-                console.log('[AIChatManager] Ignoring response for outdated quick action request');
                 return; // Bu request artık geçerli değil, cevabı gösterme
             }
             
             // Request'i temizle
             this.pendingRequests.delete(this.currentQuestionId);
-            console.log('[AIChatManager] Quick action request completed and cleared for question:', this.currentQuestionId);
             
-            // İlk mesaj başarıyla gönderildiyse işaretle
+            // İlk etkileşim başarıyla gönderildiyse işaretle
             if (isFirstMessage) {
-                this.firstMessageSent.add(this.currentQuestionId);
-                console.log('[AIChatManager] First message sent for quick action on question:', this.currentQuestionId);
+                this.firstInteractionSent.add(this.currentQuestionId);
             }
             
             // AI cevabını göster
@@ -639,7 +705,6 @@ class AIChatManager {
             
             // Request'i temizle
             this.pendingRequests.delete(this.currentQuestionId);
-            console.log('[AIChatManager] Quick action request failed and cleared for question:', this.currentQuestionId);
             
             this.addMessage('system', 'Bağlantı hatası. Lütfen tekrar deneyin. 😞');
         }
@@ -649,6 +714,7 @@ class AIChatManager {
      * Mesaj ekler
      */
     addMessage(type, content, label = null) {
+        
         if (!this.messagesContainer) return;
         
         const messageDiv = document.createElement('div');
@@ -702,6 +768,7 @@ class AIChatManager {
      * Typewriter efekti ile metni yazar
      */
     typewriterEffect(element, text, speed = 15) {
+        
         // Metni HTML etiketlerine göre parçalara böl
         const parts = text.split(/(<br>|<strong>|<\/strong>|<em>|<\/em>)/);
         let currentIndex = 0;
@@ -789,7 +856,6 @@ class AIChatManager {
      * Chat'i temizler
      */
     clearChat() {
-        console.log('[AIChatManager] clearChat called');
         
         if (this.messagesContainer) {
             this.messagesContainer.innerHTML = '';
@@ -797,7 +863,6 @@ class AIChatManager {
         
         // Bekleyen request'leri de temizle
         if (this.currentQuestionId && this.pendingRequests.has(this.currentQuestionId)) {
-            console.log('[AIChatManager] Clearing pending requests during chat clear for question:', this.currentQuestionId);
             this.pendingRequests.delete(this.currentQuestionId);
         }
     }
@@ -818,12 +883,7 @@ class AIChatManager {
      * Debug: Pending requests durumunu gösterir
      */
     debugPendingRequests() {
-        console.log('[AIChatManager] === PENDING REQUESTS DEBUG ===');
-        console.log('[AIChatManager] Current question ID:', this.currentQuestionId);
-        console.log('[AIChatManager] Pending requests:', Array.from(this.pendingRequests.entries()));
-        console.log('[AIChatManager] Request counter:', this.requestCounter);
-        console.log('[AIChatManager] First message sent for questions:', Array.from(this.firstMessageSent));
-        console.log('[AIChatManager] ================================');
+        // no-op in production
     }
 }
 

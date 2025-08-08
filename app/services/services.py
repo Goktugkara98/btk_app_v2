@@ -26,21 +26,18 @@ from typing import Dict, Any, Optional
 try:
     from .user_service import UserService
 except ImportError as e:
-    print(f"Warning: Could not import UserService: {e}")
     UserService = None
 
 # Quiz Service
 try:
     from .quiz_service import QuizService
 except ImportError as e:
-    print(f"Warning: Could not import QuizService: {e}")
     QuizService = None
 
 # System Service
 try:
     from .system_service import SystemService
 except ImportError as e:
-    print(f"Warning: Could not import SystemService: {e}")
     SystemService = None
 
 # =============================================================================

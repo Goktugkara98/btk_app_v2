@@ -150,13 +150,19 @@ class ChatSessionService:
         
         # Son birkaç mesajı veritabanından al (token limitini aşmamak için sadece son 2 mesaj)
         if self.chat_repo:
-            recent_messages = self.chat_repo.get_conversation_history(chat_session_id, limit=3)
+            # Biraz daha geniş alıp (örn. 6) sadece user/ai mesajlarını filtreleyelim
+            recent_messages = self.chat_repo.get_conversation_history(chat_session_id, limit=6)
             if recent_messages:
-                context_parts.append("\nSon sohbet:")
-                for msg in recent_messages[-2:]:  # Son 2 mesaj (token limitini aşmamak için)
-                    # Mesaj içeriğini kısalt (maksimum 200 karakter)
-                    content = msg['content'][:200] + "..." if len(msg['content']) > 200 else msg['content']
-                    context_parts.append(f"{msg['role']}: {content}")
+                # Sistem mesajlarını çıkar, sadece kullanıcı ve AI mesajlarını tut
+                non_system = [m for m in recent_messages if m.get('role') in ('user', 'ai')]
+                last_dialog = non_system[-2:] if len(non_system) > 0 else []
+                if last_dialog:
+                    context_parts.append("\nSon sohbet:")
+                    for msg in last_dialog:
+                        # Mesaj içeriğini kısalt (maksimum 200 karakter)
+                        content = msg['content'][:200] + "..." if len(msg['content']) > 200 else msg['content']
+                        role_label = 'Kullanıcı' if msg.get('role') == 'user' else 'AI'
+                        context_parts.append(f"{role_label}: {content}")
         
         return "\n\n".join(context_parts)
     

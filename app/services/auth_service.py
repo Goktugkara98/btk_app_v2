@@ -130,7 +130,6 @@ class AuthenticationService:
             session['is_admin'] = user_data.get('is_admin', False)
             return True
         except Exception as e:
-            print(f"Error in login_user: {e}")
             return False
     
     def logout_user(self) -> bool:
@@ -144,7 +143,6 @@ class AuthenticationService:
             session.clear()
             return True
         except Exception as e:
-            print(f"Error in logout_user: {e}")
             return False
     
     def validate_session(self) -> bool:

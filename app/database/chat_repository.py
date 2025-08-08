@@ -59,7 +59,6 @@ class ChatRepository:
                 
         except Exception as e:
             # Keep only critical error
-            print(f"❌ Error creating chat session: {e}")
             raise
     
     def get_chat_session_by_question(self, question_id: int) -> Optional[Dict[str, Any]]:
