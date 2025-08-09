@@ -282,6 +282,8 @@ def send_chat_message():
         chat_session_id = data['chat_session_id']
         question_id = data.get('question_id')
         question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
+        is_first_message = bool(data.get('is_first_message', False))
+        scenario_type = data.get('scenario_type', 'direct')
         debug = bool(data.get('debug'))
         
         # Mesaj validasyonu
@@ -313,27 +315,20 @@ def send_chat_message():
             action_type='general', metadata=user_metadata
         )
         
-        # AI için prompt oluştur - question_context varsa ekle
-        if question_context:
-            # Soru ve şıkların içeriğini prompt'a ekle
-            context_message = f"""
-SORU İÇERİĞİ:
-{question_context.get('question_text', 'Soru metni bulunamadı')}
-
-ŞIKLAR:
-"""
-            for i, option in enumerate(question_context.get('options', []), 1):
-                context_message += f"{i}. {option.get('option_text', 'Şık metni bulunamadı')}\n"
-            
-            context_message += f"\nKULLANICI MESAJI: {sanitized_message}"
-            
-            prompt = chat_session_service.build_prompt(chat_session_id, context_message, 'general')
-        else:
-            # Normal prompt oluştur
-            prompt = chat_session_service.build_prompt(chat_session_id, sanitized_message, 'general')
-        
-        # Token sınırı uyarısını prompt'un sonuna ekle
-        prompt += "\n\nÖNEMLİ: Cevabında 5000 token geçmemeye çalış. Kısa ve öz cevaplar ver."
+        # AI için prompt oluştur - senaryoya göre (yalnız dosya bazlı şablonlar aktif)
+        prompt = chat_session_service.build_prompt_scenario(
+            chat_session_id=chat_session_id,
+            user_message=sanitized_message,
+            scenario_type=scenario_type,
+            is_first_message=is_first_message,
+            question_context=question_context,
+            files_only=True,
+        )
+        if not prompt or not str(prompt).strip():
+            return jsonify({
+                'status': 'error',
+                'message': 'Scenario template not found or empty'
+            }), 500
         
         # AI'dan yanıt al
         ai_response = gemini_service.generate_content(prompt)
@@ -386,7 +381,7 @@ SORU İÇERİĞİ:
 
 @ai_chat_v2_bp.route('/ai/chat/quick-action', methods=['POST'])
 def quick_action():
-    """Hızlı eylemler (açıkla, ipucu)"""
+    """Hızlı eylemler (dosya bazlı şablonlarla)"""
     try:
         if not all([gemini_service, chat_session_service, chat_message_service]):
             return jsonify({
@@ -414,6 +409,8 @@ def quick_action():
         chat_session_id = data['chat_session_id']
         question_id = data['question_id']
         question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
+        is_first_message = bool(data.get('is_first_message', False))
+        scenario_type = data.get('scenario_type', 'quick_action')
         debug = bool(data.get('debug'))
         
         # Chat session kontrol
@@ -455,19 +452,21 @@ def quick_action():
                 'message': 'Quiz service not available'
             }), 503
         
-        # Quick action prompt oluştur
-        prompt = chat_message_service.create_quick_action_prompt(action, question_data)
-        if not prompt:
+        # Senaryoya göre tam prompt oluştur (yalnızca dosya bazlı, action klasörü zorunlu)
+        full_prompt = chat_session_service.build_prompt_scenario(
+            chat_session_id=chat_session_id,
+            user_message='',
+            scenario_type='quick_action',
+            is_first_message=is_first_message,
+            question_context=(question_context or question_data),
+            action=action,
+            files_only=True,
+        )
+        if not full_prompt or not full_prompt.strip():
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid action type'
+                'message': 'Invalid action or template not found'
             }), 400
-        
-        # Context ekle
-        full_prompt = chat_session_service.get_conversation_context(chat_session_id, question_id) + "\n\n" + prompt
-        
-        # Token sınırı uyarısını prompt'un sonuna ekle
-        full_prompt += "\n\nÖNEMLİ: Cevabında 20000 token geçmemeye çalış. Kısa ve öz cevaplar ver."
         
         # AI'dan yanıt al
         ai_response = gemini_service.generate_content(full_prompt)
@@ -527,16 +526,42 @@ def cleanup_sessions():
         data = request.get_json() or {}
         max_age_hours = data.get('max_age_hours', 24)
         
-        chat_session_service.cleanup_old_sessions(max_age_hours)
+        deleted = chat_session_service.cleanup_old_sessions(max_age_hours)
         
         return jsonify({
             'status': 'success',
-            'message': 'Session cleanup completed'
+            'message': 'Old sessions cleaned up',
+            'deleted': deleted
         }), 200
         
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': 'Failed to cleanup sessions',
+            'message': 'Cleanup failed',
+            'error': str(e)
+        }), 500
+
+# ===========================================================================
+# CONFIG ROUTES
+# ===========================================================================
+
+@ai_chat_v2_bp.route('/ai/system/reload-scenarios', methods=['POST'])
+def reload_scenarios():
+    """Senaryo JSON konfigürasyonlarını yeniden yükler (hot-reload)."""
+    try:
+        if not chat_session_service:
+            return jsonify({
+                'status': 'error',
+                'message': 'Chat session service not available'
+            }), 503
+        ok = chat_session_service.reload_scenarios()
+        return jsonify({
+            'status': 'success' if ok else 'error',
+            'reloaded': ok
+        }), 200 if ok else 500
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': 'Reload failed',
             'error': str(e)
         }), 500

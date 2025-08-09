@@ -1,0 +1,9 @@
+{
+  "directive": {
+    "default": "Bu bir hızlı eylem isteği. İstenen eyleme uygun, kısa ve net yanıt ver."
+  },
+  "append_tail": false,
+  "vars": {
+    "MODE": "quick"
+  }
+}

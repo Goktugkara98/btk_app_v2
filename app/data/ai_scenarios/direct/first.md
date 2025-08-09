@@ -1,0 +1,7 @@
+{SYSTEM}
+
+{DIRECTIVE}
+
+{QUESTION_BLOCK}
+
+Öğrenci mesajı: {USER_MESSAGE}

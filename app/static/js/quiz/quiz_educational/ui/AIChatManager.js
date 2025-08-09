@@ -1,49 +1,52 @@
 /**
- * AI Chat UI Manager
- * Educational quiz modunda AI sohbet arayüzünü yönetir
+ * =============================================================================
+ * AIChatManager – AI Sohbet Yöneticisi | AI Chat Manager
+ * =============================================================================
+ * Eğitim modunda AI sohbet arayüzünü ve etkileşim akışını yönetir.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Kurulum ve Başlatma | Setup & Initialization
+ *    - constructor() - Servisleri ve UI referanslarını kurar; initialize() çağırır.
+ *    - initialize() - Dinleyicileri kurar, chat'i devre dışı başlatır; servis durumu ve oturumu hazırlar.
+ *    - setupMainEventListeners() - Quiz ve soru olaylarına abone olur (load/render/wrong answer).
+ *    - setupEventListeners() - Giriş alanı, gönder butonu ve klavye dinleyicilerini bağlar.
+ *    - setupQuickActions() - Hızlı eylem butonlarını bağlar ve işleyicileri tanımlar.
+ * 2) Oturum ve Soru Bağlamı | Session & Question Context
+ *    - onQuizLoaded() - İlk soru kimliğini state'ten alır ve hazırlar.
+ *    - onQuestionRendered(data) - Soru değişimini işler; currentQuestionId'yi günceller ve chat'i senkronlar.
+ *    - checkAndLoadChatSession() - Mevcut soru için chat geçmişini yükler ve UI'ı günceller.
+ *    - getSessionId() - sessionId'yi window veya StateManager'dan elde eder.
+ *    - initializeChatSession() - Soru bağlamıyla chat oturumunu başlatır.
+ *    - getContextFromState(key) - State'ten gereken bağlam bilgisini döndürür.
+ * 3) Servis Durumu | Service Status
+ *    - checkAIServiceStatus() - Servis sağlığını kontrol eder; chat'i etkin/devre dışı yapar.
+ *    - enableChat() - Giriş ve butonları etkinleştirir.
+ *    - disableChat() - Giriş ve butonları devre dışı bırakır.
+ *    - showServiceUnavailableMessage() - Servis kullanılamaz uyarısını gösterir.
+ *    - hideServiceUnavailableMessage() - Servis uyarısını gizler.
+ * 4) Chat Etkileşimleri | Chat Interactions
+ *    - onIncorrectAnswer(data) - Eski olay; yanlış cevapta AI'dan analiz ister.
+ *    - onWrongAnswer(data) - Otomatik analiz; anti-spam ve ilk etkileşim kontrolleriyle mesaj gönderir.
+ *    - sendMessage() - Kullanıcı mesajını gönderir, AI yanıtını alıp UI'a ekler.
+ *    - handleQuickAction(action) - Seçilen hızlı eylemi mesaj olarak işler/gönderir.
+ * 5) Yardımcılar | Helpers
+ *    - showWelcomeMessage() - Hoş geldin mesajını gösterir.
+ *    - addMessage(role, text, label) - Mesajı sohbet arayüzüne ekler.
+ *    - typewriterEffect(element, text, speed) - Yazı makinesi efekti uygular.
+ *    - showTyping() - "Yazıyor" göstergesini gösterir.
+ *    - hideTyping() - "Yazıyor" göstergesini gizler.
+ *    - formatMessage(message) - Mesaj metnini güvenli/biçimli hale getirir.
+ *    - autoResizeTextarea() - Girdi alanının yüksekliğini otomatik ayarlar.
+ *    - clearChat() - Sohbet mesajlarını temizler.
+ *    - scrollToBottom() - Mesajlar sonuna kaydırır.
+ *    - debugPendingRequests() - Bekleyen istekleri günlükler.
+ * 6) Dışa Aktarım | Export
+ * =============================================================================
  */
-
-/**
- * İÇİNDEKİLER (Table of Contents)
- * - [1] Kurulum
- *   - [1.1] constructor(eventBus, aiChatService)
- *   - [1.2] initialize()
- *   - [1.3] setupEventListeners()
- *   - [1.4] setupQuickActions()
- *   - [1.5] setupMainEventListeners()
- * - [2] Soru ve Oturum
- *   - [2.1] onQuizLoaded()
- *   - [2.2] onQuestionRendered(data)
- *   - [2.3] checkAndLoadChatSession()
- *   - [2.4] getSessionId()
- *   - [2.5] initializeChatSession()
- *   - [2.6] getContextFromState(key)
- * - [3] Chat Etkileşimleri
- *   - [3.1] onIncorrectAnswer(data)
- *   - [3.2] onWrongAnswer(data)
- * - [4] Servis Durumu
- *   - [4.1] checkAIServiceStatus()
- * - [5] UI Yardımcıları
- *   - [5.1] addMessage(role, text, label)
- *   - [5.2] showWelcomeMessage()
- *   - [5.3] showServiceUnavailableMessage()
- *   - [5.4] hideServiceUnavailableMessage()
- *   - [5.5] clearChat()
- *   - [5.6] enableChat()
- *   - [5.7] disableChat()
- *   - [5.8] scrollToBottom()
- *   - [5.9] debugPendingRequests()
- *   - [5.10] cleanupQuestionState()
- * - [6] Export
- */
-
 class AIChatManager {
-    /**
-     * [1.1] constructor - Başlatıcı, bağımlılıkları ve varsayılan durumları ayarlar.
-     * Kategori: [1] Kurulum
-     * @param {EventBus} eventBus
-     * @param {AIChatService} aiChatService
-     */
+  /* =========================================================================
+   * 1) Kurulum ve Başlatma | Setup & Initialization
+   * ========================================================================= */
     constructor(eventBus, aiChatService) {
         this.eventBus = eventBus;
         this.aiChatService = aiChatService;
@@ -95,7 +98,7 @@ class AIChatManager {
     }
     
     /**
-     * Ana event listener'ları ayarlar
+     * setupMainEventListeners - Ana event listener'ları ayarlar
      */
     setupMainEventListeners() {
         
@@ -115,8 +118,12 @@ class AIChatManager {
         });
     }
     
+  /* =========================================================================
+   * 2) Oturum ve Soru Bağlamı | Session & Question Context
+   * ========================================================================= */
+
     /**
-     * Quiz yüklendiğinde çağrılır
+     * onQuizLoaded - Quiz yüklendiğinde çağrılır
      */
     onQuizLoaded() {
         
@@ -131,7 +138,7 @@ class AIChatManager {
     }
     
     /**
-     * Soru render edildiğinde çağrılır (her soru değişikliğinde)
+     * onQuestionRendered - Soru render edildiğinde çağrılır (her soru değişikliğinde)
      */
     async onQuestionRendered(data) {
         
@@ -168,7 +175,7 @@ class AIChatManager {
     }
     
     /**
-     * Bu soru için chat session'ı kontrol eder ve gerekirse yükler
+     * checkAndLoadChatSession - Bu soru için chat session'ı kontrol eder ve gerekirse yükler
      */
     async checkAndLoadChatSession() {
         
@@ -228,8 +235,12 @@ class AIChatManager {
         }
     }
     
+  /* =========================================================================
+   * 4) Chat Etkileşimleri | Chat Interactions
+   * ========================================================================= */
+
     /**
-     * Yanlış cevap verildiğinde çağrılır (eski event)
+     * onIncorrectAnswer - Yanlış cevap verildiğinde çağrılır (eski event)
      */
     async onIncorrectAnswer(data) {
         
@@ -254,8 +265,15 @@ class AIChatManager {
         const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${userAnswerText}, Doğru cevap: ${correctAnswerText}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
         
         try {
-            // AI'dan yanıt al
-            const response = await this.aiChatService.sendChatMessage(message, this.currentQuestionId);
+            // AI'dan yanıt al (legacy incorrect handler)
+            const qIdLegacy = data.questionId || this.currentQuestionId;
+            const isFirstForInteractionLegacy = !this.firstInteractionSent.has(qIdLegacy);
+            const response = await this.aiChatService.sendChatMessage(
+                message,
+                this.currentQuestionId,
+                isFirstForInteractionLegacy,
+                'wrong_answer'
+            );
             
             if (response.success) {
                 this.addMessage('ai', response.message);
@@ -269,8 +287,7 @@ class AIChatManager {
     }
 
     /**
-     * [3.2] onWrongAnswer - Yanlış cevap verildiğinde tetiklenen otomatik analiz.
-     * Kategori: [3] Chat Etkileşimleri
+     * onWrongAnswer - Yanlış cevap verildiğinde tetiklenen otomatik analiz.
      * @param {Object} data
      * @param {string|number} data.questionId
      * @param {string|number} data.userAnswer
@@ -333,7 +350,12 @@ class AIChatManager {
             // AI'ya mesaj gönder
             // İlk etkileşimde soru bağlamını (question_context) ekle
             const isFirstForInteraction = !this.firstInteractionSent.has(qId);
-            const response = await this.aiChatService.sendChatMessage(message, this.currentQuestionId, isFirstForInteraction);
+            const response = await this.aiChatService.sendChatMessage(
+                message,
+                this.currentQuestionId,
+                isFirstForInteraction,
+                'wrong_answer'
+            );
             
             if (response.success) {
                 // AI yanıtını chat'e ekle
@@ -355,7 +377,7 @@ class AIChatManager {
     }
     
     /**
-     * Session ID'yi window veya StateManager'dan alır
+     * getSessionId - Session ID'yi window veya StateManager'dan alır
      */
     getSessionId() {
         
@@ -378,7 +400,7 @@ class AIChatManager {
     }
     
     /**
-     * Chat session'ını başlatır
+     * initializeChatSession - Chat session'ını başlatır
      */
     async initializeChatSession() {
         
@@ -410,7 +432,7 @@ class AIChatManager {
     }
 
     /**
-     * State'den context bilgisi alır
+     * getContextFromState - State'den context bilgisi alır
      */
     getContextFromState(key) {
         if (window.quizApp && window.quizApp.stateManager) {
@@ -420,8 +442,12 @@ class AIChatManager {
         return '';
     }
     
+  /* =========================================================================
+   * 3) Servis Durumu | Service Status
+   * ========================================================================= */
+
     /**
-     * AI servisinin durumunu kontrol eder ve UI'yı günceller
+     * checkAIServiceStatus - AI servisinin durumunu kontrol eder ve UI'yı günceller
      */
     async checkAIServiceStatus() {
         
@@ -449,7 +475,7 @@ class AIChatManager {
     }
     
     /**
-     * Chat'i aktif hale getirir
+     * enableChat - Chat'i aktif hale getirir
      */
     enableChat() {
         
@@ -470,7 +496,7 @@ class AIChatManager {
     }
     
     /**
-     * Chat'i deaktif hale getirir
+     * disableChat - Chat'i deaktif hale getirir
      */
     disableChat() {
         
@@ -491,7 +517,7 @@ class AIChatManager {
     }
     
     /**
-     * Servis kullanılamıyor mesajını gösterir
+     * showServiceUnavailableMessage - Servis kullanılamıyor mesajını gösterir
      */
     showServiceUnavailableMessage() {
         if (this.chatContainer) {
@@ -509,7 +535,7 @@ class AIChatManager {
     }
     
     /**
-     * Servis kullanılamıyor mesajını gizler
+     * hideServiceUnavailableMessage - Servis kullanılamıyor mesajını gizler
      */
     hideServiceUnavailableMessage() {
         if (this.chatContainer) {
@@ -521,7 +547,7 @@ class AIChatManager {
     }
 
     /**
-     * Event listener'ları ayarlar
+     * setupEventListeners - Event listener'ları ayarlar
      */
     setupEventListeners() {
         
@@ -545,7 +571,7 @@ class AIChatManager {
     }
 
     /**
-     * Hızlı eylem butonlarını ayarlar
+     * setupQuickActions - Hızlı eylem butonlarını ayarlar
      */
     setupQuickActions() {
         
@@ -557,8 +583,12 @@ class AIChatManager {
         });
     }
 
+  /* =========================================================================
+   * 5) Yardımcılar | Helpers
+   * ========================================================================= */
+
     /**
-     * Hoş geldin mesajını gösterir
+     * showWelcomeMessage - Hoş geldin mesajını gösterir
      */
     showWelcomeMessage() {
         
@@ -569,8 +599,12 @@ class AIChatManager {
         }
     }
 
+  /* =========================================================================
+   * 4) Chat Etkileşimleri | Chat Interactions
+   * ========================================================================= */
+
     /**
-     * Mesaj gönderir
+     * sendMessage - Mesaj gönderir
      */
     async sendMessage() {
         
@@ -613,7 +647,8 @@ class AIChatManager {
             const response = await this.aiChatService.sendChatMessage(
                 message, 
                 this.currentQuestionId,
-                isFirstMessage
+                isFirstMessage,
+                'direct'
             );
             
             this.hideTyping();
@@ -652,7 +687,7 @@ class AIChatManager {
     }
 
     /**
-     * Hızlı eylem işler
+     * handleQuickAction - Hızlı eylem işler
      */
     async handleQuickAction(action) {
         
@@ -695,7 +730,7 @@ class AIChatManager {
             
             // AI cevabını göster
             if (response.success && response.message) {
-                const actionText = action === 'explain' ? 'Açıklama' : 'İpucu';
+                const actionText = 'Açıklama';
                 this.addMessage('ai', response.message, actionText);
             } else {
                 this.addMessage('system', `Üzgünüm, ${action} alınamadı: ${response.error || 'Bilinmeyen hata'}`);
@@ -710,8 +745,12 @@ class AIChatManager {
         }
     }
 
+  /* =========================================================================
+   * 5) Yardımcılar | Helpers
+   * ========================================================================= */
+
     /**
-     * Mesaj ekler
+     * addMessage - Mesaj ekler
      */
     addMessage(type, content, label = null) {
         
@@ -765,7 +804,7 @@ class AIChatManager {
     }
 
     /**
-     * Typewriter efekti ile metni yazar
+     * typewriterEffect - Typewriter efekti ile metni yazar
      */
     typewriterEffect(element, text, speed = 15) {
         
@@ -801,7 +840,7 @@ class AIChatManager {
     }
 
     /**
-     * Typing göstergesi ekler
+     * showTyping - Typing göstergesi ekler
      */
     showTyping() {
         if (document.querySelector('.typing-indicator')) return;
@@ -823,7 +862,7 @@ class AIChatManager {
     }
 
     /**
-     * Typing göstergesini kaldırır
+     * hideTyping - Typing göstergesini kaldırır
      */
     hideTyping() {
         const typingIndicator = document.querySelector('.typing-indicator');
@@ -833,7 +872,7 @@ class AIChatManager {
     }
 
     /**
-     * Mesajı formatlar
+     * formatMessage - Mesajı formatlar
      */
     formatMessage(message) {
         return message
@@ -843,7 +882,7 @@ class AIChatManager {
     }
 
     /**
-     * Textarea'yı otomatik boyutlandırır
+     * autoResizeTextarea - Textarea'yı otomatik boyutlandırır
      */
     autoResizeTextarea() {
         if (this.inputField) {
@@ -853,7 +892,7 @@ class AIChatManager {
     }
 
     /**
-     * Chat'i temizler
+     * clearChat - Chat'i temizler
      */
     clearChat() {
         
@@ -868,7 +907,7 @@ class AIChatManager {
     }
     
     /**
-     * Mesaj container'ını alta kaydırır
+     * scrollToBottom - Mesaj container'ını alta kaydırır
      */
     scrollToBottom() {
         if (this.messagesContainer) {
@@ -880,12 +919,16 @@ class AIChatManager {
     }
     
     /**
-     * Debug: Pending requests durumunu gösterir
+     * debugPendingRequests - Debug: Pending requests durumunu gösterir
      */
     debugPendingRequests() {
         // no-op in production
     }
 }
+
+/* =========================================================================
+ * 6) Dışa Aktarım | Export
+ * ========================================================================= */
 
 // Export for ES6 modules (default export)
 export default AIChatManager;

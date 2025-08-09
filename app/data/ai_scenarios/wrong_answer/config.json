@@ -1,0 +1,21 @@
+{
+  "directive": {
+    "first": "Öğrenci soruya yanlış cevap verdi. Doğrudan doğru cevabı söyleme; önce hatayı analiz et, ipucu ver, gerekirse düşünme adımlarını yönlendir.",
+    "followup": "Öğrenci daha önce yanlış cevap verdi. Önceki rehberliği kısaca hatırlat ve yeni bir ipucu veya açıklama ekle."
+  },
+  "vars": {
+    "TONE": "dostça"
+  },
+  "append_tail": false,
+  "blocks_prepend": [
+    { "priority": 5, "when": "always", "text": "Durum: Yanlış cevap sonrası destek (ton: {TONE})." }
+  ],
+  "blocks": [
+    { "priority": 65, "when": "always", "include": "wrong_answer/guidance.md" },
+    { "priority": 68, "when": "first", "text": "İlk hata analizi yap ve tek bir güçlü ipucu öner." },
+    { "priority": 69, "when": "followup", "text": "Önceki rehberliği 1 cümlede hatırlat, ardından farklı bir kısa ipucu ver." }
+  ],
+  "blocks_append": [
+    { "priority": 95, "when": "always", "text": "Kısa takip sorusu ekle: 'Ne düşünüyorsun?'" }
+  ]
+}

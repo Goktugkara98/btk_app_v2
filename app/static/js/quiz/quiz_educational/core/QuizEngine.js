@@ -3,36 +3,44 @@ import { eventBus } from './EventBus.js';
 import { ApiService } from '../services/ApiService.js';
 
 /**
- * QuizEngine - Çekirdek quiz mantığını ve akış kontrolünü yönetir.
+ * =============================================================================
+ * QuizEngine – Sınav Motoru | Quiz Engine
+ * =============================================================================
+ * Çekirdek quiz mantığını, durum yönetimini ve akış kontrolünü yönetir; kurulum, veri
+ * yükleme, zamanlayıcı, gezinme, cevaplama ve tamamlama adımlarını koordine eder.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Kurulum ve Başlatma | Setup & Initialization
+ *    - constructor() - Servisleri kurar ve dinleyicileri bağlar.
+ *    - initializeEventListeners() - Quiz akışı için tüm eventleri abone eder.
+ * 2) Oturum ve Veri Yönetimi | Session & Data Management
+ *    - loadQuestions() - Soruları ve oturum bilgisini yükler, state'i hazırlar.
+ *    - updateSessionStatus(sessionId) - Oturum durumunu (özellikle zamanlayıcı) günceller.
+ * 3) Zamanlayıcı Yönetimi | Timer Management
+ *    - startTimerUpdate() - Her saniye tikler ve periyodik kaydeder.
+ *    - saveTimerToDatabase(remainingTimeSeconds) - Kalan süreyi API'ye yazar.
+ * 4) Quiz Navigasyonu | Quiz Navigation
+ *    - nextQuestion() - Sonraki soruya geçer; yoksa tamamlama tetikler.
+ *    - previousQuestion() - Önceki soruya geçer.
+ *    - goToQuestion(index) - Belirtilen soruya gider ve durumu yayınlar.
+ * 5) Cevaplama İşlemleri | Answering Logic
+ *    - submitAnswer({ questionId, answer }) - Cevabı kaydeder ve gönderir.
+ *    - removeAnswer({ questionId }) - Cevabı kaldırır ve API'ye iletir.
+ *    - handleWrongAnswer(data) - Yanlış cevap kancası.
+ *    - checkAnswerLocally(questionId, userAnswer) - Yerel doğruluk kontrolü.
+ *    - getCorrectAnswer(questionId) - Doğru seçenek nesnesini döndürür.
+ * 6) Quiz Tamamlama | Quiz Completion
+ *    - completeQuiz() - Sonuçları gönderir ve yönlendirir.
+ * =============================================================================
  */
- /*
-  * İÇİNDEKİLER (Table of Contents)
-  * - [1] Kurulum
-  *   - [1.1] constructor()
-  *   - [1.2] initializeEventListeners()
-  * - [2] Zamanlayıcı (Timer)
-  *   - [2.1] startTimerUpdate()
-  *   - [2.2] saveTimerToDatabase(remainingTimeSeconds)
-  * - [3] Veri ve Oturum
-  *   - [3.1] loadQuestions()
-  *   - [3.2] updateSessionStatus(sessionId)
-  * - [4] Navigasyon
-  *   - [4.1] nextQuestion()
-  *   - [4.2] previousQuestion()
-  *   - [4.3] goToQuestion(index)
-  * - [5] Cevap İşleme
-  *   - [5.1] submitAnswer({ questionId, answer })
-  *   - [5.2] removeAnswer({ questionId })
-  *   - [5.3] checkAnswerLocally(questionId, userAnswer)
-  *   - [5.4] getCorrectAnswer(questionId)
-  *   - [5.5] handleWrongAnswer(data)
-  * - [6] Tamamlama
-  *   - [6.1] completeQuiz()
-  */
- export class QuizEngine {
+export class QuizEngine {
+
+  /* =========================================================================
+   * 1) Kurulum ve Başlatma | Setup & Initialization
+   * ========================================================================= */
+
   /**
-   * [1.1] constructor - Kaynakları ve event dinleyicilerini başlatır.
-   * Kategori: [1] Kurulum
+   * constructor - Gerekli servisleri başlatır ve olay dinleyicilerini ayarlar.
    */
   constructor() {
     this.apiService = new ApiService();
@@ -40,100 +48,42 @@ import { ApiService } from '../services/ApiService.js';
   }
 
   /**
-   * [1.2] initializeEventListeners - Quiz akışı için olay dinleyicilerini başlatır.
-   * Kategori: [1] Kurulum
+   * initializeEventListeners - Quiz akışı için gerekli tüm olay dinleyicilerini
+   * merkezi olarak başlatır.
    */
   initializeEventListeners() {
     eventBus.subscribe('quiz:start', this.loadQuestions.bind(this));
+    eventBus.subscribe('quiz:complete', this.completeQuiz.bind(this));
+    
     eventBus.subscribe('question:next', this.nextQuestion.bind(this));
     eventBus.subscribe('question:previous', this.previousQuestion.bind(this));
     eventBus.subscribe('question:goTo', ({ index }) => this.goToQuestion(index));
     
-    // 'option:selected' kaldırıldı, doğrudan 'answer:submit' dinleniyor.
     eventBus.subscribe('answer:submit', this.submitAnswer.bind(this));
-    
-    // Cevap kaldırma olayını dinle
     eventBus.subscribe('answer:remove', this.removeAnswer.bind(this));
-    
-    // Yanlış cevap olayını dinle (şimdilik boş)
     eventBus.subscribe('answer:wrong', this.handleWrongAnswer.bind(this));
     
-    eventBus.subscribe('quiz:complete', this.completeQuiz.bind(this));
-    
-    // Timer güncelleme için interval başlat
+    // Timer'ı başlat
     this.startTimerUpdate();
   }
 
-  /**
-   * [2.1] startTimerUpdate - Timer'ı otomatik olarak günceller.
-   * Kategori: [2] Zamanlayıcı (Timer)
-   */
-  startTimerUpdate() {
-    let saveCounter = 0; // 10 saniyede bir kaydetmek için sayaç
-    
-    setInterval(() => {
-      const timer = stateManager.getState('timer');
-      
-      if (timer.enabled && timer.remainingTimeSeconds > 0) {
-        const newRemainingTime = timer.remainingTimeSeconds - 1;
-        
-        stateManager.setState({
-          timer: {
-            ...timer,
-            remainingTimeSeconds: newRemainingTime
-          }
-        }, 'TIMER_TICK');
-        
-        // 10 saniyede bir veritabanına kaydet
-        saveCounter++;
-        if (saveCounter >= 10) {
-          this.saveTimerToDatabase(newRemainingTime);
-          saveCounter = 0;
-        }
-        
-        // Süre bittiğinde quiz'i otomatik tamamla
-        if (newRemainingTime <= 0) {
-          eventBus.publish('quiz:complete');
-        }
-      }
-    }, 1000);
-  }
-  
-  /**
-   * [2.2] saveTimerToDatabase - Timer'ı veritabanına kaydeder.
-   * Kategori: [2] Zamanlayıcı (Timer)
-   */
-  async saveTimerToDatabase(remainingTimeSeconds) {
-    try {
-      const sessionId = stateManager.getState('sessionId');
-      if (!sessionId) {
-        return;
-      }
-      
-      // Timer'ı veritabanına kaydetmek için API çağrısı
-      await this.apiService.updateTimer({ sessionId, remainingTimeSeconds });
-      
-    } catch (error) {
-      // Timer kaydedilirken hata oluştu
-    }
-  }
+  /* =========================================================================
+   * 2) Oturum ve Veri Yönetimi | Session & Data Management
+   * ========================================================================= */
 
   /**
-   * [3.1] loadQuestions - Quiz için soruları yükler.
-   * Kategori: [3] Veri ve Oturum
+   * loadQuestions - API'den quiz sorularını ve oturum bilgilerini yükler,
+   * ardından state'i (durumu) günceller.
    */
   async loadQuestions() {
     try {
       stateManager.setLoading(true);
       let sessionId = stateManager.getState('sessionId');
       
-      // Session ID yoksa window'dan almayı dene
+      // Session ID yoksa, global window nesnesinden almayı dener.
       if (!sessionId) {
-        if (window.QUIZ_CONFIG && window.QUIZ_CONFIG.sessionId) {
-          sessionId = window.QUIZ_CONFIG.sessionId;
-          stateManager.setState({ sessionId });
-        } else if (window.QUIZ_SESSION_ID) {
-          sessionId = window.QUIZ_SESSION_ID;
+        sessionId = window.QUIZ_CONFIG?.sessionId || window.QUIZ_SESSION_ID;
+        if (sessionId) {
           stateManager.setState({ sessionId });
         }
       }
@@ -141,95 +91,73 @@ import { ApiService } from '../services/ApiService.js';
       if (!sessionId) {
         throw new Error('Geçerli bir oturum ID bulunamadı. Lütfen sayfayı yenileyin.');
       }
-      // Sorular ve oturum bilgisini aynı anda al
+
+      // Soruları ve oturum bilgilerini eş zamanlı olarak çeker.
       const [questionsResp, sessionInfoResp] = await Promise.all([
         this.apiService.fetchQuestions({ sessionId }),
         this.apiService.getSessionInfo(sessionId).catch(() => ({ data: null }))
       ]);
 
-      const response = questionsResp;
-
-      if (!response.data || !Array.isArray(response.data.questions)) {
-        throw new Error('API yanıtı geçersiz formatta.');
+      const responseData = questionsResp.data;
+      if (!responseData || !Array.isArray(responseData.questions)) {
+        throw new Error('API yanıtı geçersiz formatta veya soru listesi bulunamadı.');
       }
       
-      // API'den gelen soru formatını JavaScript'in beklediği formata dönüştür
-      const questions = response.data.questions.map((q, index) => {
-        return {
-          question_number: q.question_number,
-          total_questions: q.total_questions,
-          question: {
-            id: q.question.id,
-            text: q.question.text,
-            explanation: q.question.explanation,
-            difficulty_level: q.question.difficulty_level,
-            points: q.question.points,
-            subject_name: q.question.subject_name,
-            topic_name: q.question.topic_name,
-            options: q.question.options || []
-          },
-          user_answer_option_id: q.user_answer_option_id,
-          progress: q.progress
-        };
-      });
+      // API'den gelen veriyi uygulamanın beklediği formata dönüştürür.
+      const questions = responseData.questions.map(q => ({
+        question_number: q.question_number,
+        total_questions: q.total_questions,
+        question: {
+          id: q.question.id,
+          text: q.question.text,
+          explanation: q.question.explanation,
+          difficulty_level: q.question.difficulty_level,
+          points: q.question.points,
+          subject_name: q.question.subject_name,
+          topic_name: q.question.topic_name,
+          options: q.question.options || []
+        },
+        user_answer_option_id: q.user_answer_option_id,
+        progress: q.progress
+      }));
       
       stateManager.setQuestions(questions);
-      // Türetilmiş map'leri oluştur (yerel doğrulama ve hızlı erişim için)
-      stateManager.buildDerivedMaps();
+      stateManager.buildDerivedMaps(); // Hızlı erişim için haritalar oluşturur.
       
-      // Quiz modunu educational olarak ayarla
-      stateManager.setState({ quizMode: 'educational' });
-      
-      // Session bilgilerini güncelle
-      if (response.data.session_id) {
-        stateManager.setState({ sessionId: response.data.session_id });
-      }
-      
-      // Timer bilgilerini güncelle
-      if (response.data.total_questions) {
-        stateManager.setState({ totalQuestions: response.data.total_questions });
-      }
+      // Quiz ile ilgili temel bilgileri state'e kaydeder.
+      stateManager.setState({ 
+        quizMode: 'educational',
+        sessionId: responseData.session_id || sessionId,
+        totalQuestions: responseData.total_questions
+      });
 
-      // Session meta bilgisini state'e işle (varsa)
-      const sessionMetaWrapper = sessionInfoResp?.data || null;
-      const sess = sessionMetaWrapper?.session || null;
-      if (sess) {
+      // Oturum meta verilerini (sınıf, konu vb.) işler.
+      const sessionMeta = sessionInfoResp?.data?.session;
+      if (sessionMeta) {
         stateManager.setMetadata({
-          grade: sess.grade || sess.grade_name || null,
-          subject: sess.subject || sess.subject_name || null,
-          unit: sess.unit || sess.unit_name || null,
-          topic: sess.topic || sess.topic_name || null,
-          difficulty: sess.difficulty || sess.difficulty_level || null
+          grade: sessionMeta.grade || sessionMeta.grade_name,
+          subject: sessionMeta.subject || sessionMeta.subject_name,
+          unit: sessionMeta.unit || sessionMeta.unit_name,
+          topic: sessionMeta.topic || sessionMeta.topic_name,
+          difficulty: sessionMeta.difficulty || sessionMeta.difficulty_level
         });
-        // Timer başlangıç bilgileri (varsa)
-        if (typeof sess.remaining_time_seconds === 'number' || typeof sess.timer_duration === 'number') {
+
+        // Oturumdan gelen zamanlayıcı bilgilerini state'e uygular.
+        if (typeof sessionMeta.remaining_time_seconds === 'number' || typeof sessionMeta.timer_duration === 'number') {
           stateManager.setState({
             timer: {
               ...stateManager.getState('timer'),
-              enabled: !!sess.timer_enabled,
-              remainingTimeSeconds: (typeof sess.remaining_time_seconds === 'number') ? sess.remaining_time_seconds : stateManager.getState('timer').remainingTimeSeconds,
-              totalTime: (typeof sess.timer_duration === 'number') ? sess.timer_duration : stateManager.getState('timer').totalTime
+              enabled: !!sessionMeta.timer_enabled,
+              remainingTimeSeconds: sessionMeta.remaining_time_seconds ?? stateManager.getState('timer').remainingTimeSeconds,
+              totalTime: sessionMeta.timer_duration ?? stateManager.getState('timer').totalTime
             }
           }, 'INIT_TIMER_FROM_SESSION');
         }
       }
       
-      // Session status'u al ve timer bilgilerini güncelle
       await this.updateSessionStatus(sessionId);
       
-      // Sayfa ilk yüklendiğinde oluşan başlangıç durumunu tek bir info log ile kaydet
-      const initialLog = {
-        sessionId: stateManager.getState('sessionId'),
-        totalQuestions: stateManager.getState('totalQuestions') ?? stateManager.getState('questions')?.length,
-        quizMode: stateManager.getState('quizMode'),
-        timer: stateManager.getState('timer'),
-        metadata: stateManager.getState('metadata'),
-        currentQuestionIndex: stateManager.getState('currentQuestionIndex') ?? 0,
-        questionsCount: stateManager.getState('questions')?.length,
-        questions: stateManager.getState('questions')
-      };
-      console.info('[QuizEducational] Initial load state', initialLog);
-
+      console.info('[QuizEngine] Quiz başarıyla yüklendi ve başlatıldı.', stateManager.getState());
       eventBus.publish('quiz:questionsLoaded');
       
     } catch (error) {
@@ -244,8 +172,86 @@ import { ApiService } from '../services/ApiService.js';
   }
 
   /**
-   * [4.1] nextQuestion - Sonraki soruya geçer.
-   * Kategori: [4] Navigasyon
+   * updateSessionStatus - Oturumun mevcut durumunu (özellikle zamanlayıcı) API'den
+   * alarak günceller.
+   * @param {string} sessionId - Güncellenecek oturumun ID'si.
+   */
+  async updateSessionStatus(sessionId) {
+    try {
+      const response = await this.apiService.getSessionStatus(sessionId);
+      if (response.data) {
+        const statusData = response.data;
+        stateManager.setState({
+          timer: {
+            enabled: statusData.timer_enabled || false,
+            remainingTimeSeconds: statusData.remaining_time_seconds || 0,
+            totalTime: statusData.timer_duration || 0
+          }
+        }, 'UPDATE_SESSION_STATUS');
+      }
+    } catch (error) {
+      console.warn('Oturum durumu güncellenirken bir hata oluştu (kritik değil):', error);
+    }
+  }
+
+  /* =========================================================================
+   * 3) Zamanlayıcı Yönetimi | Timer Management
+   * ========================================================================= */
+
+  /**
+   * startTimerUpdate - Her saniye zamanlayıcıyı güncelleyen ve periyodik olarak
+   * sunucuya kaydeden bir interval başlatır.
+   */
+  startTimerUpdate() {
+    let saveCounter = 0; // Her 10 saniyede bir kaydetmek için sayaç.
+    
+    setInterval(() => {
+      const timer = stateManager.getState('timer');
+      
+      if (timer.enabled && timer.remainingTimeSeconds > 0) {
+        const newRemainingTime = timer.remainingTimeSeconds - 1;
+        
+        stateManager.setState({
+          timer: { ...timer, remainingTimeSeconds: newRemainingTime }
+        }, 'TIMER_TICK');
+        
+        // Her 10 saniyede bir zamanı veritabanına kaydeder.
+        saveCounter++;
+        if (saveCounter >= 10) {
+          this.saveTimerToDatabase(newRemainingTime);
+          saveCounter = 0;
+        }
+        
+        // Süre bittiğinde quiz'i otomatik olarak tamamlar.
+        if (newRemainingTime <= 0) {
+          eventBus.publish('quiz:complete');
+        }
+      }
+    }, 1000);
+  }
+  
+  /**
+   * saveTimerToDatabase - Kalan süreyi periyodik olarak veritabanına kaydeder.
+   * @param {number} remainingTimeSeconds - Veritabanına kaydedilecek kalan süre.
+   */
+  async saveTimerToDatabase(remainingTimeSeconds) {
+    try {
+      const sessionId = stateManager.getState('sessionId');
+      if (!sessionId) return;
+      
+      await this.apiService.updateTimer({ sessionId, remainingTimeSeconds });
+    } catch (error) {
+      console.warn('Zamanlayıcı veritabanına kaydedilirken hata oluştu (kritik değil):', error);
+    }
+  }
+
+  /* =========================================================================
+   * 4) Quiz Navigasyonu | Quiz Navigation
+   * ========================================================================= */
+
+  /**
+   * nextQuestion - Mevcut sorudan bir sonraki soruya geçer.
+   * Eğer son sorudaysa, quiz'i tamamlama olayını tetikler.
    */
   nextQuestion() {
     const { currentQuestionIndex, questions } = stateManager.getState();
@@ -254,14 +260,12 @@ import { ApiService } from '../services/ApiService.js';
     if (nextIndex < questions.length) {
       this.goToQuestion(nextIndex);
     } else {
-      // Son sorudayken 'Sonraki Soru' butonu 'Quizi Bitir'e dönüşür ve bu olayı tetikler.
       eventBus.publish('quiz:complete');
     }
   }
 
   /**
-   * [4.2] previousQuestion - Önceki soruya geçer.
-   * Kategori: [4] Navigasyon
+   * previousQuestion - Mevcut sorudan bir önceki soruya geçer.
    */
   previousQuestion() {
     const { currentQuestionIndex } = stateManager.getState();
@@ -272,67 +276,56 @@ import { ApiService } from '../services/ApiService.js';
   }
 
   /**
-   * [4.3] goToQuestion - Belirtilen index'teki soruya gider.
-   * Kategori: [4] Navigasyon
-   * @param {number} index - Gidilecek sorunun index'i.
+   * goToQuestion - Belirtilen indeksteki soruya doğrudan gider.
+   * @param {number} index - Gidilecek sorunun indeksi.
    */
   async goToQuestion(index) {
     const currentIndex = stateManager.getState('currentQuestionIndex');
-    const navigationType = index > currentIndex ? 'forward' : 'backward';
-    
     stateManager.setCurrentQuestionIndex(index);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Navigasyon event'ini yayınla
     eventBus.publish('question:navigated', {
       fromIndex: currentIndex,
       toIndex: index,
-      type: navigationType
+      type: index > currentIndex ? 'forward' : 'backward'
     });
     
-    // Soru değiştiğinde session status'u güncelle (navbar bilgileri için)
     const sessionId = stateManager.getState('sessionId');
     if (sessionId) {
       await this.updateSessionStatus(sessionId);
     }
   }
 
+  /* =========================================================================
+   * 5) Cevaplama İşlemleri | Answering Logic
+   * ========================================================================= */
+
   /**
-   * [5.1] submitAnswer - Bir cevabı sunucuya gönderir.
-   * Kategori: [5] Cevap İşleme
-   * @param {Object} answerData - { questionId, answer }
+   * submitAnswer - Kullanıcının cevabını alır, yerel state'i günceller ve
+   * sunucuya gönderir. Cevabın doğruluğuna göre akışı yönlendirir.
+   * @param {object} params - { questionId, answer }
    */
   async submitAnswer({ questionId, answer }) {
-    // Eğer zaten bir gönderme işlemi varsa, tekrar göndermeyi engelle.
-    if (stateManager.getState('isSubmitting')) {
-      return;
-    }
+    if (stateManager.getState('isSubmitting')) return;
     
     try {
-      // Gönderme başladığında state'i güncelle (UI'ı kilitlemek için).
       stateManager.setState({ isSubmitting: true }, 'SUBMIT_ANSWER_START');
       
       const sessionId = stateManager.getState('sessionId');
-      if (sessionId == null || questionId == null || answer == null) {
-        throw new Error('Cevap göndermek için gerekli bilgiler eksik.');
+      if (!sessionId || questionId == null || answer == null) {
+        throw new Error('Cevap göndermek için oturum, soru veya cevap ID eksik.');
       }
       
-      // Cevabı anında state'e kaydet (UI'ın hızlı güncellenmesi için).
+      // UI'ın anında tepki vermesi için cevabı hemen state'e kaydeder.
       stateManager.setAnswer(questionId, answer);
       
-      // Sunucuya gönder ve yanıta göre doğruluk belirle (sunucu yoksa yerel kontrol)
       const response = await this.apiService.submitAnswer({ sessionId, questionId, answer });
-      const serverIsCorrect = response?.data?.is_correct;
-      const isCorrect = (typeof serverIsCorrect === 'boolean') ? serverIsCorrect : this.checkAnswerLocally(questionId, answer);
+      const isCorrect = response?.data?.is_correct ?? this.checkAnswerLocally(questionId, answer);
       
-      // Cevabı gönderdikten hemen sonra isSubmitting'i false yap
       stateManager.setState({ isSubmitting: false }, 'SUBMIT_ANSWER_END');
       
-      // Educational modda yanlış cevap verilirse farklı event tetikle
       const isEducationalMode = stateManager.getState('quizMode') === 'educational';
-      
       if (isEducationalMode && !isCorrect) {
-        // Yanlış cevap - yeni event tetikle
         eventBus.publish('answer:wrong', {
           questionId: questionId,
           userAnswer: answer,
@@ -341,7 +334,7 @@ import { ApiService } from '../services/ApiService.js';
         return;
       }
       
-      // Doğru cevap veya normal mod - kısa bir bekleme sonrası sonraki soruya geç
+      // Doğru cevap veya normal modda, kısa bir beklemenin ardından sonraki soruya geçer.
       setTimeout(() => this.nextQuestion(), 300);
       
     } catch (error) {
@@ -350,84 +343,16 @@ import { ApiService } from '../services/ApiService.js';
         message: 'Cevap gönderilirken bir hata oluştu.',
         details: error.message
       });
-      // Hata durumunda da isSubmitting'i false yap
       stateManager.setState({ isSubmitting: false }, 'SUBMIT_ANSWER_ERROR');
     }
   }
 
   /**
-   * [5.3] checkAnswerLocally - JavaScript tarafında cevap kontrolü yapar.
-   * Kategori: [5] Cevap İşleme
-   * @param {number} questionId - Soru ID'si
-   * @param {string} userAnswer - Kullanıcının cevabı
-   * @returns {boolean} Cevap doğru mu?
-   */
-  checkAnswerLocally(questionId, userAnswer) {
-    // Önce türetilmiş haritaları kullan
-    const correctMap = stateManager.getState('correctOptionByQuestionId');
-    const correctFromMap = correctMap?.get(Number(questionId)) || correctMap?.get(String(questionId));
-    if (correctFromMap) {
-      return String(correctFromMap.id) === String(userAnswer);
-    }
-
-    // Geriye dönük uyumluluk: doğrudan sorulardan tara
-    const { questions } = stateManager.getState();
-    const question = questions.find(q => q.question.id === parseInt(questionId, 10));
-    if (!question || !question.question.options) return false;
-    let correctOption = question.question.options.find(option => option.is_correct === true)
-      || question.question.options.find(option => option.isCorrect === true)
-      || question.question.options.find(option => option.correct === true)
-      || question.question.options.find(option => option.is_correct === 1)
-      || question.question.options.find(option => option.correct === 1);
-    if (!correctOption) return false;
-    return String(correctOption.id) === String(userAnswer);
-  }
-
-  /**
-   * [5.4] getCorrectAnswer - Belirtilen sorunun doğru cevabını döndürür.
-   * Kategori: [5] Cevap İşleme
-   * @param {number} questionId - Soru ID'si
-   * @returns {Object|null} Doğru cevap seçeneği
-   */
-  getCorrectAnswer(questionId) {
-    const correctMap = stateManager.getState('correctOptionByQuestionId');
-    const fromMap = correctMap?.get(Number(questionId)) || correctMap?.get(String(questionId));
-    if (fromMap) return fromMap;
-    const { questions } = stateManager.getState();
-    const question = questions.find(q => q.question.id === parseInt(questionId, 10));
-    if (!question || !question.question.options) return null;
-    return (
-      question.question.options.find(option => option.is_correct === true)
-      || question.question.options.find(option => option.isCorrect === true)
-      || question.question.options.find(option => option.correct === true)
-      || question.question.options.find(option => option.is_correct === 1)
-      || question.question.options.find(option => option.correct === 1)
-    ) || null;
-  }
-
-  /**
-   * [5.5] handleWrongAnswer - Yanlış cevap verildiğinde çalışacak fonksiyon (şimdilik boş).
-   * Kategori: [5] Cevap İşleme
-   * @param {Object} data - { questionId, userAnswer, correctAnswer }
-   */
-  handleWrongAnswer(data) {
-    // Şimdilik boş - buraya yanlış cevap işlemleri eklenecek
-    // info-level logs removed
-    
-    // TODO: Burada yanlış cevap için özel işlemler yapılacak
-    // Örneğin: AI chat'e bilgi gönderme, UI güncelleme, vs.
-  }
-
-  /**
-   * [5.2] removeAnswer - Bir cevabı kaldırır.
-   * Kategori: [5] Cevap İşleme
-   * @param {Object} answerData - { questionId }
+   * removeAnswer - Bir soruya verilen cevabı kaldırır.
+   * @param {object} params - { questionId }
    */
   async removeAnswer({ questionId }) {
-    // Eğer zaten bir gönderme işlemi varsa, tekrar göndermeyi engelle.
-    if (stateManager.getState('isSubmitting')) {
-      return;
-    }
+    if (stateManager.getState('isSubmitting')) return;
     
     try {
       const sessionId = stateManager.getState('sessionId');
@@ -435,10 +360,10 @@ import { ApiService } from '../services/ApiService.js';
         throw new Error('Cevap kaldırmak için gerekli bilgiler eksik.');
       }
       
-      // Cevabı anında state'den kaldır (UI'ın hızlı güncellenmesi için).
+      // Cevabı anında state'den kaldırır.
       stateManager.removeAnswer(questionId);
       
-      // API'ye cevabı kaldırma isteği gönder (null değer)
+      // API'ye cevabı kaldırma isteği gönderir (answer: null).
       await this.apiService.submitAnswer({ sessionId, questionId, answer: null });
       
     } catch (error) {
@@ -451,32 +376,48 @@ import { ApiService } from '../services/ApiService.js';
   }
 
   /**
-   * [3.2] updateSessionStatus - Session status'unu günceller ve timer bilgilerini alır.
-   * Kategori: [3] Veri ve Oturum
+   * handleWrongAnswer - 'educational' modda yanlış cevap verildiğinde tetiklenir.
+   * Bu fonksiyon, yanlış cevap durumunda yapılacak özel işlemleri (örn. AI chat'e bilgi gönderme)
+   * yönetmek için bir kancadır (hook).
+   * @param {object} data - { questionId, userAnswer, correctAnswer }
    */
-  async updateSessionStatus(sessionId) {
-    try {
-      const response = await this.apiService.getSessionStatus(sessionId);
-      if (response.data) {
-        const statusData = response.data;
-        
-        // Sadece timer bilgilerini güncelle (navbar bilgileri artık aktif sorudan alınıyor)
-        stateManager.setState({
-          timer: {
-            enabled: statusData.timer_enabled || false,
-            remainingTimeSeconds: statusData.remaining_time_seconds || 0,
-            totalTime: statusData.timer_duration || 0
-          }
-        }, 'UPDATE_SESSION_STATUS');
-      }
-    } catch (error) {
-      // Session status güncellenirken hata oluştu
-    }
+  handleWrongAnswer(data) {
+    // Bu fonksiyon, yanlış cevap verildiğinde özel mantık eklemek için bir yer tutucudur.
+    // Örneğin, kullanıcıya ek yardım sunmak veya analitik verisi göndermek için kullanılabilir.
+    console.log('Yanlış cevap işleniyor:', data);
   }
 
   /**
-   * [6.1] completeQuiz - Quizi tamamlar ve sonuçları gösterir.
-   * Kategori: [6] Tamamlama
+   * checkAnswerLocally - Sunucu yanıtı olmadığında bir cevabın doğruluğunu
+   * yerel veriye göre kontrol eder.
+   * @param {number|string} questionId - Soru ID'si.
+   * @param {string} userAnswer - Kullanıcının verdiği cevap ID'si.
+   * @returns {boolean} Cevabın doğru olup olmadığını döndürür.
+   */
+  checkAnswerLocally(questionId, userAnswer) {
+    const correctOptionMap = stateManager.getState('correctOptionByQuestionId');
+    const correctOption = correctOptionMap?.get(Number(questionId));
+    
+    return correctOption ? String(correctOption.id) === String(userAnswer) : false;
+  }
+
+  /**
+   * getCorrectAnswer - Belirtilen sorunun doğru cevap seçeneği nesnesini döndürür.
+   * @param {number|string} questionId - Soru ID'si.
+   * @returns {object|null} Doğru cevap seçeneği veya bulunamazsa null.
+   */
+  getCorrectAnswer(questionId) {
+    const correctOptionMap = stateManager.getState('correctOptionByQuestionId');
+    return correctOptionMap?.get(Number(questionId)) || null;
+  }
+
+  /* =========================================================================
+   * 6) Quiz Tamamlama | Quiz Completion
+   * ========================================================================= */
+
+  /**
+   * completeQuiz - Quiz'i sonlandırır, sonuçları sunucuya gönderir ve kullanıcıyı
+   * sonuç sayfasına yönlendirir.
    */
   async completeQuiz() {
     if (stateManager.getState('isSubmitting')) return;
@@ -492,7 +433,7 @@ import { ApiService } from '../services/ApiService.js';
       stateManager.setState({ quizCompleted: true, results }, 'QUIZ_COMPLETED');
       eventBus.publish('quiz:completed', { results });
       
-      // Sonuç sayfasına yönlendir
+      // Kullanıcıyı sonuç sayfasına yönlendir.
       window.location.href = `/quiz/results?session_id=${sessionId}`;
       
     } catch (error) {

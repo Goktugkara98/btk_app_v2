@@ -1,0 +1,10 @@
+{
+  "directive": {
+    "first": "Bu, öğrencinin bu sorudaki ilk mesajı. Bağlamı hızlıca özetle ve kısa, anlaşılır bir yanıt ver.",
+    "followup": "Önceki konuşmaları dikkate al. Kısa ve odaklı bir yanıt ver."
+  },
+  "append_tail": false,
+  "blocks": [
+    { "priority": 62, "when": "always", "include": "direct/tactics.md" }
+  ]
+}

@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import re
 import html
+import os
 
 class ChatMessageService:
     """
@@ -33,21 +34,10 @@ class ChatMessageService:
             ]
         }
         
-        # Quick action definitions
-        self.quick_actions = {
-            'explain': {
-                'prompt_template': 'Bu soruyu öğrenciye basit ve anlaşılır bir şekilde açıkla: {question_text}',
-                'context_hint': 'Açıklama yaparken adım adım ilerle ve örnekler ver.'
-            },
-            'hint': {
-                'prompt_template': 'Bu soru için öğrenciye yardımcı olacak bir ipucu ver (cevabı verme): {question_text}',
-                'context_hint': 'İpucu verirken doğrudan cevabı söyleme, düşünmeye yönlendir.'
-            },
-            'related': {
-                'prompt_template': 'Bu konu ile ilgili benzer sorular ve konular öner: {topic}',
-                'context_hint': 'İlgili konuları ve pratik önerilerini paylaş.'
-            }
-        }
+        # Quick action template base directory (file-based per action)
+        self.quick_action_template_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'data', 'ai_scenarios', 'quick_action', 'actions')
+        )
     
     def validate_message(self, message: str) -> Tuple[bool, Optional[str]]:
         """
@@ -186,24 +176,75 @@ class ChatMessageService:
         Returns:
             Prompt string veya None
         """
-        if action not in self.quick_actions:
+        # Load per-action template file: {action}.md
+        template_text = self._load_quick_action_template(action)
+        if not template_text:
             return None
         
-        action_config = self.quick_actions[action]
+        # Build dynamic context
+        question_text = question_data.get('question_text', '') or ''
+        topic = question_data.get('topic_name', '') or ''
+        options = question_data.get('options', []) or []
+        (
+            options_bulleted,
+            options_plain,
+            correct_answer_text,
+            correct_option_letter
+        ) = self._prepare_options_context(options)
         
-        # Template'i doldur
-        question_text = question_data.get('question_text', '')
-        topic = question_data.get('topic_name', '')
+        ctx: Dict[str, Any] = {
+            'question_text': question_text,
+            'topic_name': topic,
+            'options_bulleted': options_bulleted,
+            'options_plain': options_plain,
+            'correct_answer_text': correct_answer_text or '',
+            'correct_option_letter': correct_option_letter or ''
+        }
         
-        prompt = action_config['prompt_template'].format(
-            question_text=question_text,
-            topic=topic
-        )
+        # Safe format with missing keys -> empty string
+        class _SafeDict(dict):
+            def __missing__(self, key):
+                return ''
         
-        # Context hint ekle
-        prompt += f"\n\n{action_config['context_hint']}"
-        
-        return prompt
+        return template_text.format_map(_SafeDict(ctx))
+
+    def _load_quick_action_template(self, action: str) -> Optional[str]:
+        """Reads the per-action markdown template from disk."""
+        # Enforce simple action names to avoid path traversal
+        safe_action = re.sub(r'[^a-zA-Z0-9_\-]', '', action)
+        candidate = os.path.join(self.quick_action_template_dir, f"{safe_action}.md")
+        try:
+            if os.path.isfile(candidate):
+                with open(candidate, 'r', encoding='utf-8') as f:
+                    return f.read()
+            return None
+        except Exception:
+            return None
+
+    def _prepare_options_context(self, options: List[Dict[str, Any]]) -> Tuple[str, str, Optional[str], Optional[str]]:
+        """Create rendered options and detect correct answer.
+        Returns: (bulleted, plain, correct_answer_text, correct_option_letter)
+        """
+        if not options:
+            return '', '', None, None
+        letters = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+            'U', 'V', 'W', 'X', 'Y', 'Z'
+        ]
+        bulleted_lines: List[str] = []
+        plain_lines: List[str] = []
+        correct_text: Optional[str] = None
+        correct_letter: Optional[str] = None
+        for idx, opt in enumerate(options):
+            letter = letters[idx] if idx < len(letters) else str(idx + 1)
+            text = str(opt.get('name', '') or '')
+            bulleted_lines.append(f"- {letter}) {text}")
+            plain_lines.append(f"{letter}) {text}")
+            if opt.get('is_correct') in (1, True, '1', 'true', 'True') and correct_text is None:
+                correct_text = text
+                correct_letter = letter
+        return "\n".join(bulleted_lines), "\n".join(plain_lines), correct_text, correct_letter
     
     def create_message_metadata(self, message_type: str, action: Optional[str] = None, question_id: Optional[int] = None) -> Dict[str, Any]:
         """

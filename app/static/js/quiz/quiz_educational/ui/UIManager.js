@@ -2,37 +2,43 @@ import { stateManager } from '../core/StateManager.js';
 import { eventBus } from '../core/EventBus.js';
 
 /**
- * UIManager - Tüm UI güncellemelerini ve kullanıcı etkileşimlerini yönetir.
- */
-/**
- * İÇİNDEKİLER (Table of Contents)
- * - [1] Kurulum
- *   - [1.1] constructor()
- *   - [1.2] initializeElements()
- *   - [1.3] initializeEventListeners()
- *   - [1.4] initializeStateSubscriptions()
- *   - [1.5] initializeUiEventBus()
- * - [2] Render ve Güncelleme
- *   - [2.1] renderQuestion(question)
- *   - [2.2] renderEducationalFeatures(question)
- *   - [2.3] updateQuestionNavigation()
- *   - [2.4] updateNavButtons()
- *   - [2.5] updateQuestionNumber()
- *   - [2.6] updateTimer(timer)
- *   - [2.7] updateTotalQuestions(totalQuestions)
- *   - [2.8] updateNavbarFromQuestion(question)
- * - [3] Durum ve Hata
- *   - [3.1] toggleLoading(isLoading)
- *   - [3.2] showError(error)
- * - [4] Yardımcılar
- *   - [4.1] getDifficultyText(difficulty)
- *   - [4.2] markIncorrectOption(data)
- * - [5] Export
+ * =============================================================================
+ * UIManager – Kullanıcı Arayüzü Yöneticisi | User Interface Manager
+ * =============================================================================
+ * Bu sınıf, quiz eğitim modülündeki tüm UI güncellemelerini ve kullanıcı
+ * etkileşimlerini yönetir.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Kurulum ve Başlatma | Setup & Initialization
+ *    - constructor() - UI öğelerini başlatır, dinleyiciler ve abonelikleri kurar.
+ *    - initializeElements() - Gerekli DOM referanslarını seçer ve önbelleğe alır.
+ *    - initializeEventListeners() - Buton tıklamaları ve kullanıcı etkileşimlerini bağlar.
+ *    - initializeStateSubscriptions() - State değişimlerini dinler ve UI'ı günceller.
+ *    - initializeUiEventBus() - UI ile ilgili EventBus aboneliklerini kurar.
+ * 2) Durum ve Hata | State & Errors
+ *    - toggleLoading(isLoading) - Yükleniyor durumunu gösterir/gizler.
+ *    - showError(error) - Hata durumunu ve mesajını UI'da gösterir.
+ * 3) Render ve Güncellemeler | Rendering & Updates
+ *    - renderQuestion(question) - Soru metnini ve seçeneklerini render eder.
+ *    - renderEducationalFeatures(question) - Eğitim özelliklerini (örn. ipucu) günceller.
+ *    - updateQuestionNavigation() - Soru navigasyon listesini oluşturur/günceller.
+ *    - updateNavButtons() - İleri/geri butonlarının durumunu ayarlar.
+ *    - updateQuestionNumber() - Mevcut soru numarasını gösterir.
+ *    - updateTimer(timer) - Zamanlayıcıyı formatlayıp UI'da günceller.
+ *    - updateTotalQuestions(totalQuestions) - Toplam soru sayısını günceller.
+ *    - updateNavbarFromQuestion(question) - Üst çubukta konu/ders bilgilerini günceller.
+ * 4) Yardımcılar | Helpers
+ *    - getDifficultyText(difficulty) - Zorluk etiketini metne çevirir.
+ *    - markIncorrectOption(data) - Yanlış seçilen şıkkı vurgular/işaretler.
+ * 5) Dışa Aktarım | Export
+ * =============================================================================
  */
 export class UIManager {
+  /* =========================================================================
+   * 1) Kurulum ve Başlatma | Setup & Initialization
+   * ========================================================================= */
   /**
-   * [1.1] constructor - UI öğelerini ve abonelikleri başlatır.
-   * Kategori: [1] Kurulum
+   * constructor - UI öğelerini ve abonelikleri başlatır.
    */
   constructor() {
     this.elements = {};
@@ -43,8 +49,7 @@ export class UIManager {
   }
 
   /**
-   * [1.2] initializeElements - DOM eleman referanslarını başlatır.
-   * Kategori: [1] Kurulum
+   * initializeElements - DOM eleman referanslarını başlatır.
    */
   initializeElements() {
     const $ = (selector) => document.querySelector(selector);
@@ -77,16 +82,14 @@ export class UIManager {
   }
 
   /**
-   * [1.5] initializeUiEventBus - UI ile ilgili EventBus aboneliklerini başlatır.
-   * Kategori: [1] Kurulum
+   * initializeUiEventBus - UI ile ilgili EventBus aboneliklerini başlatır.
    */
   initializeUiEventBus() {
     eventBus.subscribe('answer:wrong', this.markIncorrectOption.bind(this));
   }
 
   /**
-   * [4.2] markIncorrectOption - Yanlış cevap verildiğinde seçilen şıkkı kırmızı (incorrect) işaretler.
-   * Kategori: [4] Yardımcılar
+   * markIncorrectOption - Yanlış cevap verildiğinde seçilen şıkkı kırmızı (incorrect) işaretler.
    * @param {{questionId: number|string, userAnswer: number|string}} data
    */
   markIncorrectOption(data) {
@@ -115,8 +118,7 @@ export class UIManager {
   }
 
   /**
-   * [1.3] initializeEventListeners - UI etkileşimleri için olay dinleyicilerini başlatır.
-   * Kategori: [1] Kurulum
+   * initializeEventListeners - UI etkileşimleri için olay dinleyicilerini başlatır.
    */
   initializeEventListeners() {
     // Sonraki Soru Butonu
@@ -181,8 +183,7 @@ export class UIManager {
   }
 
   /**
-   * [1.4] initializeStateSubscriptions - State değişikliklerine abone olur ve UI'ı günceller.
-   * Kategori: [1] Kurulum
+   * initializeStateSubscriptions - State değişikliklerine abone olur ve UI'ı günceller.
    */
   initializeStateSubscriptions() {
     eventBus.subscribe('state:changed', ({ currentState, prevState }) => {
@@ -229,9 +230,11 @@ export class UIManager {
     });
   }
 
+  /* =========================================================================
+   * 2) Durum ve Hata | State & Errors
+   * ========================================================================= */
   /**
-   * [3.1] toggleLoading - Yükleniyor durumunu yönetir.
-   * Kategori: [3] Durum ve Hata
+   * toggleLoading - Yükleniyor durumunu yönetir.
    */
   toggleLoading(isLoading) {
     if (this.elements.loadingState) {
@@ -243,8 +246,7 @@ export class UIManager {
   }
 
   /**
-   * [3.2] showError - Hata mesajını gösterir.
-   * Kategori: [3] Durum ve Hata
+   * showError - Hata mesajını gösterir.
    */
   showError(error) {
     if (!this.elements.errorState || !this.elements.errorMessage) return;
@@ -261,9 +263,11 @@ export class UIManager {
     }
   }
 
+  /* =========================================================================
+   * 3) Render ve Güncellemeler | Rendering & Updates
+   * ========================================================================= */
   /**
-   * [2.1] renderQuestion - Mevcut soruyu ve seçeneklerini ekrana çizer.
-   * Kategori: [2] Render ve Güncelleme
+   * renderQuestion - Mevcut soruyu ve seçeneklerini ekrana çizer.
    * @param {Object} question - Soru nesnesi.
    */
   renderQuestion(question) {
@@ -318,8 +322,7 @@ export class UIManager {
   }
 
   /**
-   * [2.2] renderEducationalFeatures - Educational features'ları render eder.
-   * Kategori: [2] Render ve Güncelleme
+   * renderEducationalFeatures - Educational features'ları render eder.
    * @param {Object} question - Soru nesnesi.
    */
   renderEducationalFeatures(question) {
@@ -327,8 +330,7 @@ export class UIManager {
   }
 
   /**
-   * [2.3] updateQuestionNavigation - Soru navigasyonunu günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateQuestionNavigation - Soru navigasyonunu günceller.
    */
   updateQuestionNavigation() {
     const { questions, currentQuestionIndex, answers, visitedQuestions } = stateManager.getState();
@@ -354,8 +356,7 @@ export class UIManager {
   }
 
   /**
-   * [2.4] updateNavButtons - İleri/Geri butonlarının durumunu günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateNavButtons - İleri/Geri butonlarının durumunu günceller.
    */
   updateNavButtons() {
     const { currentQuestionIndex, questions, isSubmitting } = stateManager.getState();
@@ -374,8 +375,7 @@ export class UIManager {
   }
 
   /**
-   * [2.5] updateQuestionNumber - Soru numarasını günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateQuestionNumber - Soru numarasını günceller.
    */
   updateQuestionNumber() {
     const { questions, currentQuestionIndex } = stateManager.getState();
@@ -388,8 +388,7 @@ export class UIManager {
   }
 
   /**
-   * [2.6] updateTimer - Zamanlayıcıyı günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateTimer - Zamanlayıcıyı günceller.
    */
   updateTimer(timer) {
     if (!this.elements.timerElement) return;
@@ -405,11 +404,11 @@ export class UIManager {
     }
   }
 
-
-
+  /* =========================================================================
+   * 4) Yardımcılar | Helpers
+   * ========================================================================= */
   /**
-   * [4.1] getDifficultyText - Zorluk seviyesini Türkçe metne çevirir.
-   * Kategori: [4] Yardımcılar
+   * getDifficultyText - Zorluk seviyesini Türkçe metne çevirir.
    */
   getDifficultyText(difficulty) {
     const difficultyMap = {
@@ -422,8 +421,7 @@ export class UIManager {
   }
 
   /**
-   * [2.7] updateTotalQuestions - Toplam soru sayısını günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateTotalQuestions - Toplam soru sayısını günceller.
    */
   updateTotalQuestions(totalQuestions) {
     if (this.elements.totalQuestionNumber) {
@@ -432,8 +430,7 @@ export class UIManager {
   }
 
   /**
-   * [2.8] updateNavbarFromQuestion - Aktif sorudan navbar bilgilerini günceller.
-   * Kategori: [2] Render ve Güncelleme
+   * updateNavbarFromQuestion - Aktif sorudan navbar bilgilerini günceller.
    */
   updateNavbarFromQuestion(question) {
     if (!question || !question.question) {
@@ -465,7 +462,10 @@ export class UIManager {
     }
   }
 }
-// Export [5] CommonJS (Node.js uyumluluğu)
+/* =========================================================================
+ * 5) Dışa Aktarım | Export
+ * ========================================================================= */
+// CommonJS (Node.js uyumluluğu)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { UIManager };
 }

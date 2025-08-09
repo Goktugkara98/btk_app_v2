@@ -1,528 +1,450 @@
 /**
- * AI Chat Service V2
- * Educational quiz modu için AI sohbet hizmetlerini yönetir
- * Yeni modüler API yapısı ile çalışır
- */
-
-/*
- * İÇİNDEKİLER (Table of Contents)
- * - [1] Kurulum
- *   - [1.1] constructor()
- *   - [1.2] checkServiceStatus()
- * - [2] Durum/Yetkinlik
- *   - [2.1] isServiceEnabled()
- * - [3] Oturum
- *   - [3.1] startChatSession(quizSessionId, questionId, context)
- *   - [3.2] isSessionActive()
- *   - [3.3] endChatSession()
- *   - [3.4] getChatHistory(questionId)
- * - [4] Mesajlaşma
- *   - [4.1] sendChatMessage(message, currentQuestionId, isFirstMessage)
- * - [5] Hızlı Eylemler
- *   - [5.1] sendQuickAction(action, questionId, isFirstMessage)
- * - [6] Soru Bağlamı
- *   - [6.1] getCurrentQuestionData()
- * - [7] Sağlık
- *   - [7.1] healthCheck()
- * - [8] Dışa Aktarım
- *   - [8.1] export default
- *   - [8.2] CommonJS export
+ * =============================================================================
+ * AIChatService – Sohbet Servisi | Chat Service
+ * =============================================================================
+ * Educational quiz modunda AI tabanlı sohbet işlemlerini ve API etkileşimlerini yönetir.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Çekirdek ve Kurulum | Core & Setup
+ *    - constructor() - API temel yolu ve kontrol değişkenlerini başlatır.
+ *    - checkServiceStatus() - Servis müsaitliğini kontrol eder ve önbelleğe alır.
+ * 2) Servis Durumu | Service Status
+ *    - isServiceEnabled() - Servisin etkin olup olmadığını döndürür.
+ *    - healthCheck() - Altyapı sağlık kontrolü yapar.
+ * 3) Oturum Yönetimi | Session Management
+ *    - startChatSession(quizSessionId, questionId, context) - Sohbet oturumu başlatır/sürdürür.
+ *    - isSessionActive() - Oturumun aktif olup olmadığını kontrol eder.
+ *    - endChatSession() - Mevcut oturumu sonlandırır.
+ *    - getChatHistory(questionId) - Soruya ait sohbet geçmişini getirir.
+ * 4) Mesajlaşma | Messaging
+ *    - sendChatMessage(message, currentQuestionId, isFirstMessage) - Sohbet mesajı gönderir.
+ * 5) Hızlı Eylemler | Quick Actions
+ *    - sendQuickAction(action, questionId, isFirstMessage) - Hızlı eylem gönderir.
+ * 6) Soru Bağlamı | Question Context
+ *    - getCurrentQuestionData() - Sorunun metin ve seçeneklerini döndürür.
+ * 7) Dışa Aktarım | Export
+ * =============================================================================
  */
 class AIChatService {
+
+    /* =========================================================================
+     * 1) Çekirdek ve Kurulum | Core & Setup
+     * ========================================================================= */
+
     /**
-     * [1.1] constructor - Servis URL'lerini ve kontrol yapılarını kurar; durum kontrolünü başlatır.
-     * Kategori: [1] Kurulum
+     * Servis ayarlarını başlatır, API adresini tanımlar ve servisin kullanılabilirliğini kontrol eder.
      */
     constructor() {
-        this.baseUrl = '/api/ai';
-        this.isEnabled = false;
-        this.chatSessionId = null;
-        // Birden fazla eşzamanlı isteği engellemek için AbortController haritaları
-        this.messageControllers = new Map(); // key: questionId | 'default'
-        this.quickActionControllers = new Map(); // key: questionId | 'default'
-        this.checkServiceStatus();
+      this.baseUrl = '/api/ai';
+      this.isEnabled = false;
+      this.chatSessionId = null;
+
+      // Eşzamanlı API çağrılarını yönetmek ve iptal edebilmek için AbortController'lar.
+      this.messageControllers = new Map();
+      this.quickActionControllers = new Map();
+      
+      this.checkServiceStatus();
     }
 
     /**
-     * [1.2] checkServiceStatus - AI servisinin durumunu kontrol eder.
-     * Kategori: [1] Kurulum
+     * Başlangıçta ve periyodik olarak AI servisinin genel durumunu (aktif/pasif) sunucudan kontrol eder.
      */
     async checkServiceStatus() {
-        
-        try {
-            const response = await fetch(`${this.baseUrl}/system/status`);
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.isEnabled = data.data.available;
-            } else {
-                console.warn('[AIChatService] Service check failed:', data.message);
-                this.isEnabled = false;
-            }
-        } catch (error) {
-            console.error('[AIChatService] Status check error:', error);
-            this.isEnabled = false;
-        }
+      try {
+        const response = await fetch(`${this.baseUrl}/system/status`);
+        const data = await response.json();
+        this.isEnabled = data?.status === 'success' && data?.data?.available;
+      } catch (error) {
+        console.error('[AIChatService] Status check error:', error);
+        this.isEnabled = false;
+      }
     }
 
+    /* =========================================================================
+     * 2) Servis Durumu | Service Status
+     * ========================================================================= */
+
     /**
-     * [2.1] isServiceEnabled - Servisin aktif olup olmadığını döndürür.
-     * Kategori: [2] Durum/Yetkinlik
+     * AI servisinin o an kullanılabilir olup olmadığını döndürür.
+     * @returns {boolean} Servis etkinse true, değilse false.
      */
     isServiceEnabled() {
-        return this.isEnabled;
-    }
-
-    /**
-     * [3.1] startChatSession - Chat session başlatır.
-     * Kategori: [3] Oturum
-     * @param {string} quizSessionId - Quiz session ID
-     * @param {number} questionId - Aktif soru ID
-     * @param {Object} context - Quiz context bilgileri
-     * @returns {Promise<Object>} Session bilgileri
-     */
-    async startChatSession(quizSessionId, questionId, context = {}) {
-        
-        if (!this.isEnabled) {
-            console.warn('[AIChatService] Cannot start chat session - service not enabled');
-            return {
-                success: false,
-                error: 'AI Chat service is not available'
-            };
-        }
-
-        try {
-            // Quiz session + question ID kombinasyonu olarak chat session ID oluştur
-            const chatSessionId = `chat_${quizSessionId}_${questionId}`;
-            
-            const requestBody = {
-                quiz_session_id: quizSessionId,
-                question_id: questionId,
-                chat_session_id: chatSessionId, // Önceden oluşturulan session ID
-                context: context
-            };
-            
-            const response = await fetch(`${this.baseUrl}/session/start`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                // Prefer server-provided chat_session_id if available for robustness
-                const serverSessionId = data?.data?.chat_session_id || chatSessionId;
-                this.chatSessionId = serverSessionId;
-                return {
-                    success: true,
-                    chatSessionId: this.chatSessionId
-                };
-            } else {
-                console.error('[AIChatService] Failed to start chat session:', data.message);
-                return {
-                    success: false,
-                    error: data.message || 'Failed to start chat session'
-                };
-            }
-        } catch (error) {
-            console.error('[AIChatService] Start chat session error:', error);
-            return {
-                success: false,
-                error: 'Network error occurred'
-            };
-        }
-    }
-
-    /**
-     * [4.1] sendChatMessage - Chat mesajı gönderir ve AI yanıtı alır.
-     * Kategori: [4] Mesajlaşma
-     * @param {string} message - Gönderilecek mesaj
-     * @param {number} currentQuestionId - Mevcut soru ID (opsiyonel)
-     * @param {boolean} isFirstMessage - İlk mesaj mı (soru ve şıkları eklemek için)
-     * @returns {Promise<Object>} AI yanıtı
-     */
-    async sendChatMessage(message, currentQuestionId = null, isFirstMessage = false) {
-        
-        if (!this.isEnabled) {
-            throw new Error('AI Chat servisi kullanılamıyor');
-        }
-
-        if (!this.chatSessionId) {
-            throw new Error('Chat session başlatılmamış');
-        }
-
-        if (!message || !message.trim()) {
-            throw new Error('Mesaj boş olamaz');
-        }
-
-        try {
-            const requestBody = {
-                message: message.trim(),
-                chat_session_id: this.chatSessionId
-            };
-
-            if (currentQuestionId) {
-                requestBody.question_id = currentQuestionId;
-            }
-
-            // İlk mesaj ise soru ve şıkların içeriğini ekle
-            if (isFirstMessage && currentQuestionId) {
-                const questionData = this.getCurrentQuestionData();
-                if (questionData) {
-                    requestBody.question_context = {
-                        question_text: questionData.question_text,
-                        options: questionData.options
-                    };
-                }
-            }
-
-            // Debug: final prompt'u backend response'unda görmek için debug bayrağını gönder
-            const debugEnabled = (window.QUIZ_CONFIG?.aiDebug ?? true);
-            requestBody.debug = debugEnabled;
-
-            // Giden isteği konsola yaz
-            // eslint-disable-next-line no-console
-            console.log('[AI Debug] Sending /chat/message request:', requestBody);
-
-            // Aynı soru için önceki isteği iptal et
-            const key = currentQuestionId || 'default';
-            const prev = this.messageControllers.get(key);
-            if (prev) { try { prev.abort(); } catch (_) {} }
-            const controller = new AbortController();
-            this.messageControllers.set(key, controller);
-
-            const response = await fetch(`${this.baseUrl}/chat/message`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody),
-                signal: controller.signal
-            });
-
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                // Eğer backend debug bilgisi döndüyse, F12'da görebilmek için window.QUIZ_CONFIG'e yaz
-                if (data?.data?.debug?.prompt_used) {
-                    window.QUIZ_CONFIG = window.QUIZ_CONFIG || {};
-                    window.QUIZ_CONFIG.lastAIPrompt = data.data.debug.prompt_used;
-                    window.QUIZ_CONFIG.aiDebugInfo = {
-                        lastPrompt: data.data.debug.prompt_used,
-                        updatedAt: new Date().toISOString(),
-                        type: 'message'
-                    };
-                    // Konsola da yaz ki F12'da net görünsün
-                    // eslint-disable-next-line no-console
-                    console.log('[AI Debug] Prompt used (message):', data.data.debug.prompt_used);
-                }
-                return {
-                    success: true,
-                    message: data.data.ai_response
-                };
-            } else {
-                throw new Error(data.message || 'AI yanıtı alınamadı');
-            }
-        } catch (error) {
-            if (error?.name === 'AbortError') {
-                // eslint-disable-next-line no-console
-                console.log('[AIChatService] Message request aborted');
-                return { success: false, aborted: true };
-            }
-            console.error('[AIChatService] Send chat message error:', error);
-            throw error;
-        } finally {
-            // Controller'ı temizle
-            const k = currentQuestionId || 'default';
-            const c = this.messageControllers.get(k);
-            if (c && c.signal.aborted) {
-                this.messageControllers.delete(k);
-            }
-        }
+      return this.isEnabled;
     }
     
-
-/**
- * [6.1] getCurrentQuestionData - Mevcut sorunun verilerini alır.
- * Kategori: [6] Soru Bağlamı
- * @returns {Object|null} Soru ve şıkların içeriği
- */
-getCurrentQuestionData() {
-    try {
-        // StateManager'dan mevcut soru bilgilerini al
-        if (window.quizApp && window.quizApp.stateManager) {
-            const state = window.quizApp.stateManager.getState();
-            const currentQuestion = state.currentQuestion;
-            
-            if (currentQuestion && currentQuestion.question) {
-                // QuizEngine'den gelen format: question.text
-                // Ama biz question_text arıyoruz
-                const questionText = currentQuestion.question.text || currentQuestion.question.question_text;
-                
-                // Options'ları al - farklı formatları kontrol et
-                let options = [];
-                if (currentQuestion.question.options && Array.isArray(currentQuestion.question.options)) {
-                    options = currentQuestion.question.options;
-                } else if (currentQuestion.options && Array.isArray(currentQuestion.options)) {
-                    options = currentQuestion.options;
-                }
-                
-                if (questionText && options.length > 0) {
-                    const mappedOptions = options.map(option => ({
-                        id: option.id,
-                        option_text: option.text || option.option_text || option.name,
-                        is_correct: option.is_correct
-                    }));
-                    
-                    return {
-                        question_text: questionText,
-                        options: mappedOptions
-                    };
-                }
-            }
-        }
-        
-        console.warn('[AIChatService] Could not get current question data - missing required fields');
-        return null;
-    } catch (error) {
-        console.error('[AIChatService] Error getting current question data:', error);
-        return null;
-    }
-}
-
-/**
- * [3.2] isSessionActive - Chat session'ının durumunu kontrol eder.
- * Kategori: [3] Oturum
- * @returns {boolean} Session aktif mi
- */
-isSessionActive() {
-    return this.chatSessionId !== null;
-}
-
-/**
- * [3.3] endChatSession - Chat session'ını sonlandırır.
- * Kategori: [3] Oturum
- */
-endChatSession() {
-    this.chatSessionId = null;
-}
-
-/**
- * [3.4] getChatHistory - Chat history'yi getirir.
- * Kategori: [3] Oturum
- * @param {number} questionId - Soru ID
- * @returns {Promise<Object>} Chat history
- */
-async getChatHistory(questionId) {
-    if (!this.isEnabled) {
-        console.warn('[AIChatService] Cannot get chat history - service not enabled');
-        return {
-            success: false,
-            error: 'AI Chat service is not available'
-        };
-    }
-
-    // Quiz session ID'yi window'dan al
-    const quizSessionId = window.QUIZ_CONFIG?.sessionId || window.QUIZ_SESSION_ID;
-
-    if (!quizSessionId) {
-        console.error('[AIChatService] Cannot get chat history - no quiz session ID');
-        return {
-            success: false,
-            error: 'Quiz session ID bulunamadı'
-        };
-    }
-
-    // Chat session ID'yi oluştur
-    const chatSessionId = `chat_${quizSessionId}_${questionId}`;
-
-    try {
-        const url = `${this.baseUrl}/chat/history?chat_session_id=${encodeURIComponent(chatSessionId)}`;
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            const messages = data.data.messages || [];
-            return {
-                success: true,
-                messages: messages
-            };
-        } else {
-            console.error('[AIChatService] Failed to get chat history:', data.message);
-            return {
-                success: false,
-                error: data.message || 'Chat history alınamadı'
-            };
-        }
-    } catch (error) {
-        console.error('[AIChatService] Get chat history error:', error);
-        return {
-            success: false,
-            error: 'Network error occurred'
-        };
-    }
-}
-
-/**
- * [5.1] sendQuickAction - Hızlı eylemler için AI yanıtı alır (açıkla, ipucu).
- * Kategori: [5] Hızlı Eylemler
- * @param {string} action - 'explain' veya 'hint'
- * @param {number} questionId - Soru ID
- * @param {boolean} isFirstMessage - İlk mesaj mı (soru ve şıkları eklemek için)
- * @returns {Promise<Object>} AI yanıtı
- */
-async sendQuickAction(action, questionId, isFirstMessage = false) {
-        
-    if (!this.isEnabled) {
-        console.warn('[AIChatService] Cannot send quick action - service not enabled');
-        return {
-            success: false,
-            error: 'AI Chat service is not available'
-        };
-    }
-
-    if (!this.chatSessionId) {
-        console.warn('[AIChatService] Cannot send quick action - no chat session');
-        return {
-            success: false,
-            error: 'Chat session not started'
-        };
-    }
-
-    try {
-        const requestBody = {
-            action: action,
-            chat_session_id: this.chatSessionId,
-            question_id: questionId
-        };
-        
-        // İlk mesaj ise soru ve şıkların içeriğini ekle
-        if (isFirstMessage && questionId) {
-            const questionData = this.getCurrentQuestionData();
-            if (questionData) {
-                requestBody.question_context = {
-                    question_text: questionData.question_text,
-                    options: questionData.options
-                };
-            }
-        }
-        
-        // Giden quick-action isteğini konsola yaz
-        // eslint-disable-next-line no-console
-        console.log('[AI Debug] Sending /chat/quick-action request:', {
-            ...requestBody,
-            debug: (window.QUIZ_CONFIG?.aiDebug ?? true)
-        });
-
-        // Aynı soru için önceki quick-action isteğini iptal et
-        const qKey = questionId || 'default';
-        const prevQ = this.quickActionControllers.get(qKey);
-        if (prevQ) { try { prevQ.abort(); } catch (_) {} }
-        const qController = new AbortController();
-        this.quickActionControllers.set(qKey, qController);
-
-        const response = await fetch(`${this.baseUrl}/chat/quick-action`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ...requestBody,
-                // Debug: final prompt'u backend response'unda görmek için debug bayrağını gönder
-                debug: (window.QUIZ_CONFIG?.aiDebug ?? true)
-            }),
-            signal: qController.signal
-        });
-
-        const data = await response.json();
-
-        // Başarılı yanıtı işle
-        if (data.status === 'success') {
-            // Backend debug bilgisi döndüyse, F12'da görebilmek için window.QUIZ_CONFIG'e yaz
-            if (data?.data?.debug?.prompt_used) {
-                window.QUIZ_CONFIG = window.QUIZ_CONFIG || {};
-                window.QUIZ_CONFIG.lastAIPrompt = data.data.debug.prompt_used;
-                window.QUIZ_CONFIG.aiDebugInfo = {
-                    lastPrompt: data.data.debug.prompt_used,
-                    updatedAt: new Date().toISOString(),
-                    type: `quick-action:${action}`
-                };
-                // eslint-disable-next-line no-console
-                console.log('[AI Debug] Prompt used (quick-action):', data.data.debug.prompt_used);
-            }
-            return {
-                success: true,
-                message: data.data.ai_response,
-                action: action
-            };
-        } else {
-            console.error('[AIChatService] Quick action failed:', data.message);
-            return {
-                success: false,
-                error: data.message || 'Unknown error occurred'
-            };
-        }
-    } catch (error) {
-        if (error?.name === 'AbortError') {
-            // eslint-disable-next-line no-console
-            console.log('[AIChatService] Quick action request aborted');
-            return { success: false, aborted: true };
-        }
-        console.error('[AIChatService] Quick action error:', error);
-        return {
-            success: false,
-            error: error.message || 'Network error occurred'
-        };
-    } finally {
-        const kq = questionId || 'default';
-        const cq = this.quickActionControllers.get(kq);
-        if (cq && cq.signal.aborted) {
-            this.quickActionControllers.delete(kq);
-        }
-    }
-}
-
-/**
- * [7.1] healthCheck - Service health check yapar.
- * Kategori: [7] Sağlık
- * @returns {Promise<boolean>} Servis sağlıklı mı
- */
-async healthCheck() {
-    try {
+    /**
+     * AI servisinin altyapısının sağlıklı çalışıp çalışmadığını kontrol eder.
+     * @returns {Promise<boolean>} Servis sağlıklı ise true döner.
+     */
+    async healthCheck() {
+      try {
         const response = await fetch(`${this.baseUrl}/system/health`);
         const data = await response.json();
-        const isHealthy = data.status === 'success' && data.data.healthy;
-        return isHealthy;
-    } catch (error) {
+        return data.status === 'success' && data.data.healthy;
+      } catch (error) {
         console.error('[AIChatService] Health check error:', error);
         return false;
+      }
     }
-}
 
-}
+    /* =========================================================================
+     * 3) Oturum Yönetimi | Session Management
+     * ========================================================================= */
 
-// Export for ES6 modules (default export)
-/**
- * [8.1] export default - ES6 default export.
- * Kategori: [8] Dışa Aktarım
- */
-export default AIChatService;
+    /**
+     * Belirli bir soru için yeni bir sohbet oturumu başlatır veya mevcut olanı devam ettirir.
+     * @param {string} quizSessionId - Ana quiz oturumunun kimliği.
+     * @param {number} questionId - Sohbetin ilişkilendirileceği soru kimliği.
+     * @param {Object} context - Oturumla ilgili ek bağlam bilgileri.
+     * @returns {Promise<Object>} Başarılı ise oturum bilgilerini içeren nesne.
+     */
+    async startChatSession(quizSessionId, questionId, context = {}) {
+      if (!this.isEnabled) {
+        return { success: false, error: 'AI Chat service is not available' };
+      }
 
-// Export for CommonJS (Node.js compatibility)
-/**
- * [8.2] CommonJS export - Node.js uyumluluğu için.
- * Kategori: [8] Dışa Aktarım
- */
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AIChatService;
-}
+      try {
+        const chatSessionId = `chat_${quizSessionId}_${questionId}`;
+        const response = await fetch(`${this.baseUrl}/session/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            quiz_session_id: quizSessionId,
+            question_id: questionId,
+            chat_session_id: chatSessionId,
+            context: context
+          })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+          this.chatSessionId = data?.data?.chat_session_id || chatSessionId;
+          return { success: true, chatSessionId: this.chatSessionId };
+        } else {
+          throw new Error(data.message || 'Failed to start chat session');
+        }
+      } catch (error) {
+        console.error('[AIChatService] Start chat session error:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    /**
+     * Aktif bir sohbet oturumunun olup olmadığını kontrol eder.
+     * @returns {boolean} Oturum aktifse true.
+     */
+    isSessionActive() {
+      return this.chatSessionId !== null;
+    }
+
+    /**
+     * Mevcut sohbet oturumunu sonlandırır ve session ID'yi temizler.
+     */
+    endChatSession() {
+      this.chatSessionId = null;
+    }
+
+    /**
+     * Belirli bir soruya ait sohbet geçmişini sunucudan getirir.
+     * @param {number} questionId - Geçmişi alınacak sorunun kimliği.
+     * @returns {Promise<Object>} Başarılı ise mesaj listesini içeren nesne.
+     */
+    async getChatHistory(questionId) {
+      if (!this.isEnabled) {
+        return { success: false, error: 'AI Chat service is not available' };
+      }
+      const quizSessionId = window.QUIZ_CONFIG?.sessionId || window.QUIZ_SESSION_ID;
+      if (!quizSessionId) {
+        return { success: false, error: 'Quiz session ID not found' };
+      }
+
+      const chatSessionId = `chat_${quizSessionId}_${questionId}`;
+      try {
+        const url = `${this.baseUrl}/chat/history?chat_session_id=${encodeURIComponent(chatSessionId)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          return { success: true, messages: data.data.messages || [] };
+        } else {
+          throw new Error(data.message || 'Failed to get chat history');
+        }
+      } catch (error) {
+        console.error('[AIChatService] Get chat history error:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    /* =========================================================================
+     * 4) Mesajlaşma | Messaging
+     * ========================================================================= */
+
+    /**
+     * Kullanıcının yazdığı bir mesajı AI servisine gönderir ve yanıtını alır.
+     * @param {string} message - Kullanıcının gönderdiği metin mesajı.
+     * @param {number} currentQuestionId - Mesajın ilgili olduğu soru kimliği.
+     * @param {boolean} isFirstMessage - Bu mesajın o soru için ilk mesaj olup olmadığı.
+     * @param {('direct'|'wrong_answer'|'quick_action')} scenarioType - Mesaj senaryosu.
+     * @returns {Promise<Object>} Başarılı ise AI yanıtını içeren nesne.
+     */
+    async sendChatMessage(message, currentQuestionId = null, isFirstMessage = false, scenarioType = 'direct') {
+      if (!this.isEnabled || !this.chatSessionId) {
+        throw new Error('AI Chat service is not available or session not started.');
+      }
+      if (!message || !message.trim()) {
+        throw new Error('Message cannot be empty.');
+      }
+
+      const key = currentQuestionId || 'default';
+      const prevController = this.messageControllers.get(key);
+      if (prevController) {
+        prevController.abort();
+      }
+      const controller = new AbortController();
+      this.messageControllers.set(key, controller);
+      
+      try {
+        const requestBody = {
+          message: message.trim(),
+          chat_session_id: this.chatSessionId,
+          question_id: currentQuestionId,
+          debug: window.QUIZ_CONFIG?.aiDebug ?? true
+        };
+        // Senaryo ve ilk mesaj bayrağını ekle
+        requestBody.is_first_message = !!isFirstMessage;
+        requestBody.scenario_type = scenarioType || 'direct';
+
+        if (isFirstMessage && currentQuestionId) {
+          requestBody.question_context = this.getCurrentQuestionData();
+        }
+
+        // Debug: Log the exact outgoing request payload to the console (F12)
+        if (window?.QUIZ_CONFIG?.debug || window?.QUIZ_CONFIG?.aiDebug) {
+          const debugLog = {
+            url: `${this.baseUrl}/chat/message`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+            bodyString: JSON.stringify(requestBody)
+          };
+          // Use warn to keep alignment with previous no-console.log policy
+          console.warn('[AIChatService] Outgoing AI message payload', debugLog);
+          window.__LAST_AI_REQUEST__ = {
+            timestamp: new Date().toISOString(),
+            ...debugLog
+          };
+        }
+
+        const response = await fetch(`${this.baseUrl}/chat/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          // Debug: Log server-side final prompt if provided
+          if (window?.QUIZ_CONFIG?.debug || window?.QUIZ_CONFIG?.aiDebug) {
+            const promptUsed = data?.data?.debug?.prompt_used;
+            if (promptUsed) {
+              console.warn('[AIChatService] Server prompt_used (message)', {
+                prompt: promptUsed,
+                chat_session_id: data?.data?.chat_session_id
+              });
+              window.__LAST_AI_PROMPT__ = {
+                timestamp: new Date().toISOString(),
+                source: 'message',
+                chat_session_id: data?.data?.chat_session_id,
+                prompt: promptUsed
+              };
+            }
+          }
+          return { success: true, message: data.data.ai_response };
+        } else {
+          throw new Error(data.message || 'Failed to get AI response');
+        }
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return { success: false, aborted: true, message: 'Request was aborted.' };
+        }
+        console.error('[AIChatService] Send chat message error:', error);
+        throw error;
+      } finally {
+        this.messageControllers.delete(key);
+      }
+    }
+    
+    /* =========================================================================
+     * 5) Hızlı Eylemler | Quick Actions
+     * ========================================================================= */
+
+    /**
+     * Önceden tanımlanmış eylemi (yalnızca "açıkla") AI servisine gönderir.
+     * @param {string} action - Gerçekleştirilecek eylemin adı ('explain').
+     * @param {number} questionId - Eylemin ilgili olduğu soru kimliği.
+     * @param {boolean} isFirstMessage - Bu eylemin o soru için ilk etkileşim olup olmadığı.
+     * @returns {Promise<Object>} Başarılı ise AI yanıtını içeren nesne.
+     */
+    async sendQuickAction(action, questionId, isFirstMessage = false) {
+      if (!this.isEnabled || !this.chatSessionId) {
+        return { success: false, error: 'AI Chat service is not available or session not started.' };
+      }
+
+      const key = questionId || 'default';
+      const prevController = this.quickActionControllers.get(key);
+      if (prevController) {
+        prevController.abort();
+      }
+      const controller = new AbortController();
+      this.quickActionControllers.set(key, controller);
+
+      try {
+        const requestBody = {
+          action,
+          chat_session_id: this.chatSessionId,
+          question_id: questionId,
+          debug: window.QUIZ_CONFIG?.aiDebug ?? true
+        };
+        // Senaryo ve ilk mesaj bayrağını ekle
+        requestBody.is_first_message = !!isFirstMessage;
+        requestBody.scenario_type = 'quick_action';
+
+        if (isFirstMessage && questionId) {
+          requestBody.question_context = this.getCurrentQuestionData();
+        }
+
+        // Debug: Log the exact outgoing quick-action request payload
+        if (window?.QUIZ_CONFIG?.debug || window?.QUIZ_CONFIG?.aiDebug) {
+          const debugLog = {
+            url: `${this.baseUrl}/chat/quick-action`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+            bodyString: JSON.stringify(requestBody)
+          };
+          console.warn('[AIChatService] Outgoing AI quick-action payload', debugLog);
+          window.__LAST_AI_REQUEST__ = {
+            timestamp: new Date().toISOString(),
+            ...debugLog
+          };
+        }
+
+        const response = await fetch(`${this.baseUrl}/chat/quick-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          // Debug: Log server-side final prompt if provided
+          if (window?.QUIZ_CONFIG?.debug || window?.QUIZ_CONFIG?.aiDebug) {
+            const promptUsed = data?.data?.debug?.prompt_used;
+            if (promptUsed) {
+              console.warn('[AIChatService] Server prompt_used (quick-action)', {
+                prompt: promptUsed,
+                chat_session_id: data?.data?.chat_session_id,
+                action,
+                question_id: questionId
+              });
+              window.__LAST_AI_PROMPT__ = {
+                timestamp: new Date().toISOString(),
+                source: 'quick-action',
+                chat_session_id: data?.data?.chat_session_id,
+                action,
+                question_id: questionId,
+                prompt: promptUsed
+              };
+            }
+          }
+          return { success: true, message: data.data.ai_response, action };
+        } else {
+          throw new Error(data.message || 'Quick action failed');
+        }
+      } catch (error) {
+         if (error?.name === 'AbortError') {
+          return { success: false, aborted: true, error: 'Request was aborted.' };
+        }
+        console.error('[AIChatService] Quick action error:', error);
+        return { success: false, error: error.message };
+      } finally {
+        this.quickActionControllers.delete(key);
+      }
+    }
+
+    /* =========================================================================
+     * 6) Soru Bağlamı | Question Context
+     * ========================================================================= */
+ 
+     /**
+      * StateManager üzerinden mevcut aktif sorunun metnini ve seçeneklerini alır.
+      * Bu veri, AI'a bağlam sağlamak için kullanılır.
+      * @returns {Object|null} Soru metni ve seçenekleri içeren nesne veya null.
+      */
+     getCurrentQuestionData() {
+       try {
+         if (window.quizApp && window.quizApp.stateManager) {
+           const state = window.quizApp.stateManager.getState();
+           const currentQuestion = state.currentQuestion;
+           
+           if (currentQuestion?.question) {
+             const questionText = (
+               currentQuestion.question.text ??
+               currentQuestion.question.name ??
+               currentQuestion.question.title ??
+               currentQuestion.text ??
+               currentQuestion.name ??
+               ''
+             );
+             const qid = currentQuestion.question.id ?? currentQuestion.id;
+             const optMap = state.optionsByQuestionId;
+             let optionsFromMap = [];
+             if (optMap) {
+               if (optMap instanceof Map) {
+                 optionsFromMap = optMap.get(qid) || optMap.get(String(qid)) || optMap.get(Number(qid)) || [];
+               } else if (typeof optMap === 'object') {
+                 optionsFromMap = optMap[qid] || optMap[String(qid)] || optMap[Number(qid)] || [];
+               }
+             }
+             const options = (optionsFromMap && optionsFromMap.length > 0) ? optionsFromMap : (currentQuestion.question.options || []);
+ 
+             if (questionText && options.length > 0) {
+               return {
+                 question_text: String(questionText),
+                 options: options.map(opt => {
+                   const id = (opt && (opt.id ?? opt.option_id ?? opt.value ?? null));
+                   const text = (opt && (
+                     opt.text ?? opt.name ?? opt.title ?? opt.option_text ?? opt.label ?? opt.description ?? opt.content ?? (typeof opt.value !== 'object' ? opt.value : '') ?? ''
+                   ));
+                   const isCorrectRaw = (opt?.is_correct ?? opt?.isCorrect ?? opt?.correct);
+                   const is_correct = (isCorrectRaw === true || isCorrectRaw === 1 || isCorrectRaw === '1');
+                   return { id, option_text: String(text || ''), is_correct };
+                 })
+               };
+             }
+           }
+         }
+         return null;
+       } catch (error) {
+         console.error('[AIChatService] Error getting current question data:', error);
+         return null;
+       }
+     }
+ 
+   }
+ 
+   /* =========================================================================
+    * 7) Dışa Aktarım | Export
+    * ========================================================================= */
+ 
+   // ES6 modül sistemi için varsayılan dışa aktarım.
+   export default AIChatService;
+ 
+   // Node.js gibi CommonJS ortamlarıyla uyumluluk için ek dışa aktarım.
+   if (typeof module !== 'undefined' && module.exports) {
+     module.exports = AIChatService;
+   }

@@ -1,97 +1,123 @@
 /**
- * EventBus - Merkezi olay (event) yönetim sistemi.
- * Bileşenler arasında gevşek bağlı (loosely-coupled) iletişim için
- * yayınla-abone ol (publish-subscribe) desenini uygular.
+ * =============================================================================
+ * EventBus – Olay Otobüsü | Event Bus
+ * =============================================================================
+ * Uygulama bileşenleri arasında gevşek bağlı iletişim için yayınla-abone ol (pub/sub)
+ * desenini uygular. Modülerlik ve bakım kolaylığı sağlar.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Yapı ve Depolama | Structure & Storage
+ *    - constructor() - Olay deposunu (Map) başlatır.
+ * 2) Temel İşlemler | Core Operations
+ *    - subscribe(eventName, callback) - Abone ekler, `unsubscribe` döndürür.
+ *    - publish(eventName, data) - Olayı tüm abonelere güvenli şekilde yayınlar.
+ * 3) Yönetim ve Temizlik | Management & Cleanup
+ *    - clear(eventName) - Belirli olayı veya tüm olayları temizler.
+ * 4) Tekil Örnek | Singleton Export
+ *    - eventBus - Uygulama genelinde paylaşılan tek örnek.
+ * =============================================================================
  */
- /*
-  * İÇİNDEKİLER (Table of Contents)
-  * - [1] Kurulum
-  *   - [1.1] constructor()
-  * - [2] Abonelik Yönetimi
-  *   - [2.1] subscribe(event, callback)
-  * - [3] Yayınlama
-  *   - [3.1] publish(event, data)
-  * - [4] Temizlik
-  *   - [4.1] clear(event)
-  * - [5] Dışa Aktarım
-  *   - [5.1] eventBus singleton
-  */
- class EventBus {
+class EventBus {
+
+  /* =========================================================================
+   * 1) Yapı ve Depolama | Structure & Storage
+   * ========================================================================= */
+
   /**
-   * [1.1] constructor - Olay depolama yapısını başlatır.
-   * Kategori: [1] Kurulum
+   * Olay (event) deposunu başlatır.
+   * Olayları ve onlara abone olan callback fonksiyonlarını saklamak için bir Map kullanılır.
+   * Veri yapısı: `Map<string, Set<Function>>`
+   * - Key (string): Olayın adı (örn. 'quiz:start').
+   * - Value (Set<Function>): Olay tetiklendiğinde çalıştırılacak callback fonksiyonları kümesi.
+   * `Set` kullanılması, aynı callback fonksiyonunun bir olaya yanlışlıkla birden fazla kez
+   * eklenmesini otomatik olarak engeller ve performansı artırır.
    */
   constructor() {
-    // Olayları ve onlara abone olan callback fonksiyonlarını saklar.
-    // Map<string, Set<Function>>
     this.events = new Map();
   }
 
+  /* =========================================================================
+   * 2) Temel İşlemler | Core Operations
+   * ========================================================================= */
+
   /**
-   * [2.1] subscribe - Bir olaya abone olur.
-   * Kategori: [2] Abonelik Yönetimi
-   * @param {string} event - Abone olunacak olayın adı.
+   * Bir olaya abone olmak için kullanılır.
+   * @param {string} eventName - Abone olunacak olayın adı.
    * @param {Function} callback - Olay yayınlandığında çağrılacak fonksiyon.
-   * @returns {Function} Aboneliği iptal etmek için kullanılabilecek bir fonksiyon.
+   * @returns {{unsubscribe: Function}} Aboneliği sonlandırmak için kullanılabilecek 
+   * bir `unsubscribe` fonksiyonu içeren nesne.
    */
-  subscribe(event, callback) {
-    if (!this.events.has(event)) {
-      this.events.set(event, new Set());
+  subscribe(eventName, callback) {
+    if (!this.events.has(eventName)) {
+      this.events.set(eventName, new Set());
     }
     
-    const subscribers = this.events.get(event);
+    const subscribers = this.events.get(eventName);
     subscribers.add(callback);
 
-    // Abonelikten çıkma fonksiyonu döndürülür.
-    return () => {
+    // Abone olan bileşenin, yaşam döngüsü sona erdiğinde (örn. bir React bileşeni unmount olduğunda)
+    // kolayca abonelikten çıkabilmesi için bir fonksiyon döndürülür.
+    // Bu, "memory leak" (hafıza sızıntısı) riskini ortadan kaldırır.
+    const unsubscribe = () => {
       subscribers.delete(callback);
-      // Eğer bir olayın hiç abonesi kalmazsa, hafızadan temizlenir.
+      // Eğer bir olayın hiç abonesi kalmazsa, hafızayı verimli kullanmak
+      // için olay Map'ten tamamen silinir.
       if (subscribers.size === 0) {
-        this.events.delete(event);
+        this.events.delete(eventName);
       }
     };
+    
+    return { unsubscribe };
   }
 
   /**
-   * [3.1] publish - Bir olay yayınlar ve tüm aboneleri bilgilendirir.
-   * Kategori: [3] Yayınlama
-   * @param {string} event - Yayınlanacak olayın adı.
-   * @param {*} [data] - Abonelere gönderilecek veri.
+   * Belirtilen bir olayı, tüm abonelerine veri göndererek yayınlar.
+   * @param {string} eventName - Yayınlanacak olayın adı.
+   * @param {*} [data] - Abonelere gönderilecek isteğe bağlı veri.
    */
-  publish(event, data) {
-    if (!this.events.has(event)) {
+  publish(eventName, data) {
+    if (!this.events.has(eventName)) {
+      // Olayın abonesi yoksa, gereksiz işlem yapma.
       return;
     }
     
-    const subscribers = this.events.get(event);
+    const subscribers = this.events.get(eventName);
     subscribers.forEach(callback => {
       try {
-        // Her bir abonenin callback fonksiyonu güvenli bir şekilde çağrılır.
+        // Her bir abonenin callback fonksiyonu, diğerlerini etkilememesi için
+        // güvenli bir `try-catch` bloğu içinde çağrılır.
         callback(data);
       } catch (error) {
-        // Event callback hatası
+        // Bir abonede hata oluşursa, bu hata konsola yazdırılır ancak
+        // diğer abonelerin çalışmasını engellemez. Bu, uygulamanın kararlılığını artırır.
+        console.error(`[EventBus] '${eventName}' olayı için bir abonede hata oluştu:`, error);
       }
     });
   }
 
+  /* =========================================================================
+   * 3) Yönetim ve Temizlik | Management & Cleanup
+   * ========================================================================= */
+
   /**
-   * [4.1] clear - Tüm abonelikleri temizler.
-   * Kategori: [4] Temizlik
-   * @param {string} [event] - Belirtilirse sadece o olayın abonelerini,
-   * belirtilmezse tüm aboneleri temizler.
+   * Abonelikleri temizler. Belirtilen olay için veya tümünü.
+   * Test ortamlarında veya bileşenler arası geçişlerde temiz bir başlangıç yapmak için kullanışlıdır.
+   * @param {string} [eventName] - Belirtilirse sadece o olayın aboneleri,
+   * belirtilmezse tüm olaylar temizlenir.
    */
-  clear(event) {
-    if (event) {
-      this.events.delete(event);
+  clear(eventName) {
+    if (eventName) {
+      this.events.delete(eventName);
+      console.log(`[EventBus] '${eventName}' olayına ait tüm abonelikler temizlendi.`);
     } else {
       this.events.clear();
+      console.log(`[EventBus] Tüm olay abonelikleri temizlendi.`);
     }
   }
 }
 
-// Uygulama genelinde tek bir örnek (singleton) olarak ihraç edilir.
-/**
- * [5.1] eventBus - Singleton örneği.
- * Kategori: [5] Dışa Aktarım
- */
+/* =========================================================================
+ * 4) Tekil Örnek | Singleton Export
+ * ========================================================================= */
+// Uygulama genelinde tek bir EventBus örneği dışa aktarılır.
 export const eventBus = new EventBus();

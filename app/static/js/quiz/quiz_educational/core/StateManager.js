@@ -1,39 +1,44 @@
 import { eventBus } from './EventBus.js';
 
 /**
- * StateManager - Merkezi durum (state) yönetimi.
- * Değişiklik bildirimleri olan basit bir state container'ı uygular.
+ * =============================================================================
+ * StateManager – Durum Yöneticisi | State Manager
+ * =============================================================================
+ * Uygulamanın tüm durumunu tek bir merkezde tutar ve yönetir; değişiklikleri `eventBus` ile yayar.
+ *
+ * İÇİNDEKİLER | TABLE OF CONTENTS
+ * 1) Kurulum ve Çekirdek | Setup & Core
+ *    - constructor(initialState) - Başlangıç durumunu kurar ve session ID'yi tespit eder.
+ * 2) Temel Durum Erişimi | Core State Access
+ *    - getState(path) - Tüm state'i veya bir yolu döndürür.
+ *    - setState(newState, action) - State'i günceller ve olay yayınlar.
+ * 3) Quiz Durum Yönetimi | Quiz Status Management
+ *    - setQuestions(questions) - Soruları yükler ve başlangıcı ayarlar.
+ *    - setCurrentQuestionIndex(index) - Aktif soruyu değiştirir ve ziyaret edilenlere ekler.
+ * 4) Cevap Yönetimi | Answer Management
+ *    - setAnswer(questionId, answer) - Cevabı kaydeder.
+ *    - removeAnswer(questionId) - Cevabı siler.
+ * 5) Zamanlayıcı Yönetimi | Timer Management
+ *    - setTimer(remainingTime, totalTime) - Zamanlayıcı değerlerini günceller.
+ * 6) Arayüz Durum Yönetimi | UI State Management
+ *    - setLoading(isLoading) - Yükleniyor durumunu ayarlar.
+ *    - setError(error) - Hata durumunu ayarlar.
+ * 7) Meta Veri Yönetimi | Metadata Management
+ *    - setMetadata({...}) - Meta verileri günceller.
+ * 8) Türetilmiş Veri Yönetimi | Derived Data Management
+ *    - buildDerivedMaps() - Hızlı erişim için haritalar oluşturur.
+ * 9) Tekil Örnek | Singleton Export
+ *    - stateManager - Uygulama genelinde paylaşılan örnek.
+ * =============================================================================
  */
- /*
-  * İÇİNDEKİLER (Table of Contents)
-  * - [1] Kurulum
-  *   - [1.1] constructor()
-  * - [2] Okuma
-  *   - [2.1] getState(path)
-  * - [3] Yazma (Temel)
-  *   - [3.1] setState(newState, action)
-  * - [4] Quiz Durumu
-  *   - [4.1] setQuestions(questions)
-  *   - [4.2] setCurrentQuestionIndex(index)
-  * - [5] Cevap Yönetimi
-  *   - [5.1] setAnswer(questionId, answer)
-  *   - [5.2] removeAnswer(questionId)
-  * - [6] Zamanlayıcı
-  *   - [6.1] setTimer(remainingTime, totalTime)
-  * - [7] UI Durumu
-  *   - [7.1] setLoading(isLoading)
-  *   - [7.2] setError(error)
-  * - [8] Meta Bilgiler
-  *   - [8.1] setMetadata({...})
-  * - [9] Türetilmiş Veri
-  *   - [9.1] buildDerivedMaps()
-  * - [10] Dışa Aktarım
-  *   - [10.1] stateManager singleton
-  */
- class StateManager {
+class StateManager {
+
+  /* =========================================================================
+   * 1) Kurulum ve Çekirdek | Setup & Core
+   * ========================================================================= */
+
   /**
-   * [1.1] constructor - Başlangıç state'ini yükler ve sessionId tespit eder.
-   * Kategori: [1] Kurulum
+   * constructor - Başlangıç state'ini yükler ve mevcut oturum (session) ID'sini tespit eder.
    */
   constructor(initialState = {}) {
     this.state = {
@@ -41,9 +46,10 @@ import { eventBus } from './EventBus.js';
       questions: [],
       currentQuestion: null,
       currentQuestionIndex: 0,
-      answers: new Map(), // Soru ID'lerini ve verilen cevapları tutar.
-      visitedQuestions: new Set(), // Ziyaret edilen soruları takip eder
+      answers: new Map(),
+      visitedQuestions: new Set(),
       totalQuestions: 0,
+      
       // Hızlı erişim için türetilmiş yapılar
       questionById: new Map(),
       optionsByQuestionId: new Map(),
@@ -51,15 +57,14 @@ import { eventBus } from './EventBus.js';
       
       // Oturum durumu
       sessionId: null,
-      quizMode: 'practice', // 'practice' veya 'exam'
+      quizMode: 'practice',
       timer: {
         enabled: false,
-        remainingTime: 0,
-        totalTime: 0,
-        remainingTimeSeconds: 0
+        remainingTimeSeconds: 0,
+        totalTime: 0
       },
       
-      // Quiz meta bilgileri (ders, ünite, konu, zorluk vb.)
+      // Quiz meta bilgileri
       grade: null,
       subject: null,
       unit: null,
@@ -68,27 +73,29 @@ import { eventBus } from './EventBus.js';
       
       // Arayüz (UI) durumu
       isLoading: false,
-      isSubmitting: false, // Cevap gönderilirken çift tıklamayı önlemek için.
+      isSubmitting: false,
       error: null,
       
       // Başlangıçta verilen state ile birleştirilir.
       ...initialState
     };
     
-    // Eğer window nesnesinde session ID varsa, state'i başlat.
-    if (window.QUIZ_CONFIG && window.QUIZ_CONFIG.sessionId) {
+    // Global window nesnesinden session ID'yi alıp state'e yazar.
+    if (window.QUIZ_CONFIG?.sessionId) {
       this.state.sessionId = window.QUIZ_CONFIG.sessionId;
     } else if (window.QUIZ_SESSION_ID) {
-      // Eski format için geriye dönük uyumluluk
-      this.state.sessionId = window.QUIZ_SESSION_ID;
+      this.state.sessionId = window.QUIZ_SESSION_ID; // Geriye dönük uyumluluk
     }
   }
 
+  /* =========================================================================
+   * 2) Temel Durum Erişimi | Core State Access
+   * ========================================================================= */
+
   /**
-   * [2.1] getState - Mevcut state'i veya state içindeki belirli bir değeri alır.
-   * Kategori: [2] Okuma
-   * @param {string} [path] - State özelliğine giden nokta notasyonlu yol (örn: 'timer.remainingTime').
-   * @returns {*} State veya state özelliği.
+   * Mevcut state'i veya state içindeki belirli bir değeri alır.
+   * @param {string} [path] - State özelliğine giden nokta notasyonlu yol (örn: 'timer.remainingTimeSeconds').
+   * @returns {*} İstenen state parçası veya tüm state nesnesi.
    */
   getState(path) {
     if (!path) return this.state;
@@ -99,18 +106,14 @@ import { eventBus } from './EventBus.js';
   }
 
   /**
-   * [3.1] setState - State'i günceller ve aboneleri bilgilendirir.
-   * Kategori: [3] Yazma (Temel)
-   * @param {Object} newState - Birleştirilecek yeni state parçası.
-   * @param {string} [action] - Hata ayıklama için eylemin türünü belirten opsiyonel string.
+   * State'i günceller ve 'state:changed' olayını yayınlayarak aboneleri bilgilendirir.
+   * @param {Object} newState - Mevcut state ile birleştirilecek yeni state parçası.
+   * @param {string} [action='STATE_UPDATE'] - Hata ayıklama için eylemin türünü belirten opsiyonel etiket.
    */
   setState(newState, action = 'STATE_UPDATE') {
     const prevState = { ...this.state };
-    
-    // Yeni state'i mevcut state ile birleştir.
     this.state = { ...this.state, ...newState };
 
-    // State değişikliğini 'state:changed' olayı ile yayınla.
     eventBus.publish('state:changed', {
       action,
       prevState,
@@ -118,17 +121,18 @@ import { eventBus } from './EventBus.js';
     });
   }
 
-  // Sık kullanılan state güncellemeleri için yardımcı metotlar
-  
+  /* =========================================================================
+   * 3) Quiz Durum Yönetimi | Quiz Status Management
+   * ========================================================================= */
+
   /**
-   * [4.1] setQuestions - Soruları ve başlangıç indeksini ayarlar; ziyaret edilenleri başlatır.
-   * Kategori: [4] Quiz Durumu
+   * Soruları, başlangıç indeksini ayarlar ve ziyaret edilenler listesini sıfırlar.
+   * @param {Array} questions - Yüklenecek soru listesi.
    */
   setQuestions(questions) {
-    // İlk soruyu ziyaret edilmiş olarak işaretle
     const initialVisitedQuestions = new Set();
     if (questions.length > 0) {
-      initialVisitedQuestions.add(0);
+      initialVisitedQuestions.add(0); // İlk soruyu ziyaret edilmiş olarak işaretle
     }
     
     this.setState({ 
@@ -136,103 +140,112 @@ import { eventBus } from './EventBus.js';
       currentQuestion: questions[0] || null,
       currentQuestionIndex: 0,
       answers: new Map(), // Yeni sorular geldiğinde eski cevapları temizle
-      visitedQuestions: initialVisitedQuestions // İlk soruyu ziyaret edilmiş olarak işaretle
+      visitedQuestions: initialVisitedQuestions
     }, 'SET_QUESTIONS');
   }
 
   /**
-   * [4.2] setCurrentQuestionIndex - Aktif soruyu ve ziyaret edilenleri günceller.
-   * Kategori: [4] Quiz Durumu
+   * Aktif sorunun indeksini günceller ve bu indeksi ziyaret edilenler listesine ekler.
+   * @param {number} index - Aktif hale getirilecek sorunun indeksi.
    */
   setCurrentQuestionIndex(index) {
     if (index >= 0 && index < this.state.questions.length) {
-      // Ziyaret edilen soruları takip et
       const newVisitedQuestions = new Set(this.state.visitedQuestions);
       newVisitedQuestions.add(index);
       
-      const newCurrentQuestion = this.state.questions[index];
-      
       this.setState({
         currentQuestionIndex: index,
-        currentQuestion: newCurrentQuestion,
+        currentQuestion: this.state.questions[index],
         visitedQuestions: newVisitedQuestions
       }, 'SET_CURRENT_QUESTION');
     }
   }
 
+  /* =========================================================================
+   * 4) Cevap Yönetimi | Answer Management
+   * ========================================================================= */
+
   /**
-   * [5.1] setAnswer - Kullanıcı cevabını state içinde saklar.
-   * Kategori: [5] Cevap Yönetimi
+   * Bir soru için kullanıcının cevabını state'e kaydeder.
+   * @param {number|string} questionId - Cevabın ait olduğu soru ID'si.
+   * @param {*} answer - Kullanıcının verdiği cevap.
    */
   setAnswer(questionId, answer) {
-    // questionId'yi her zaman number olarak sakla
-    const numericQuestionId = parseInt(questionId, 10);
-    
     const newAnswers = new Map(this.state.answers);
-    newAnswers.set(numericQuestionId, answer);
-    
+    newAnswers.set(parseInt(questionId, 10), answer);
     this.setState({ answers: newAnswers }, 'SET_ANSWER');
   }
 
   /**
-   * [5.2] removeAnswer - Kullanıcının cevabını kaldırır.
-   * Kategori: [5] Cevap Yönetimi
+   * Bir soruya verilen cevabı state'den kaldırır.
+   * @param {number|string} questionId - Cevabı kaldırılacak soru ID'si.
    */
   removeAnswer(questionId) {
-    // questionId'yi her zaman number olarak sakla
-    const numericQuestionId = parseInt(questionId, 10);
-    
     const newAnswers = new Map(this.state.answers);
-    newAnswers.delete(numericQuestionId);
-    
+    newAnswers.delete(parseInt(questionId, 10));
     this.setState({ answers: newAnswers }, 'REMOVE_ANSWER');
   }
 
+  /* =========================================================================
+   * 5) Zamanlayıcı Yönetimi | Timer Management
+   * ========================================================================= */
+
   /**
-   * [6.1] setTimer - Zamanlayıcı durumunu günceller.
-   * Kategori: [6] Zamanlayıcı
+   * Zamanlayıcının durumunu (kalan süre, toplam süre) günceller.
+   * @param {number} remainingTime - Saniye cinsinden kalan süre.
+   * @param {number} totalTime - Saniye cinsinden toplam süre.
    */
   setTimer(remainingTime, totalTime) {
-    // remainingTimeSeconds kanonik alan; remainingTime geriye dönük uyumluluk için korunur.
     const remainingTimeSeconds = typeof remainingTime === 'number' ? remainingTime : this.state.timer.remainingTimeSeconds;
     this.setState({
       timer: {
         ...this.state.timer,
         enabled: true,
-        remainingTime: remainingTimeSeconds, // backward compatibility
         remainingTimeSeconds,
         totalTime: (typeof totalTime === 'number') ? totalTime : this.state.timer.totalTime
       }
     }, 'SET_TIMER');
   }
 
+  /* =========================================================================
+   * 6) Arayüz Durum Yönetimi | UI State Management
+   * ========================================================================= */
+
   /**
-   * [7.1] setLoading - Yükleniyor durumunu ayarlar.
-   * Kategori: [7] UI Durumu
+   * API çağrıları gibi asenkron işlemler için yükleniyor durumunu ayarlar.
+   * @param {boolean} isLoading - Yükleniyor durumunun aktif olup olmadığı.
    */
   setLoading(isLoading) {
     this.setState({ isLoading }, 'SET_LOADING');
   }
 
   /**
-   * [7.2] setError - Hata durumunu ayarlar.
-   * Kategori: [7] UI Durumu
+   * Uygulamada bir hata oluştuğunda hata durumunu ayarlar.
+   * @param {Object|null} error - Hata nesnesi veya durumu temizlemek için null.
    */
   setError(error) {
     this.setState({ error }, 'SET_ERROR');
   }
 
+  /* =========================================================================
+   * 7) Meta Veri Yönetimi | Metadata Management
+   * ========================================================================= */
+
   /**
-   * [8.1] setMetadata - Quiz meta bilgilerini ayarlar (ders, konu, zorluk vb.)
-   * Kategori: [8] Meta Bilgiler
+   * Quiz'in meta verilerini (ders, konu, zorluk vb.) ayarlar.
+   * @param {Object} metadata - Meta verileri içeren nesne.
    */
   setMetadata({ grade = null, subject = null, unit = null, topic = null, difficulty = null } = {}) {
     this.setState({ grade, subject, unit, topic, difficulty }, 'SET_METADATA');
   }
 
+  /* =========================================================================
+   * 8) Türetilmiş Veri Yönetimi | Derived Data Management
+   * ========================================================================= */
+
   /**
-   * [9.1] buildDerivedMaps - Sorulardan hızlı erişim için yardımcı map'ler üretir.
-   * Kategori: [9] Türetilmiş Veri
+   * Soru listesinden, verilere hızlı erişim sağlamak için yardımcı Map'ler oluşturur.
+   * Bu işlem, soru ID'sine göre soru, seçenek ve doğru cevap bulmayı optimize eder.
    */
   buildDerivedMaps() {
     const questionById = new Map();
@@ -242,22 +255,27 @@ import { eventBus } from './EventBus.js';
     for (const q of this.state.questions) {
       const qid = q?.question?.id;
       if (!qid) continue;
+      
       questionById.set(qid, q);
 
       const options = Array.isArray(q?.question?.options) ? q.question.options : [];
       optionsByQuestionId.set(qid, options);
 
-      const correct = options.find(o => o?.is_correct === true || o?.isCorrect === true || o?.correct === true || o?.is_correct === 1 || o?.correct === 1) || null;
-      if (correct) correctOptionByQuestionId.set(qid, correct);
+      const correctOption = options.find(o => o.is_correct === true || o.isCorrect === true) || null;
+      if (correctOption) {
+        correctOptionByQuestionId.set(qid, correctOption);
+      }
     }
-
+    
     this.setState({ questionById, optionsByQuestionId, correctOptionByQuestionId }, 'BUILD_DERIVED_MAPS');
   }
 }
 
-// Uygulama genelinde tek bir örnek (singleton) olarak ihraç edilir.
 /**
- * [10.1] stateManager - Singleton örneği.
- * Kategori: [10] Dışa Aktarım
+ * =========================================================================
+ * 9) Tekil Örnek | Singleton Export
+ * =========================================================================
+ *
+ * Uygulama genelinde kullanılacak tek StateManager örneği.
  */
 export const stateManager = new StateManager();

@@ -1,0 +1,9 @@
+{SYSTEM}
+
+{DIRECTIVE}
+
+{HISTORY}
+
+{QUESTION_BLOCK}
+
+Öğrenci mesajı: {USER_MESSAGE}

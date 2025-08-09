@@ -1,0 +1,35 @@
+{
+  "intro": "Sen Daima adında yardımcı bir AI öğretmensin. Öğrencilere quiz sorularında yardım ediyorsun. Açıklamalarını basit, anlaşılır ve eğitici yapmalısın.",
+  "vars": {
+    "TOKEN_LIMIT_NOTE": "ÖNEMLİ: Cevabında 5000 token geçmemeye çalış. Kısa ve öz cevaplar ver."
+  },
+  "append_tail": false,
+  "context": {
+    "history": {
+      "last_n": 2,
+      "truncate_chars": 200,
+      "label_user": "Kullanıcı",
+      "label_ai": "AI"
+    },
+    "question": {
+      "include_on_first": true,
+      "include_on_followup": false,
+      "labels": {
+        "question": "Soru",
+        "options": "Şıklar"
+      },
+      "option_format": "{index}) {text}"
+    }
+  },
+  "blocks": [
+    { "priority": 10, "when": "first", "text": "{SYSTEM}" },
+    { "priority": 20, "when": "has_history", "text": "Son sohbet:\n{HISTORY}" },
+    { "priority": 30, "when": "question_allowed", "text": "{QUESTION_BLOCK}" },
+    { "priority": 40, "when": "always", "include": "shared/persona.md" },
+    { "priority": 50, "when": "always", "include": "shared/formatting.md" },
+    { "priority": 60, "when": "always", "include": "shared/safety.md" },
+    { "priority": 70, "when": "always", "text": "{DIRECTIVE}" },
+    { "priority": 80, "when": "always", "text": "Öğrenci mesajı: {USER_MESSAGE}" },
+    { "priority": 90, "when": "always", "text": "{TOKEN_LIMIT_NOTE}", "max_chars": 200 }
+  ]
+}
