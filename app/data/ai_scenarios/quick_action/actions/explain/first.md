@@ -2,6 +2,9 @@
 
 {DIRECTIVE}
 
+Önceki sohbet:
+{HISTORY}
+
 Soru:
 {question_text}
 

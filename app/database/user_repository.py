@@ -78,14 +78,14 @@ class UserRepository:
         self._ensure_connection()
         try:
             with self.db as conn:
-                # Temel alanlar (name_id otomatik olarak username ile aynı)
-                fields = ['username', 'name_id', 'email', 'password_hash']
-                values = [username, username, email, hashed_password]
+                # Temel alanlar
+                fields = ['username', 'email', 'password_hash']
+                values = [username, email, hashed_password]
                 
                 # Opsiyonel alanlar
                 optional_fields = [
                     'first_name', 'last_name', 'phone', 'birth_date', 'gender',
-                    'school', 'grade_level_id', 'bio', 'avatar_path'
+                    'country', 'city', 'school', 'bio', 'avatar_path'
                 ]
                 
                 for field in optional_fields:
@@ -111,9 +111,9 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT u.id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.school, u.grade_level_id,
-                           u.bio, u.avatar_path, u.created_at, u.updated_at
+                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
+                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
+                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
                     FROM users u
                     WHERE u.username = %s
                 """
@@ -130,9 +130,9 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT u.id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.school, u.grade_level_id,
-                           u.bio, u.avatar_path, u.created_at, u.updated_at
+                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
+                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
+                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
                     FROM users u
                     WHERE u.email = %s
                 """
@@ -149,11 +149,11 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT u.id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.school, u.grade_level_id,
-                           u.bio, u.avatar_path, u.created_at, u.updated_at
+                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
+                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
+                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
                     FROM users u
-                    WHERE u.id = %s
+                    WHERE u.user_id = %s
                 """
                 conn.cursor.execute(query, (user_id,))
                 result = conn.cursor.fetchone()
@@ -169,9 +169,9 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT u.id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.school, u.grade_level_id,
-                           u.bio, u.avatar_path, u.created_at, u.updated_at
+                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
+                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
+                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
                     FROM users u
                     ORDER BY u.created_at DESC
                 """
@@ -190,7 +190,8 @@ class UserRepository:
                 # Güncellenebilir alanlar
                 updatable_fields = [
                     'username', 'email', 'first_name', 'last_name', 'phone', 
-                    'birth_date', 'gender', 'school', 'grade_level_id', 'bio', 'avatar_path'
+                    'birth_date', 'gender', 'country', 'city', 'school', 'bio', 'avatar_path',
+                    'is_active', 'is_admin'
                 ]
                 
                 # Güncellenecek alanları filtrele
@@ -206,7 +207,7 @@ class UserRepository:
                     return False
                 
                 update_values.append(user_id)
-                query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+                query = f"UPDATE users SET {', '.join(update_fields)} WHERE user_id = %s"
                 
                 conn.cursor.execute(query, update_values)
                 conn.connection.commit()
@@ -225,7 +226,7 @@ class UserRepository:
         self._ensure_connection()
         try:
             with self.db as conn:
-                query = "UPDATE users SET password_hash = %s WHERE id = %s"
+                query = "UPDATE users SET password_hash = %s WHERE user_id = %s"
                 conn.cursor.execute(query, (new_password_hash, user_id))
                 conn.connection.commit()
                 return conn.cursor.rowcount > 0
@@ -240,7 +241,7 @@ class UserRepository:
         self._ensure_connection()
         try:
             with self.db as conn:
-                query = "DELETE FROM users WHERE id = %s"
+                query = "DELETE FROM users WHERE user_id = %s"
                 conn.cursor.execute(query, (user_id,))
                 conn.connection.commit()
                 return conn.cursor.rowcount > 0
@@ -307,11 +308,11 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT id, username, email, first_name, last_name, 
-                           phone, birth_date, gender, school, grade_level_id,
-                           bio, avatar_path, created_at, updated_at
+                    SELECT u.user_id AS id, u.username, u.email, u.first_name, u.last_name, 
+                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
+                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
                     FROM users u
-                    WHERE u.id = %s
+                    WHERE u.user_id = %s
                 """
                 conn.cursor.execute(query, (user_id,))
                 return conn.cursor.fetchone()
@@ -326,8 +327,8 @@ class UserRepository:
         try:
             with self.db as conn:
                 query = """
-                    SELECT u.id, u.username, u.email, u.first_name, u.last_name, 
-                           u.school, u.grade_level_id
+                    SELECT u.user_id AS id, u.username, u.email, u.first_name, u.last_name, 
+                           u.school, u.country, u.city
                     FROM users u
                     WHERE u.username LIKE %s OR u.email LIKE %s OR u.first_name LIKE %s OR u.last_name LIKE %s
                     ORDER BY u.username

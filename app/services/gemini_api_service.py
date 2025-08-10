@@ -42,13 +42,14 @@ class GeminiAPIService:
         """API servisinin kullanılabilir olup olmadığını kontrol eder."""
         return self.is_configured
     
-    def generate_content(self, prompt: str, config: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    def generate_content(self, prompt: Optional[str] = None, config: Optional[Dict[str, Any]] = None, contents: Optional[list] = None) -> Optional[str]:
         """
         Gemini API'sine content generation request gönderir.
         
         Args:
             prompt: AI'ya gönderilecek prompt
             config: Generation konfigürasyonu (optional)
+            contents: Structured contents list with roles/parts (optional)
             
         Returns:
             AI yanıtı veya None
@@ -61,14 +62,20 @@ class GeminiAPIService:
             generation_config = {**self.default_config, **(config or {})}
             
             # Request body'yi hazırla
-            request_body = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt
-                    }]
-                }],
-                "generationConfig": generation_config
-            }
+            if contents and isinstance(contents, list) and len(contents) > 0:
+                request_body = {
+                    "contents": contents,
+                    "generationConfig": generation_config
+                }
+            else:
+                # Geriye dönük uyumluluk: tek parça prompt'u user olarak gönder
+                request_body = {
+                    "contents": [{
+                        "role": "user",
+                        "parts": [{"text": prompt or ""}]
+                    }],
+                    "generationConfig": generation_config
+                }
             
             # Headers
             headers = {

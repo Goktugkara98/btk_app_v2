@@ -142,7 +142,7 @@ def quiz_auto_start():
         # Testuser'ı oluştur veya mevcut olanı bul
         with DatabaseConnection() as conn:
             # Önce testuser'ın var olup olmadığını kontrol et
-            conn.cursor.execute("SELECT id FROM users WHERE username = 'testuser'")
+            conn.cursor.execute("SELECT user_id AS id FROM users WHERE username = 'testuser'")
             user_result = conn.cursor.fetchone()
             
             if user_result:
@@ -155,9 +155,9 @@ def quiz_auto_start():
                 
                 # Direkt SQL ile kullanıcı oluştur
                 conn.cursor.execute("""
-                    INSERT INTO users (username, name_id, email, password_hash, first_name, last_name)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, ('testuser', 'testuser', 'testuser@example.com', password_hash, 'Test', 'User'))
+                    INSERT INTO users (username, email, password_hash, first_name, last_name)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, ('testuser', 'testuser@example.com', password_hash, 'Test', 'User'))
                 
                 test_user_id = conn.cursor.lastrowid
                 conn.connection.commit()
@@ -292,7 +292,7 @@ def quiz_auto_start_educational():
         # Testuser'ı oluştur veya mevcut olanı bul
         with DatabaseConnection() as conn:
             # Önce testuser'ın var olup olmadığını kontrol et
-            conn.cursor.execute("SELECT id FROM users WHERE username = 'testuser'")
+            conn.cursor.execute("SELECT user_id AS id FROM users WHERE username = 'testuser'")
             user_result = conn.cursor.fetchone()
             
             if user_result:
@@ -305,9 +305,9 @@ def quiz_auto_start_educational():
                 
                 # Direkt SQL ile kullanıcı oluştur
                 conn.cursor.execute("""
-                    INSERT INTO users (username, name_id, email, password_hash, first_name, last_name)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, ('testuser', 'testuser', 'testuser@example.com', password_hash, 'Test', 'User'))
+                    INSERT INTO users (username, email, password_hash, first_name, last_name)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, ('testuser', 'testuser@example.com', password_hash, 'Test', 'User'))
                 
                 test_user_id = conn.cursor.lastrowid
                 conn.connection.commit()

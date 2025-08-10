@@ -385,55 +385,47 @@ class AIChatService {
       * Bu veri, AI'a bağlam sağlamak için kullanılır.
       * @returns {Object|null} Soru metni ve seçenekleri içeren nesne veya null.
       */
-     getCurrentQuestionData() {
-       try {
-         if (window.quizApp && window.quizApp.stateManager) {
-           const state = window.quizApp.stateManager.getState();
-           const currentQuestion = state.currentQuestion;
-           
-           if (currentQuestion?.question) {
-             const questionText = (
-               currentQuestion.question.text ??
-               currentQuestion.question.name ??
-               currentQuestion.question.title ??
-               currentQuestion.text ??
-               currentQuestion.name ??
-               ''
-             );
-             const qid = currentQuestion.question.id ?? currentQuestion.id;
-             const optMap = state.optionsByQuestionId;
-             let optionsFromMap = [];
-             if (optMap) {
-               if (optMap instanceof Map) {
-                 optionsFromMap = optMap.get(qid) || optMap.get(String(qid)) || optMap.get(Number(qid)) || [];
-               } else if (typeof optMap === 'object') {
-                 optionsFromMap = optMap[qid] || optMap[String(qid)] || optMap[Number(qid)] || [];
-               }
-             }
-             const options = (optionsFromMap && optionsFromMap.length > 0) ? optionsFromMap : (currentQuestion.question.options || []);
- 
-             if (questionText && options.length > 0) {
-               return {
-                 question_text: String(questionText),
-                 options: options.map(opt => {
-                   const id = (opt && (opt.id ?? opt.option_id ?? opt.value ?? null));
-                   const text = (opt && (
-                     opt.text ?? opt.name ?? opt.title ?? opt.option_text ?? opt.label ?? opt.description ?? opt.content ?? (typeof opt.value !== 'object' ? opt.value : '') ?? ''
-                   ));
-                   const isCorrectRaw = (opt?.is_correct ?? opt?.isCorrect ?? opt?.correct);
-                   const is_correct = (isCorrectRaw === true || isCorrectRaw === 1 || isCorrectRaw === '1');
-                   return { id, option_text: String(text || ''), is_correct };
-                 })
-               };
-             }
-           }
-         }
-         return null;
-       } catch (error) {
-         console.error('[AIChatService] Error getting current question data:', error);
-         return null;
-       }
-     }
+      getCurrentQuestionData() {
+        try {
+          if (window.quizApp && window.quizApp.stateManager) {
+            const state = window.quizApp.stateManager.getState();
+            const currentQuestion = (state?.questions && state.questions.length > 0)
+              ? state.questions[state.currentQuestionIndex]
+              : null;
+            
+            if (currentQuestion?.question) {
+              const questionText = (
+                currentQuestion.question.text ??
+                currentQuestion.question.name ??
+                currentQuestion.question.title ??
+                currentQuestion.text ??
+                currentQuestion.name ??
+                ''
+              );
+              const options = currentQuestion.question.options || [];
+  
+              if (questionText && options.length > 0) {
+                return {
+                  question_text: String(questionText),
+                  options: options.map(opt => {
+                    const id = (opt && (opt.id ?? opt.option_id ?? opt.value ?? null));
+                    const text = (opt && (
+                      opt.text ?? opt.name ?? opt.title ?? opt.option_text ?? opt.label ?? opt.description ?? opt.content ?? (typeof opt.value !== 'object' ? opt.value : '') ?? ''
+                    ));
+                    const isCorrectRaw = (opt?.is_correct ?? opt?.isCorrect ?? opt?.correct);
+                    const is_correct = (isCorrectRaw === true || isCorrectRaw === 1 || isCorrectRaw === '1');
+                    return { id, option_text: String(text || ''), is_correct };
+                  })
+                };
+              }
+            }
+          }
+          return null;
+        } catch (error) {
+          console.error('[AIChatService] Error getting current question data:', error);
+          return null;
+        }
+      }
  
    }
  

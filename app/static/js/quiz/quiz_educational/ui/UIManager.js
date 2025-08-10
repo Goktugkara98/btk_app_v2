@@ -97,7 +97,8 @@ export class UIManager {
     const { questionId, userAnswer } = data;
 
     // Sadece aktif soru için uygula (güvenlik amacıyla kontrol)
-    const current = stateManager.getState('currentQuestion');
+    const st = stateManager.getState();
+    const current = st?.questions?.[st?.currentQuestionIndex] || null;
     const currentQuestionId = current?.question?.id;
     if (String(currentQuestionId) !== String(questionId)) {
       return;
@@ -195,37 +196,34 @@ export class UIManager {
         this.showError(currentState.error);
       }
       
-      // Soru değiştiğinde render et ve navbar'ı güncelle
-      if (prevState.currentQuestion !== currentState.currentQuestion) {
-        this.renderQuestion(currentState.currentQuestion);
-        this.updateNavbarFromQuestion(currentState.currentQuestion);
+      // Soru değiştiğinde (index veya questions değişimi) render et ve navbar'ı güncelle
+      const prevQ = (prevState.questions && prevState.questions.length > 0)
+        ? prevState.questions[prevState.currentQuestionIndex] : null;
+      const currQ = (currentState.questions && currentState.questions.length > 0)
+        ? currentState.questions[currentState.currentQuestionIndex] : null;
+      const questionChanged = prevQ !== currQ;
+      if (questionChanged && currQ) {
+        this.renderQuestion(currQ);
+        this.updateNavbarFromQuestion(currQ);
       }
       
       // Navigation, buttons ve question number güncellemeleri
       if (prevState.questions !== currentState.questions || 
           prevState.currentQuestionIndex !== currentState.currentQuestionIndex || 
-          prevState.answers !== currentState.answers || 
-          prevState.visitedQuestions !== currentState.visitedQuestions) {
+          prevState.answers !== currentState.answers) {
         
         this.updateQuestionNavigation();
         this.updateNavButtons();
         this.updateQuestionNumber();
         
-        // Sadece answers değiştiğinde ve currentQuestion varsa render et
-        // currentQuestion değişikliği yukarıda zaten handle ediliyor
-        if (prevState.answers !== currentState.answers && 
-            currentState.currentQuestion && 
-            prevState.currentQuestion === currentState.currentQuestion) {
-          this.renderQuestion(currentState.currentQuestion);
+        // Sadece answers değiştiğinde ve soru nesnesi değişmemişse yeniden çiz
+        if (prevState.answers !== currentState.answers && currQ && prevQ === currQ) {
+          this.renderQuestion(currQ);
         }
       }
       
       if (prevState.timer.remainingTimeSeconds !== currentState.timer.remainingTimeSeconds) {
         this.updateTimer(currentState.timer);
-      }
-      
-      if (prevState.totalQuestions !== currentState.totalQuestions) {
-        this.updateTotalQuestions(currentState.totalQuestions);
       }
     });
   }
@@ -333,14 +331,15 @@ export class UIManager {
    * updateQuestionNavigation - Soru navigasyonunu günceller.
    */
   updateQuestionNavigation() {
-    const { questions, currentQuestionIndex, answers, visitedQuestions } = stateManager.getState();
+    const { questions, currentQuestionIndex, answers } = stateManager.getState();
     if (!this.elements.questionNav) return;
     
     this.elements.questionNav.innerHTML = questions.map((q, index) => {
       const isCurrent = index === currentQuestionIndex;
       const questionId = parseInt(q.question.id, 10);
       const isAnswered = answers.has(questionId);
-      const isVisited = visitedQuestions.has(index);
+      // Ziyaret bilgisi, basitçe mevcut indeks ve öncesi olarak türetilir
+      const isVisited = index <= currentQuestionIndex;
       const isSkipped = isVisited && !isAnswered; // Ziyaret edilmiş ama cevaplanmamış
       
       // CSS'te 'current' class'ı kullanılıyor, 'active' değil
@@ -420,14 +419,7 @@ export class UIManager {
     return difficultyMap[difficulty] || difficulty;
   }
 
-  /**
-   * updateTotalQuestions - Toplam soru sayısını günceller.
-   */
-  updateTotalQuestions(totalQuestions) {
-    if (this.elements.totalQuestionNumber) {
-      this.elements.totalQuestionNumber.textContent = totalQuestions;
-    }
-  }
+  
 
   /**
    * updateNavbarFromQuestion - Aktif sorudan navbar bilgilerini günceller.

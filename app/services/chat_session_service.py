@@ -497,16 +497,14 @@ class ChatSessionService:
         hist_conf: Dict[str, Any] = context_conf.get('history') or {}
         q_conf: Dict[str, Any] = context_conf.get('question') or {}
 
-        # Tarihçe (yalnızca takip mesajlarında)
-        history_str = ''
-        if not is_first_message:
-            history_str = self._get_recent_dialog(
-                chat_session_id,
-                last_n=int(hist_conf.get('last_n', 2) or 2),
-                truncate_chars=int(hist_conf.get('truncate_chars', 200) or 200),
-                label_user=str(hist_conf.get('label_user', 'Kullanıcı')),
-                label_ai=str(hist_conf.get('label_ai', 'AI')),
-            )
+        # Tarihçe (her istekte; sistem mesajlarını hariç tut)
+        history_str = self._get_recent_dialog(
+            chat_session_id,
+            last_n=int(hist_conf.get('last_n', 2) or 2),
+            truncate_chars=int(hist_conf.get('truncate_chars', 200) or 200),
+            label_user=str(hist_conf.get('label_user', 'Kullanıcı')),
+            label_ai=str(hist_conf.get('label_ai', 'AI')),
+        )
 
         has_history = bool(history_str)
 
@@ -643,6 +641,141 @@ class ChatSessionService:
         
         for session_id in to_remove:
             del self.sessions[session_id]
+
+    # ---------------------------------------------------------------------
+    # Gemini REST Contents Builder
+    # ---------------------------------------------------------------------
+    def build_gemini_contents_scenario(
+        self,
+        chat_session_id: str,
+        user_message: str,
+        scenario_type: str = 'direct',
+        is_first_message: bool = False,
+        question_context: Optional[Dict[str, Any]] = None,
+        action: Optional[str] = None,
+        files_only: bool = True,
+        history_limit: int = 12,
+    ) -> Dict[str, Any]:
+        """
+        Gemini REST API'ye uygun 'contents' yapısını döndürür.
+        - Geçmiş: veritabanından user/model mesajları (system hariç)
+        - Şablon: senaryoya göre markdown dosyasını değişkenlerle doldurur
+        - Son içerik: render edilen şablonu 'user' mesajı olarak ekler
+
+        Returns:
+            {
+              'contents': [ {role, parts:[{text}]}... ],
+              'final_user_text': str
+            }
+        """
+        # 1) Mevcut yapıdaki değişkenleri hazırla (HISTORY'yi metin olarak da doldur)
+        shared_conf: Dict[str, Any] = self.scenario_texts.get('shared') or {}
+        context_conf: Dict[str, Any] = (shared_conf.get('context') or {}) if isinstance(shared_conf, dict) else {}
+        hist_conf: Dict[str, Any] = context_conf.get('history') or {}
+        q_conf: Dict[str, Any] = context_conf.get('question') or {}
+
+        # Metinsel tarihçe (şablonlar için). Sistem mesajlarını hariç tut.
+        history_str = self._get_recent_dialog(
+            chat_session_id,
+            last_n=int(hist_conf.get('last_n', 2) or 2),
+            truncate_chars=int(hist_conf.get('truncate_chars', 200) or 200),
+            label_user=str(hist_conf.get('label_user', 'Kullanıcı')),
+            label_ai=str(hist_conf.get('label_ai', 'AI')),
+        )
+
+        # Soru bloğu
+        include_q = False
+        if question_context:
+            include_q = bool(q_conf.get('include_on_first', True)) if is_first_message else bool(q_conf.get('include_on_followup', False))
+        q_block = ''
+        if question_context and include_q:
+            q_text = str(question_context.get('question_text', '')).strip()
+            options = question_context.get('options', []) or []
+            label_question = (q_conf.get('labels', {}) or {}).get('question', 'Soru')
+            label_options = (q_conf.get('labels', {}) or {}).get('options', 'Şıklar')
+            opt_fmt = q_conf.get('option_format', '{index}) {text}')
+            lines: List[str] = []
+            if q_text:
+                lines.append(f"{label_question}: {q_text}")
+            if options:
+                lines.append(f"{label_options}:")
+                for idx, opt in enumerate(options, 1):
+                    otext = str(opt.get('option_text', '')).strip() or 'Şık metni bulunamadı'
+                    lines.append(self._render_text(opt_fmt, {'index': idx, 'text': otext}))
+            q_block = "\n".join(lines)
+
+        directive = self._get_scenario_directive(scenario_type, is_first_message)
+        session = self.get_session(chat_session_id) or {}
+        variables = {
+            'SYSTEM': self._get_intro_text(),
+            'DIRECTIVE': directive,
+            'USER_MESSAGE': user_message,
+            'HISTORY': history_str,  # Yapısal geçmiş ayrı gönderilecek olsa da şablon uyumu için metinsel tarihçe
+            'QUESTION_BLOCK': q_block,
+            'SUBJECT': session.get('subject_name', 'Bu ders'),
+            'TOPIC': session.get('topic_name', 'bu konu'),
+            'DIFFICULTY': session.get('difficulty_level', 'orta'),
+        }
+        # Soru/şık ek değişkenleri ve paylaşılan/ senaryo özel vars
+        variables.update(self._prepare_question_vars(question_context))
+        scen_conf: Dict[str, Any] = self.scenario_texts.get(scenario_type) or {}
+        try:
+            extra_vars: Dict[str, Any] = {}
+            if isinstance(shared_conf, dict) and isinstance(shared_conf.get('vars'), dict):
+                extra_vars.update(shared_conf.get('vars'))
+            if isinstance(scen_conf, dict) and isinstance(scen_conf.get('vars'), dict):
+                extra_vars.update(scen_conf.get('vars'))
+            variables.update(extra_vars)
+        except Exception:
+            pass
+
+        # 2) Dosya şablonunu yükle ve render et
+        file_prompt = self._load_file_prompt(scenario_type, is_first_message, action=action)
+        final_user_text = self._render_text(file_prompt, variables) if file_prompt else ''
+        if files_only and not final_user_text:
+            return {'contents': [], 'final_user_text': ''}
+        if not final_user_text:
+            # Fallback: build_prompt_scenario ile oluştur
+            final_user_text = self.build_prompt_scenario(
+                chat_session_id=chat_session_id,
+                user_message=user_message,
+                scenario_type=scenario_type,
+                is_first_message=is_first_message,
+                question_context=question_context,
+                action=action,
+                files_only=False,
+            )
+
+        # 3) Geçmişi REST formatında topla (system hariç)
+        contents: List[Dict[str, Any]] = []
+        try:
+            if self.chat_repo:
+                raw_hist = self.chat_repo.get_conversation_history(chat_session_id, limit=history_limit)
+                for msg in raw_hist:
+                    role = msg.get('role')
+                    if role not in ('user', 'ai'):
+                        continue
+                    mapped_role = 'user' if role == 'user' else 'model'
+                    text = str(msg.get('content') or '')
+                    if not text:
+                        continue
+                    contents.append({
+                        'role': mapped_role,
+                        'parts': [{'text': text}]
+                    })
+        except Exception:
+            pass
+
+        # 4) Şu anki isteğin render edilmiş içeriğini son 'user' olarak ekle
+        contents.append({
+            'role': 'user',
+            'parts': [{'text': final_user_text}]
+        })
+
+        return {
+            'contents': contents,
+            'final_user_text': final_user_text
+        }
     
     def get_session_stats(self, chat_session_id: str) -> Dict[str, Any]:
         """

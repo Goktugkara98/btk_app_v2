@@ -273,9 +273,9 @@ class UserService:
                 'phone': user_profile.get('phone'),
                 'birth_date': birth_date,
                 'gender': user_profile.get('gender'),
-
+                'country': user_profile.get('country'),
+                'city': user_profile.get('city'),
                 'school': user_profile.get('school'),
-                'grade_level': user_profile.get('grade_level_id'),
                 'bio': user_profile.get('bio'),
                 'avatar_path': user_profile.get('avatar_path'),
                 'created_at': created_at,
@@ -297,8 +297,9 @@ class UserService:
                 'phone': 'phone',
                 'birthDate': 'birth_date',
                 'gender': 'gender',
+                'country': 'country',
+                'city': 'city',
                 'school': 'school',
-                'gradeLevel': 'grade_level_id',
                 'bio': 'bio'
             }
             
@@ -306,18 +307,7 @@ class UserService:
             update_data = {}
             for form_field, db_field in field_mapping.items():
                 if form_field in profile_data and profile_data[form_field] is not None:
-                    # gradeLevel için integer dönüşümü yap
-                    if form_field == 'gradeLevel':
-                        try:
-                            # Boş string kontrolü
-                            if profile_data[form_field] == '':
-                                update_data[db_field] = None
-                            else:
-                                update_data[db_field] = int(profile_data[form_field])
-                        except (ValueError, TypeError):
-                            return False, {'message': 'Geçersiz sınıf değeri'}
-                    else:
-                        update_data[db_field] = profile_data[form_field]
+                    update_data[db_field] = profile_data[form_field]
             
             # Veritabanını güncelle
             try:

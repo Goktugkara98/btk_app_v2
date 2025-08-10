@@ -132,7 +132,13 @@ class AIChatManager {
             const state = window.quizApp.stateManager.getState();
             
             if (state && state.questions && state.questions.length > 0) {
-                this.currentQuestionId = state.questions[0].question.id;
+                const idx = (typeof state.currentQuestionIndex === 'number' && state.currentQuestionIndex >= 0)
+                  ? state.currentQuestionIndex
+                  : 0;
+                const cq = state.questions[idx];
+                if (cq && cq.question && cq.question.id != null) {
+                    this.currentQuestionId = cq.question.id;
+                }
             }
         }
     }
@@ -147,8 +153,14 @@ class AIChatManager {
         if (window.quizApp && window.quizApp.stateManager) {
             const state = window.quizApp.stateManager.getState();
             
-            if (state && state.currentQuestion && state.currentQuestion.question) {
-                newQuestionId = state.currentQuestion.question.id;
+            if (state && state.questions && state.questions.length > 0) {
+                const idx = (typeof state.currentQuestionIndex === 'number' && state.currentQuestionIndex >= 0)
+                  ? state.currentQuestionIndex
+                  : 0;
+                const cq = state.questions[idx];
+                if (cq && cq.question && cq.question.id != null) {
+                    newQuestionId = cq.question.id;
+                }
             }
         }
         

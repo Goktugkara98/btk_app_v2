@@ -305,18 +305,12 @@ def send_chat_message():
         # Mesajı sanitize et
         sanitized_message = chat_message_service.sanitize_message(message)
         
-        # User mesajını veritabanına kaydet
+        # Zaman ölçümü başlat
         import time
         start_time = time.time()
         
-        user_metadata = chat_message_service.create_message_metadata('user', question_id=question_id)
-        user_message_id = chat_session_service.add_message(
-            chat_session_id, 'user', sanitized_message, 
-            action_type='general', metadata=user_metadata
-        )
-        
-        # AI için prompt oluştur - senaryoya göre (yalnız dosya bazlı şablonlar aktif)
-        prompt = chat_session_service.build_prompt_scenario(
+        # Gemini için structured contents oluştur (geçmiş + render edilmiş şablon)
+        built = chat_session_service.build_gemini_contents_scenario(
             chat_session_id=chat_session_id,
             user_message=sanitized_message,
             scenario_type=scenario_type,
@@ -324,14 +318,23 @@ def send_chat_message():
             question_context=question_context,
             files_only=True,
         )
-        if not prompt or not str(prompt).strip():
+        contents = built.get('contents', [])
+        final_user_text = built.get('final_user_text', '')
+        if not contents or not str(final_user_text).strip():
             return jsonify({
                 'status': 'error',
                 'message': 'Scenario template not found or empty'
             }), 500
         
-        # AI'dan yanıt al
-        ai_response = gemini_service.generate_content(prompt)
+        # Kullanıcı mesajını artık geçmişe ekle (prompt zaten oluşturuldu)
+        user_metadata = chat_message_service.create_message_metadata('user', question_id=question_id)
+        chat_session_service.add_message(
+            chat_session_id, 'user', sanitized_message,
+            action_type='general', metadata=user_metadata
+        )
+
+        # AI'dan yanıt al (structured contents)
+        ai_response = gemini_service.generate_content(contents=contents)
         
         # Response time hesapla
         response_time_ms = int((time.time() - start_time) * 1000)
@@ -348,11 +351,15 @@ def send_chat_message():
         
         # AI mesajını veritabanına kaydet
         ai_metadata = chat_message_service.create_message_metadata('ai', question_id=question_id)
+        try:
+            ai_metadata['prompt_contents'] = contents
+        except Exception:
+            pass
         ai_message_id = chat_session_service.add_message(
             chat_session_id, 'ai', formatted_response,
             action_type='general',
             ai_model='gemini-2.5-flash',
-            prompt_used=prompt,
+            prompt_used=final_user_text,
             response_time_ms=response_time_ms,
             metadata=ai_metadata
         )
@@ -367,7 +374,8 @@ def send_chat_message():
         }
         if debug:
             response_payload['data']['debug'] = {
-                'prompt_used': prompt
+                'prompt_used_text': final_user_text,
+                'prompt_contents': contents
             }
         return jsonify(response_payload), 200
         
@@ -452,8 +460,8 @@ def quick_action():
                 'message': 'Quiz service not available'
             }), 503
         
-        # Senaryoya göre tam prompt oluştur (yalnızca dosya bazlı, action klasörü zorunlu)
-        full_prompt = chat_session_service.build_prompt_scenario(
+        # Senaryoya göre structured contents oluştur (yalnız dosya bazlı şablon zorunlu)
+        built = chat_session_service.build_gemini_contents_scenario(
             chat_session_id=chat_session_id,
             user_message='',
             scenario_type='quick_action',
@@ -462,14 +470,16 @@ def quick_action():
             action=action,
             files_only=True,
         )
-        if not full_prompt or not full_prompt.strip():
+        contents = built.get('contents', [])
+        final_user_text = built.get('final_user_text', '')
+        if not contents or not final_user_text.strip():
             return jsonify({
                 'status': 'error',
                 'message': 'Invalid action or template not found'
             }), 400
         
-        # AI'dan yanıt al
-        ai_response = gemini_service.generate_content(full_prompt)
+        # AI'dan yanıt al (structured contents)
+        ai_response = gemini_service.generate_content(contents=contents)
         
         if not ai_response:
             error_msg = chat_message_service.get_error_message('api_error')
@@ -483,7 +493,17 @@ def quick_action():
         
         # AI mesajını session'a ekle
         ai_metadata = chat_message_service.create_message_metadata('ai', action=action, question_id=question_id)
-        chat_session_service.add_message(chat_session_id, 'ai', formatted_response, ai_metadata)
+        try:
+            ai_metadata['prompt_contents'] = contents
+        except Exception:
+            pass
+        chat_session_service.add_message(
+            chat_session_id, 'ai', formatted_response,
+            action_type='general',
+            ai_model='gemini-2.5-flash',
+            prompt_used=final_user_text,
+            metadata=ai_metadata
+        )
         
         quick_response = {
             'status': 'success',
@@ -497,7 +517,8 @@ def quick_action():
         }
         if debug:
             quick_response['data']['debug'] = {
-                'prompt_used': full_prompt
+                'prompt_used_text': final_user_text,
+                'prompt_contents': contents
             }
         return jsonify(quick_response), 200
         

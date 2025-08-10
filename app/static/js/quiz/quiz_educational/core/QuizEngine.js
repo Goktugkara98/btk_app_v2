@@ -122,13 +122,11 @@ export class QuizEngine {
       }));
       
       stateManager.setQuestions(questions);
-      stateManager.buildDerivedMaps(); // Hızlı erişim için haritalar oluşturur.
       
       // Quiz ile ilgili temel bilgileri state'e kaydeder.
       stateManager.setState({ 
         quizMode: 'educational',
-        sessionId: responseData.session_id || sessionId,
-        totalQuestions: responseData.total_questions
+        sessionId: responseData.session_id || sessionId
       });
 
       // Oturum meta verilerini (sınıf, konu vb.) işler.
@@ -395,10 +393,11 @@ export class QuizEngine {
    * @returns {boolean} Cevabın doğru olup olmadığını döndürür.
    */
   checkAnswerLocally(questionId, userAnswer) {
-    const correctOptionMap = stateManager.getState('correctOptionByQuestionId');
-    const correctOption = correctOptionMap?.get(Number(questionId));
-    
-    return correctOption ? String(correctOption.id) === String(userAnswer) : false;
+    const st = stateManager.getState();
+    const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
+    const options = q?.question?.options || [];
+    const correct = options.find(o => (o?.is_correct === true) || (o?.isCorrect === true) || (o?.correct === true) || (o?.is_correct === 1) || (o?.isCorrect === 1));
+    return correct ? String(correct.id) === String(userAnswer) : false;
   }
 
   /**
@@ -407,8 +406,10 @@ export class QuizEngine {
    * @returns {object|null} Doğru cevap seçeneği veya bulunamazsa null.
    */
   getCorrectAnswer(questionId) {
-    const correctOptionMap = stateManager.getState('correctOptionByQuestionId');
-    return correctOptionMap?.get(Number(questionId)) || null;
+    const st = stateManager.getState();
+    const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
+    const options = q?.question?.options || [];
+    return options.find(o => (o?.is_correct === true) || (o?.isCorrect === true) || (o?.correct === true) || (o?.is_correct === 1) || (o?.isCorrect === 1)) || null;
   }
 
   /* =========================================================================

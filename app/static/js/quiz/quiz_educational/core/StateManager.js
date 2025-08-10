@@ -38,22 +38,15 @@ class StateManager {
    * ========================================================================= */
 
   /**
-   * constructor - Başlangıç state'ini yükler ve mevcut oturum (session) ID'sini tespit eder.
+   * constructor - Başlangıç state'ini yükler ve mevcut oturum (session) ID'yi tespit eder.
    */
   constructor(initialState = {}) {
     this.state = {
       // Quiz durumu
       questions: [],
-      currentQuestion: null,
       currentQuestionIndex: 0,
       answers: new Map(),
-      visitedQuestions: new Set(),
-      totalQuestions: 0,
       
-      // Hızlı erişim için türetilmiş yapılar
-      questionById: new Map(),
-      optionsByQuestionId: new Map(),
-      correctOptionByQuestionId: new Map(),
       
       // Oturum durumu
       sessionId: null,
@@ -130,17 +123,10 @@ class StateManager {
    * @param {Array} questions - Yüklenecek soru listesi.
    */
   setQuestions(questions) {
-    const initialVisitedQuestions = new Set();
-    if (questions.length > 0) {
-      initialVisitedQuestions.add(0); // İlk soruyu ziyaret edilmiş olarak işaretle
-    }
-    
     this.setState({ 
       questions,
-      currentQuestion: questions[0] || null,
       currentQuestionIndex: 0,
-      answers: new Map(), // Yeni sorular geldiğinde eski cevapları temizle
-      visitedQuestions: initialVisitedQuestions
+      answers: new Map() // Yeni sorular geldiğinde eski cevapları temizle
     }, 'SET_QUESTIONS');
   }
 
@@ -150,13 +136,8 @@ class StateManager {
    */
   setCurrentQuestionIndex(index) {
     if (index >= 0 && index < this.state.questions.length) {
-      const newVisitedQuestions = new Set(this.state.visitedQuestions);
-      newVisitedQuestions.add(index);
-      
       this.setState({
-        currentQuestionIndex: index,
-        currentQuestion: this.state.questions[index],
-        visitedQuestions: newVisitedQuestions
+        currentQuestionIndex: index
       }, 'SET_CURRENT_QUESTION');
     }
   }
@@ -248,26 +229,8 @@ class StateManager {
    * Bu işlem, soru ID'sine göre soru, seçenek ve doğru cevap bulmayı optimize eder.
    */
   buildDerivedMaps() {
-    const questionById = new Map();
-    const optionsByQuestionId = new Map();
-    const correctOptionByQuestionId = new Map();
-
-    for (const q of this.state.questions) {
-      const qid = q?.question?.id;
-      if (!qid) continue;
-      
-      questionById.set(qid, q);
-
-      const options = Array.isArray(q?.question?.options) ? q.question.options : [];
-      optionsByQuestionId.set(qid, options);
-
-      const correctOption = options.find(o => o.is_correct === true || o.isCorrect === true) || null;
-      if (correctOption) {
-        correctOptionByQuestionId.set(qid, correctOption);
-      }
-    }
-    
-    this.setState({ questionById, optionsByQuestionId, correctOptionByQuestionId }, 'BUILD_DERIVED_MAPS');
+    // Artık türetilmiş map'ler tutulmuyor; gerektiğinde selector/hesaplama ile elde edilir.
+    return; // no-op
   }
 }
 

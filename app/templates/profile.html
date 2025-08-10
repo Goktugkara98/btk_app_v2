@@ -155,28 +155,32 @@
                                           </button>
                                       </div>
                                   </div>
-                                  
-
-                                  
+                                   
+                                  <div class="form-group">
+                                      <label for="country">Ülke</label>
+                                      <div class="input-with-edit">
+                                          <input type="text" id="country" name="country" placeholder="Ülke" value="{{ user.country if user else '' }}" disabled>
+                                          <button type="button" class="btn-edit-field" data-field="country">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                   
+                                  <div class="form-group">
+                                      <label for="city">Şehir</label>
+                                      <div class="input-with-edit">
+                                          <input type="text" id="city" name="city" placeholder="Şehir" value="{{ user.city if user else '' }}" disabled>
+                                          <button type="button" class="btn-edit-field" data-field="city">
+                                              <i class="fas fa-edit"></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                   
                                   <div class="form-group">
                                       <label for="school">Okul</label>
                                       <div class="input-with-edit">
                                           <input type="text" id="school" name="school" placeholder="Okul adı" value="{{ user.school if user else '' }}" disabled>
                                           <button type="button" class="btn-edit-field" data-field="school">
-                                              <i class="fas fa-edit"></i>
-                                          </button>
-                                      </div>
-                                  </div>
-                                  
-                                  <div class="form-group">
-                                      <label for="gradeLevel">Sınıf</label>
-                                      <div class="input-with-edit">
-                                          <select id="gradeLevel" name="gradeLevel" disabled>
-                                              <option value="">Sınıf seçiniz</option>
-                                              <option value="1" {{ 'selected' if user and user.grade_level_id and user.grade_level_id == 1 else '' }}>8. Sınıf</option>
-                                              <option value="2" {{ 'selected' if user and user.grade_level_id and user.grade_level_id == 2 else '' }}>9. Sınıf</option>
-                                          </select>
-                                          <button type="button" class="btn-edit-field" data-field="gradeLevel">
                                               <i class="fas fa-edit"></i>
                                           </button>
                                       </div>
