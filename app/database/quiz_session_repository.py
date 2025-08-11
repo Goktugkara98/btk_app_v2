@@ -89,14 +89,14 @@ class QuizSessionRepository:
             with self.db as conn:
                 conn.cursor.execute("""
                     SELECT qs.*, 
-                           g.name as grade_name,
-                           s.name as subject_name,
-                           u.name as unit_name,
+                           g.grade_name as grade_name,
+                           s.subject_name as subject_name,
+                           u.unit_name as unit_name,
                            t.name as topic_name
                     FROM quiz_sessions qs
-                    JOIN grades g ON qs.grade_id = g.id
-                    JOIN subjects s ON qs.subject_id = s.id
-                    LEFT JOIN units u ON qs.unit_id = u.id
+                    JOIN grades g ON qs.grade_id = g.grade_id
+                    JOIN subjects s ON qs.subject_id = s.subject_id
+                    LEFT JOIN units u ON qs.unit_id = u.unit_id
                     LEFT JOIN topics t ON qs.topic_id = t.id
                     WHERE qs.session_id = %s
                 """, (session_id,))
@@ -113,14 +113,14 @@ class QuizSessionRepository:
             with self.db as conn:
                 conn.cursor.execute("""
                     SELECT qs.*, 
-                           g.name as grade_name,
-                           s.name as subject_name,
-                           u.name as unit_name,
+                           g.grade_name as grade_name,
+                           s.subject_name as subject_name,
+                           u.unit_name as unit_name,
                            t.name as topic_name
                     FROM quiz_sessions qs
-                    JOIN grades g ON qs.grade_id = g.id
-                    JOIN subjects s ON qs.subject_id = s.id
-                    LEFT JOIN units u ON qs.unit_id = u.id
+                    JOIN grades g ON qs.grade_id = g.grade_id
+                    JOIN subjects s ON qs.subject_id = s.subject_id
+                    LEFT JOIN units u ON qs.unit_id = u.unit_id
                     LEFT JOIN topics t ON qs.topic_id = t.id
                     WHERE qs.id = %s
                 """, (session_db_id,))
@@ -377,7 +377,7 @@ class QuizSessionRepository:
                     FROM questions q
                     LEFT JOIN question_options qo ON q.id = qo.question_id
                     JOIN topics t ON q.topic_id = t.id
-                    JOIN units u ON t.unit_id = u.id
+                    JOIN units u ON t.unit_id = u.unit_id
                     WHERE u.subject_id = %s 
                     AND q.is_active = 1
                     {difficulty_filter}
@@ -447,11 +447,11 @@ class QuizSessionRepository:
                 conn.cursor.execute("""
                     SELECT q.*, 
                            t.name as topic_name,
-                           s.name as subject_name
+                           s.subject_name as subject_name
                     FROM questions q
                     JOIN topics t ON q.topic_id = t.id
-                    JOIN units u ON t.unit_id = u.id
-                    JOIN subjects s ON u.subject_id = s.id
+                    JOIN units u ON t.unit_id = u.unit_id
+                    JOIN subjects s ON u.subject_id = s.subject_id
                     WHERE q.id = %s
                 """, (question_id,))
                 

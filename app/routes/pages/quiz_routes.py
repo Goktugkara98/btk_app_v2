@@ -163,15 +163,15 @@ def quiz_auto_start():
                 conn.connection.commit()
             
             # Mevcut sınıfları kontrol et
-            conn.cursor.execute("SELECT id, name FROM grades WHERE is_active = 1")
+            conn.cursor.execute("SELECT grade_id AS id, grade_name AS name FROM grades WHERE is_active = 1")
             grades = conn.cursor.fetchall()
             
             # 8. sınıf ID'sini bul
-            conn.cursor.execute("SELECT id FROM grades WHERE name = '8. Sınıf' AND is_active = 1")
+            conn.cursor.execute("SELECT grade_id AS id FROM grades WHERE grade_name = '8. Sınıf' AND is_active = 1")
             grade_result = conn.cursor.fetchone()
             if not grade_result:
                 # Eğer 8. sınıf yoksa, ilk sınıfı kullan
-                conn.cursor.execute("SELECT id FROM grades WHERE is_active = 1 LIMIT 1")
+                conn.cursor.execute("SELECT grade_id AS id FROM grades WHERE is_active = 1 LIMIT 1")
                 grade_result = conn.cursor.fetchone()
                 if not grade_result:
                     return "Hiç sınıf bulunamadı", 404
@@ -180,15 +180,15 @@ def quiz_auto_start():
                 grade_id = grade_result['id']
             
             # Mevcut dersleri kontrol et
-            conn.cursor.execute("SELECT id, name FROM subjects WHERE grade_id = %s AND is_active = 1", (grade_id,))
+            conn.cursor.execute("SELECT subject_id AS id, subject_name AS name FROM subjects WHERE grade_id = %s AND is_active = 1", (grade_id,))
             subjects = conn.cursor.fetchall()
             
             # Türkçe dersi ID'sini bul
-            conn.cursor.execute("SELECT id FROM subjects WHERE name = 'Türkçe' AND grade_id = %s AND is_active = 1", (grade_id,))
+            conn.cursor.execute("SELECT subject_id AS id FROM subjects WHERE subject_name = 'Türkçe' AND grade_id = %s AND is_active = 1", (grade_id,))
             subject_result = conn.cursor.fetchone()
             if not subject_result:
                 # Eğer Türkçe yoksa, ilk dersi kullan
-                conn.cursor.execute("SELECT id FROM subjects WHERE grade_id = %s AND is_active = 1 LIMIT 1", (grade_id,))
+                conn.cursor.execute("SELECT subject_id AS id FROM subjects WHERE grade_id = %s AND is_active = 1 LIMIT 1", (grade_id,))
                 subject_result = conn.cursor.fetchone()
                 if not subject_result:
                     return "Hiç ders bulunamadı", 404
@@ -197,15 +197,15 @@ def quiz_auto_start():
                 subject_id = subject_result['id']
             
             # Mevcut üniteleri kontrol et
-            conn.cursor.execute("SELECT id, name FROM units WHERE subject_id = %s AND is_active = 1", (subject_id,))
+            conn.cursor.execute("SELECT unit_id AS id, unit_name AS name FROM units WHERE subject_id = %s AND is_active = 1", (subject_id,))
             units = conn.cursor.fetchall()
             
             # Fiilimsiler ünitesi ID'sini bul
-            conn.cursor.execute("SELECT id FROM units WHERE name = 'Fiilimsiler' AND subject_id = %s AND is_active = 1", (subject_id,))
+            conn.cursor.execute("SELECT unit_id AS id FROM units WHERE unit_name = 'Fiilimsiler' AND subject_id = %s AND is_active = 1", (subject_id,))
             unit_result = conn.cursor.fetchone()
             if not unit_result:
                 # Eğer Fiilimsiler yoksa, ilk üniteyi kullan
-                conn.cursor.execute("SELECT id FROM units WHERE subject_id = %s AND is_active = 1 LIMIT 1", (subject_id,))
+                conn.cursor.execute("SELECT unit_id AS id FROM units WHERE subject_id = %s AND is_active = 1 LIMIT 1", (subject_id,))
                 unit_result = conn.cursor.fetchone()
                 if not unit_result:
                     return "Hiç ünite bulunamadı", 404
@@ -257,8 +257,8 @@ def quiz_auto_start():
                 conn.cursor.execute("""
                     SELECT COUNT(*) as count FROM questions q
                     JOIN topics t ON q.topic_id = t.id
-                    JOIN units u ON t.unit_id = u.id
-                    WHERE u.id = %s AND q.is_active = 1
+                    JOIN units u ON t.unit_id = u.unit_id
+                    WHERE u.unit_id = %s AND q.is_active = 1
                 """, (unit_id,))
                 unit_question_count = conn.cursor.fetchone()['count']
                 
@@ -313,15 +313,15 @@ def quiz_auto_start_educational():
                 conn.connection.commit()
             
             # Mevcut sınıfları kontrol et
-            conn.cursor.execute("SELECT id, name FROM grades WHERE is_active = 1")
+            conn.cursor.execute("SELECT grade_id AS id, grade_name AS name FROM grades WHERE is_active = 1")
             grades = conn.cursor.fetchall()
             
             # 8. sınıf ID'sini bul
-            conn.cursor.execute("SELECT id FROM grades WHERE name = '8. Sınıf' AND is_active = 1")
+            conn.cursor.execute("SELECT grade_id AS id FROM grades WHERE grade_name = '8. Sınıf' AND is_active = 1")
             grade_result = conn.cursor.fetchone()
             if not grade_result:
                 # Eğer 8. sınıf yoksa, ilk sınıfı kullan
-                conn.cursor.execute("SELECT id FROM grades WHERE is_active = 1 LIMIT 1")
+                conn.cursor.execute("SELECT grade_id AS id FROM grades WHERE is_active = 1 LIMIT 1")
                 grade_result = conn.cursor.fetchone()
                 if not grade_result:
                     return "Hiç sınıf bulunamadı", 404
@@ -330,15 +330,15 @@ def quiz_auto_start_educational():
                 grade_id = grade_result['id']
             
             # Mevcut dersleri kontrol et
-            conn.cursor.execute("SELECT id, name FROM subjects WHERE grade_id = %s AND is_active = 1", (grade_id,))
+            conn.cursor.execute("SELECT subject_id AS id, subject_name AS name FROM subjects WHERE grade_id = %s AND is_active = 1", (grade_id,))
             subjects = conn.cursor.fetchall()
             
             # Türkçe dersi ID'sini bul
-            conn.cursor.execute("SELECT id FROM subjects WHERE name = 'Türkçe' AND grade_id = %s AND is_active = 1", (grade_id,))
+            conn.cursor.execute("SELECT subject_id AS id FROM subjects WHERE subject_name = 'Türkçe' AND grade_id = %s AND is_active = 1", (grade_id,))
             subject_result = conn.cursor.fetchone()
             if not subject_result:
                 # Eğer Türkçe yoksa, ilk dersi kullan
-                conn.cursor.execute("SELECT id FROM subjects WHERE grade_id = %s AND is_active = 1 LIMIT 1", (grade_id,))
+                conn.cursor.execute("SELECT subject_id AS id FROM subjects WHERE grade_id = %s AND is_active = 1 LIMIT 1", (grade_id,))
                 subject_result = conn.cursor.fetchone()
                 if not subject_result:
                     return "Hiç ders bulunamadı", 404
@@ -347,15 +347,15 @@ def quiz_auto_start_educational():
                 subject_id = subject_result['id']
             
             # Mevcut üniteleri kontrol et
-            conn.cursor.execute("SELECT id, name FROM units WHERE subject_id = %s AND is_active = 1", (subject_id,))
+            conn.cursor.execute("SELECT unit_id AS id, unit_name AS name FROM units WHERE subject_id = %s AND is_active = 1", (subject_id,))
             units = conn.cursor.fetchall()
             
             # Fiilimsiler ünitesi ID'sini bul
-            conn.cursor.execute("SELECT id FROM units WHERE name = 'Fiilimsiler' AND subject_id = %s AND is_active = 1", (subject_id,))
+            conn.cursor.execute("SELECT unit_id AS id FROM units WHERE unit_name = 'Fiilimsiler' AND subject_id = %s AND is_active = 1", (subject_id,))
             unit_result = conn.cursor.fetchone()
             if not unit_result:
                 # Eğer Fiilimsiler yoksa, ilk üniteyi kullan
-                conn.cursor.execute("SELECT id FROM units WHERE subject_id = %s AND is_active = 1 LIMIT 1", (subject_id,))
+                conn.cursor.execute("SELECT unit_id AS id FROM units WHERE subject_id = %s AND is_active = 1 LIMIT 1", (subject_id,))
                 unit_result = conn.cursor.fetchone()
                 if not unit_result:
                     return "Hiç ünite bulunamadı", 404
@@ -407,8 +407,8 @@ def quiz_auto_start_educational():
                 conn.cursor.execute("""
                     SELECT COUNT(*) as count FROM questions q
                     JOIN topics t ON q.topic_id = t.id
-                    JOIN units u ON t.unit_id = u.id
-                    WHERE u.id = %s AND q.is_active = 1
+                    JOIN units u ON t.unit_id = u.unit_id
+                    WHERE u.unit_id = %s AND q.is_active = 1
                 """, (unit_id,))
                 unit_question_count = conn.cursor.fetchone()['count']
                 

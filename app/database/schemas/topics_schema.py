@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS topics (
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(unit_id) ON DELETE CASCADE,
     INDEX idx_topics_name (name),
     INDEX idx_topics_name_id (name_id),
     INDEX idx_topics_unit (unit_id),

@@ -378,7 +378,7 @@ class QuizStartManager {
         this.grades.forEach(grade => {
             const option = document.createElement('option');
             option.value = grade.id;
-            option.textContent = grade.name;
+            option.textContent = grade.grade_name;
             select.appendChild(option);
         });
     }
@@ -535,7 +535,7 @@ class QuizStartManager {
     getGradeName(gradeId) {
         if (!gradeId) return '-';
         const grade = this.grades.find(g => g.id == gradeId);
-        return grade ? grade.name : '-';
+        return grade ? grade.grade_name : '-';
     }
 
     getSubjectName(subjectId) {

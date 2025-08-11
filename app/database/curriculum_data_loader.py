@@ -177,19 +177,18 @@ class JSONDataLoader:
         values = []
         for grade_level, grade_data in self.grades_data.items():
             grade_name = grade_data.get('gradeName', f'{grade_level}. Sınıf')
-            grade_name_id = f'grade_{grade_level}'
             description = f'{grade_name} seviyesi'
             
-            values.append(f"('{grade_name}', '{grade_name_id}', {grade_level}, '{description}')")
+            values.append(f"('{grade_name}', '{description}')")
             
         if not values:
             return ""
             
         sql = f"""
-INSERT INTO grades (name, name_id, level, description) VALUES
+INSERT INTO grades (grade_name, description) VALUES
 {', '.join(values)}
 ON DUPLICATE KEY UPDATE 
-    name = VALUES(name),
+    grade_name = VALUES(grade_name),
     description = VALUES(description);
 """
         return sql
@@ -216,16 +215,16 @@ ON DUPLICATE KEY UPDATE
                 subject_name_escaped = subject_name.replace("'", "''")
                 description_escaped = description.replace("'", "''")
                 
-                values.append(f"({grade_id}, '{subject_name_escaped}', '{subject_code.upper()}', '{description_escaped}')")
+                values.append(f"({grade_id}, '{subject_name_escaped}', '{description_escaped}')")
             
         if not values:
             return ""
             
         sql = f"""
-INSERT INTO subjects (grade_id, name, name_id, description) VALUES
+INSERT INTO subjects (grade_id, subject_name, description) VALUES
 {', '.join(values)}
 ON DUPLICATE KEY UPDATE 
-    name = VALUES(name),
+    subject_name = VALUES(subject_name),
     description = VALUES(description);
 """
         return sql
@@ -252,16 +251,16 @@ ON DUPLICATE KEY UPDATE
                 unit_name_escaped = unit_name.replace("'", "''")
                 description_escaped = description.replace("'", "''")
                 
-                values.append(f"({subject_id}, '{unit_name_escaped}', '{unit_id}', '{description_escaped}')")
+                values.append(f"({subject_id}, '{unit_name_escaped}', '{description_escaped}')")
             
         if not values:
             return ""
             
         sql = f"""
-INSERT INTO units (subject_id, name, name_id, description) VALUES
+INSERT INTO units (subject_id, unit_name, description) VALUES
 {', '.join(values)}
 ON DUPLICATE KEY UPDATE 
-    name = VALUES(name),
+    unit_name = VALUES(unit_name),
     description = VALUES(description);
 """
         return sql
@@ -345,13 +344,14 @@ ON DUPLICATE KEY UPDATE
         try:
             with db_connection as conn:
                 for grade_level in self.grades_data.keys():
+                    grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
                     conn.cursor.execute(
-                        "SELECT id FROM grades WHERE level = %s",
-                        (grade_level,)
+                        "SELECT grade_id FROM grades WHERE grade_name = %s",
+                        (grade_name,)
                     )
                     result = conn.cursor.fetchone()
                     if result:
-                        grade_id_map[grade_level] = result['id']
+                        grade_id_map[grade_level] = result['grade_id']
                         
         except Exception as e:
             pass
@@ -373,19 +373,53 @@ ON DUPLICATE KEY UPDATE
         try:
             with db_connection as conn:
                 for grade_level, subject_code, subject_name, description in self.subjects_data:
+                    grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
                     conn.cursor.execute(
-                        "SELECT s.id FROM subjects s JOIN grades g ON s.grade_id = g.id WHERE s.name_id = %s AND g.level = %s",
-                        (subject_code.upper(), grade_level)
+                        "SELECT s.subject_id FROM subjects s JOIN grades g ON s.grade_id = g.grade_id WHERE s.subject_name = %s AND g.grade_name = %s",
+                        (subject_name, grade_name)
                     )
                     result = conn.cursor.fetchone()
                     if result:
-                        subject_id_map[subject_code] = result['id']
+                        subject_id_map[subject_code] = result['subject_id']
             
             return subject_id_map
             
         except Exception:
             return {}
         
+    def get_unit_id_map(self, db_connection) -> Dict[str, int]:
+        """
+        Veritabanından ünite ID'lerini veritabanı ID'lerine eşler.
+        
+        Args:
+            db_connection: Veritabanı bağlantısı
+            
+        Returns:
+            Ünite ID'si -> veritabanı ID eşlemesi
+        """
+        unit_id_map = {}
+        try:
+            with db_connection as conn:
+                for unit_id, unit_name, subject_code, description in self.units_data:
+                    # Derse göre üniteyi bulmak için subject_name'e ihtiyaç var
+                    subject_name = None
+                    for gl, sc, sn, _ in self.subjects_data:
+                        if sc == subject_code:
+                            subject_name = sn
+                            break
+                    if not subject_name:
+                        continue
+                    conn.cursor.execute(
+                        "SELECT u.unit_id FROM units u JOIN subjects s ON u.subject_id = s.subject_id WHERE u.unit_name = %s AND s.subject_name = %s",
+                        (unit_name, subject_name)
+                    )
+                    result = conn.cursor.fetchone()
+                    if result:
+                        unit_id_map[unit_id] = result['unit_id']
+        except Exception:
+            return {}
+        return unit_id_map
+
         def get_grade_id_map(self, db_connection) -> Dict[int, int]:
             """
             Veritabanından grade seviyelerini ID'lere eşler.
@@ -401,13 +435,14 @@ ON DUPLICATE KEY UPDATE
             try:
                 with db_connection as conn:
                     for grade_level in self.grades_data.keys():
+                        grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
                         conn.cursor.execute(
-                            "SELECT id FROM grades WHERE level = %s",
-                            (grade_level,)
+                            "SELECT grade_id FROM grades WHERE grade_name = %s",
+                            (grade_name,)
                         )
                         result = conn.cursor.fetchone()
                         if result:
-                            grade_id_map[grade_level] = result['id']
+                            grade_id_map[grade_level] = result['grade_id']
                             
             except Exception as e:
                 return ""
@@ -429,13 +464,14 @@ ON DUPLICATE KEY UPDATE
             try:
                 with db_connection as conn:
                     for grade_level, subject_code, subject_name, description in self.subjects_data:
+                        grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
                         conn.cursor.execute(
-                            "SELECT s.id FROM subjects s JOIN grades g ON s.grade_id = g.id WHERE s.name_id = %s AND g.level = %s",
-                            (subject_code.upper(), grade_level)
+                            "SELECT s.subject_id FROM subjects s JOIN grades g ON s.grade_id = g.grade_id WHERE s.subject_name = %s AND g.grade_name = %s",
+                            (subject_name, grade_name)
                         )
                         result = conn.cursor.fetchone()
                         if result:
-                            subject_id_map[subject_code] = result['id']
+                            subject_id_map[subject_code] = result['subject_id']
                             
             except Exception as e:
                 return ""
@@ -457,13 +493,21 @@ ON DUPLICATE KEY UPDATE
             try:
                 with db_connection as conn:
                     for unit_id, unit_name, subject_code, description in self.units_data:
+                        # Derse göre üniteyi bulmak için subject_name'e ihtiyaç var
+                        subject_name = None
+                        for gl, sc, sn, _ in self.subjects_data:
+                            if sc == subject_code:
+                                subject_name = sn
+                                break
+                        if not subject_name:
+                            continue
                         conn.cursor.execute(
-                            "SELECT u.id FROM units u JOIN subjects s ON u.subject_id = s.id WHERE u.name_id = %s AND s.name_id = %s",
-                            (unit_id, subject_code.upper())
+                            "SELECT u.unit_id FROM units u JOIN subjects s ON u.subject_id = s.subject_id WHERE u.unit_name = %s AND s.subject_name = %s",
+                            (unit_name, subject_name)
                         )
                         result = conn.cursor.fetchone()
                         if result:
-                            unit_id_map[unit_id] = result['id']
+                            unit_id_map[unit_id] = result['unit_id']
                             
             except Exception as e:
                 return ""

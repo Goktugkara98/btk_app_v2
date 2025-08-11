@@ -65,17 +65,20 @@ class QuestionLoader:
             query = """
             SELECT t.id 
             FROM topics t
-            JOIN units u ON t.unit_id = u.id
-            JOIN subjects s ON u.subject_id = s.id
-            JOIN grades g ON s.grade_id = g.id
-            WHERE g.level = %s 
-            AND s.name = %s 
-            AND u.name = %s 
+            JOIN units u ON t.unit_id = u.unit_id
+            JOIN subjects s ON u.subject_id = s.subject_id
+            JOIN grades g ON s.grade_id = g.grade_id
+            WHERE g.grade_name = %s 
+            AND s.subject_name = %s 
+            AND u.unit_name = %s 
             AND t.name = %s
             """
-            
+
+            # Yeni şemada grade, g.grade_name ile eşleşir. Varsayılan ad: "{grade}. Sınıf"
+            grade_name = f"{grade}. Sınıf"
+
             with self.db as conn:
-                conn.cursor.execute(query, (grade, subject, unit, topic))
+                conn.cursor.execute(query, (grade_name, subject, unit, topic))
                 result = conn.cursor.fetchone()
                 
                 if result:

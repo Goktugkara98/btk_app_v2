@@ -101,6 +101,180 @@ class DatabaseMigrations:
         except Exception:
             return False
 
+    def _seed_grades_1_to_12_if_empty(self) -> bool:
+        """Grades tablosu boşsa 1'den 12'ye kadar sınıfları sabit grade_id ile ekler."""
+        try:
+            with self.db as conn:
+                conn.cursor.execute("SELECT COUNT(*) AS cnt FROM grades")
+                result = conn.cursor.fetchone()
+                count = (result or {}).get('cnt', 0)
+                if count and count > 0:
+                    return True
+
+                # Boşsa 1..12 ekle (explicit grade_id)
+                values = []
+                for i in range(1, 13):
+                    name = f"{i}. Sınıf"
+                    desc = f"{name} seviyesi"
+                    # Escape quotes just in case
+                    name_esc = name.replace("'", "''")
+                    desc_esc = desc.replace("'", "''")
+                    values.append(f"({i}, '{name_esc}', '{desc_esc}', 1)")
+
+                sql = f"""
+INSERT INTO grades (grade_id, grade_name, description, is_active) VALUES
+{', '.join(values)}
+ON DUPLICATE KEY UPDATE
+    grade_name = VALUES(grade_name),
+    description = VALUES(description),
+    is_active = VALUES(is_active);
+"""
+                conn.cursor.execute(sql)
+                conn.connection.commit()
+                return True
+        except Exception:
+            return False
+
+    def _migrate_units_schema(self) -> bool:
+        """Existing DB'lerde units şemasını yeni yapıya dönüştürür.
+        - id -> unit_id (PK)
+        - name -> unit_name
+        - drop name_id
+        - indexes/unique: unique (subject_id, unit_name), idx on unit_name, subject_id, is_active
+        - FKs: topics.unit_id -> units.unit_id, quiz_sessions.unit_id -> units.unit_id
+        """
+        try:
+            with self.db as conn:
+                # 1) Kolon adlarını dönüştür
+                # id -> unit_id
+                conn.cursor.execute("SHOW COLUMNS FROM units LIKE 'unit_id'")
+                has_unit_id = bool(conn.cursor.fetchone())
+                if not has_unit_id:
+                    conn.cursor.execute("SHOW COLUMNS FROM units LIKE 'id'")
+                    if conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE units CHANGE COLUMN id unit_id INT AUTO_INCREMENT PRIMARY KEY"
+                        )
+                        conn.connection.commit()
+
+                # name -> unit_name
+                conn.cursor.execute("SHOW COLUMNS FROM units LIKE 'unit_name'")
+                has_unit_name = bool(conn.cursor.fetchone())
+                if not has_unit_name:
+                    conn.cursor.execute("SHOW COLUMNS FROM units LIKE 'name'")
+                    if conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE units CHANGE COLUMN name unit_name VARCHAR(200) NOT NULL"
+                        )
+                        conn.connection.commit()
+
+                # name_id drop (if exists)
+                conn.cursor.execute("SHOW COLUMNS FROM units LIKE 'name_id'")
+                if conn.cursor.fetchone():
+                    try:
+                        conn.cursor.execute("ALTER TABLE units DROP COLUMN name_id")
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # 2) Eski index/unique'leri temizle, yenilerini kur
+                def drop_units_index_if_exists(idx_name: str):
+                    try:
+                        conn.cursor.execute(
+                            "SHOW INDEX FROM units WHERE Key_name = %s",
+                            (idx_name,)
+                        )
+                        if conn.cursor.fetchone():
+                            conn.cursor.execute(f"DROP INDEX {idx_name} ON units")
+                            conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                for idx in [
+                    'idx_units_name',
+                    'idx_units_name_id',
+                    'idx_units_subject',
+                    'idx_units_active',
+                    'unique_unit_per_subject',
+                    'unique_name_subject'
+                ]:
+                    drop_units_index_if_exists(idx)
+
+                def ensure_units_index(idx_name: str, expr: str, unique: bool = False):
+                    try:
+                        conn.cursor.execute(
+                            "SHOW INDEX FROM units WHERE Key_name = %s",
+                            (idx_name,)
+                        )
+                        exists = bool(conn.cursor.fetchone())
+                        if not exists:
+                            if unique:
+                                conn.cursor.execute(
+                                    f"ALTER TABLE units ADD CONSTRAINT {idx_name} UNIQUE ({expr})"
+                                )
+                            else:
+                                conn.cursor.execute(
+                                    f"CREATE INDEX {idx_name} ON units ({expr})"
+                                )
+                            conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                ensure_units_index('idx_units_name', 'unit_name')
+                ensure_units_index('idx_units_subject', 'subject_id')
+                ensure_units_index('idx_units_active', 'is_active')
+                ensure_units_index('unique_unit_per_subject', 'subject_id, unit_name', unique=True)
+
+                # 3) Dış anahtarları güncelle: topics.unit_id ve quiz_sessions.unit_id
+                def drop_fk_if_exists(table: str, column: str, referenced_table: str):
+                    try:
+                        conn.cursor.execute(
+                            """
+                            SELECT CONSTRAINT_NAME 
+                            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                            WHERE TABLE_SCHEMA = DATABASE()
+                              AND TABLE_NAME = %s
+                              AND COLUMN_NAME = %s
+                              AND REFERENCED_TABLE_NAME = %s
+                            """,
+                            (table, column, referenced_table)
+                        )
+                        row = conn.cursor.fetchone()
+                        if row and row.get('CONSTRAINT_NAME'):
+                            fk_name = row['CONSTRAINT_NAME']
+                            try:
+                                conn.cursor.execute(f"ALTER TABLE {table} DROP FOREIGN KEY {fk_name}")
+                                conn.connection.commit()
+                            except MySQLError:
+                                pass
+                    except MySQLError:
+                        pass
+
+                # Drop existing FKs (if any)
+                drop_fk_if_exists('topics', 'unit_id', 'units')
+                drop_fk_if_exists('quiz_sessions', 'unit_id', 'units')
+
+                # Recreate FKs to units(unit_id)
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE topics ADD CONSTRAINT fk_topics_unit FOREIGN KEY (unit_id) REFERENCES units(unit_id) ON DELETE CASCADE"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions ADD CONSTRAINT fk_quiz_sessions_unit FOREIGN KEY (unit_id) REFERENCES units(unit_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+            return True
+        except Exception:
+            return False
+
     def _drop_table(self, table_name: str) -> bool:
         """Tabloyu siler."""
         return self._execute_sql(f"DROP TABLE IF EXISTS {table_name}")
@@ -187,7 +361,11 @@ class DatabaseMigrations:
                 if not self._create_table(table_name, table_sql, sample_data):
                     return False
 
-            # JSON verilerini yükle
+            # İlk çalıştırmada sınıfları seed et (1..12)
+            if not self._seed_grades_1_to_12_if_empty():
+                return False
+
+            # JSON verilerini yükle (gerekirse açıklamaları/dersleri ekler)
             if not self._populate_from_json():
                 return False
 
@@ -219,6 +397,191 @@ class DatabaseMigrations:
         except MySQLError:
             return False
 
+    def _migrate_grades_name_column(self) -> bool:
+        """Existing DB'lerde grades.name kolonunu grades.grade_name olarak değiştirir."""
+        try:
+            with self.db as conn:
+                # Kolon mevcut mu kontrol et
+                conn.cursor.execute("SHOW COLUMNS FROM grades LIKE 'name'")
+                if conn.cursor.fetchone():
+                    # Kolonu yeniden adlandır
+                    conn.cursor.execute(
+                        "ALTER TABLE grades CHANGE COLUMN name grade_name VARCHAR(100) NOT NULL"
+                    )
+                    conn.connection.commit()
+            return True
+        except Exception:
+            return False
+
+    def _migrate_subjects_schema(self) -> bool:
+        """Existing DB'lerde subjects şemasını yeni yapıya dönüştürür.
+        - id -> subject_id (PK)
+        - name -> subject_name
+        - drop name_id
+        - replace grade_id with unit_id
+        - indexes/unique: unique (unit_id, subject_name), idx on subject_name, unit_id, is_active
+        - units.subject_id FK -> subjects.subject_id (mevcut durumda korunur)
+        """
+        try:
+            with self.db as conn:
+                # 1) Kolon adlarını dönüştür
+                # id -> subject_id
+                conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'subject_id'")
+                has_subject_id = bool(conn.cursor.fetchone())
+                if not has_subject_id:
+                    conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'id'")
+                    if conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE subjects CHANGE COLUMN id subject_id INT AUTO_INCREMENT PRIMARY KEY"
+                        )
+                        conn.connection.commit()
+
+                # name -> subject_name
+                conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'subject_name'")
+                has_subject_name = bool(conn.cursor.fetchone())
+                if not has_subject_name:
+                    conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'name'")
+                    if conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE subjects CHANGE COLUMN name subject_name VARCHAR(200) NOT NULL"
+                        )
+                        conn.connection.commit()
+
+                # name_id drop
+                conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'name_id'")
+                if conn.cursor.fetchone():
+                    try:
+                        conn.cursor.execute("ALTER TABLE subjects DROP COLUMN name_id")
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # unit_id ekle (yoksa); geçici olarak NULL kabul edilebilir (backfill sonrası NOT NULL'a çevrilebilir)
+                conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'unit_id'")
+                if not conn.cursor.fetchone():
+                    try:
+                        conn.cursor.execute("ALTER TABLE subjects ADD COLUMN unit_id INT NULL AFTER subject_id")
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # subjects.grade_id -> kaldır: önce varsa FK'yı düşür, sonra kolonu sil
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT CONSTRAINT_NAME 
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'subjects'
+                          AND COLUMN_NAME = 'grade_id'
+                          AND REFERENCED_TABLE_NAME = 'grades'
+                        """
+                    )
+                    row = conn.cursor.fetchone()
+                    if row and row.get('CONSTRAINT_NAME'):
+                        fk_name = row['CONSTRAINT_NAME']
+                        try:
+                            conn.cursor.execute(f"ALTER TABLE subjects DROP FOREIGN KEY {fk_name}")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                conn.cursor.execute("SHOW COLUMNS FROM subjects LIKE 'grade_id'")
+                if conn.cursor.fetchone():
+                    try:
+                        conn.cursor.execute("ALTER TABLE subjects DROP COLUMN grade_id")
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # 2) Eski index/unique'leri temizle, yenilerini kur
+                def drop_index_if_exists(idx_name: str):
+                    try:
+                        conn.cursor.execute(
+                            "SHOW INDEX FROM subjects WHERE Key_name = %s",
+                            (idx_name,)
+                        )
+                        if conn.cursor.fetchone():
+                            conn.cursor.execute(f"DROP INDEX {idx_name} ON subjects")
+                            conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # Muhtemel eski index/unique isimleri
+                for idx in [
+                    'idx_subjects_name',
+                    'idx_subjects_name_id',
+                    'unique_subject_grade',
+                    'unique_name_grade',
+                    'idx_subjects_grade',
+                    'unique_subject_per_grade'
+                ]:
+                    drop_index_if_exists(idx)
+
+                # Yeni index/unique'leri yoksa ekle
+                def ensure_index(idx_name: str, expr: str, unique: bool = False):
+                    try:
+                        conn.cursor.execute(
+                            "SHOW INDEX FROM subjects WHERE Key_name = %s",
+                            (idx_name,)
+                        )
+                        exists = bool(conn.cursor.fetchone())
+                        if not exists:
+                            if unique:
+                                conn.cursor.execute(
+                                    f"ALTER TABLE subjects ADD CONSTRAINT {idx_name} UNIQUE ({expr})"
+                                )
+                            else:
+                                conn.cursor.execute(
+                                    f"CREATE INDEX {idx_name} ON subjects ({expr})"
+                                )
+                            conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                ensure_index('idx_subjects_name', 'subject_name')
+                ensure_index('idx_subjects_unit', 'unit_id')
+                ensure_index('idx_subjects_active', 'is_active')
+                ensure_index('unique_subject_per_unit', 'unit_id, subject_name', unique=True)
+
+                # 3) units.subject_id dış anahtarını subjects.subject_id'ye sabitle
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT CONSTRAINT_NAME 
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'units'
+                          AND COLUMN_NAME = 'subject_id'
+                          AND REFERENCED_TABLE_NAME = 'subjects'
+                        """
+                    )
+                    row = conn.cursor.fetchone()
+                    if row and row.get('CONSTRAINT_NAME'):
+                        fk_name = row['CONSTRAINT_NAME']
+                        try:
+                            conn.cursor.execute(f"ALTER TABLE units DROP FOREIGN KEY {fk_name}")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                # FK ekle (zaten varsa sessizce geç)
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE units ADD CONSTRAINT fk_units_subject FOREIGN KEY (subject_id) REFERENCES subjects(subject_id) ON DELETE CASCADE"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+            return True
+        except Exception:
+            return False
+
     def run_migrations(self):
         """Ana migration işlemini çalıştırır.
         
@@ -228,6 +591,10 @@ class DatabaseMigrations:
         try:
             # Tabloların mevcut olup olmadığını kontrol et
             if self.check_tables_exist():
+                # Mevcut veritabanı için şema migrasyonlarını uygula
+                self._migrate_grades_name_column()
+                self._migrate_subjects_schema()
+                self._migrate_units_schema()
                 return True
             
             # Tabloları oluştur

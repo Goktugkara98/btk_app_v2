@@ -68,10 +68,10 @@ def get_grades():
         
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
-                SELECT id, name, level, description 
+                SELECT grade_id AS id, grade_name AS grade_name, description 
                 FROM grades 
                 WHERE is_active = 1 
-                ORDER BY level
+                ORDER BY grade_id
             """)
             grades = conn.cursor.fetchall()
             
@@ -80,8 +80,7 @@ def get_grades():
             for grade in grades:
                 grades_list.append({
                     'id': grade['id'],
-                    'name': grade['name'],
-                    'level': grade['level'],
+                    'grade_name': grade['grade_name'],
                     'description': grade['description']
                 })
             
@@ -100,13 +99,13 @@ def get_grades():
 
 @quiz_bp.route('/quiz/subjects', methods=['GET'])
 def get_subjects():
-    """5.1.2. Belirli bir sınıfa ait dersleri listeler."""
-    grade_id = request.args.get('grade_id', type=int)
+    """5.1.2. Belirli bir üniteye ait dersleri listeler."""
+    unit_id = request.args.get('unit_id', type=int)
     
-    if not grade_id:
+    if not unit_id:
         return jsonify({
             'status': 'error',
-            'message': 'Grade ID is required'
+            'message': 'Unit ID is required'
         }), 400
     
     try:
@@ -118,12 +117,12 @@ def get_subjects():
         
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
-                SELECT s.id, s.name, s.name_id, s.description, g.name as grade_name
+                SELECT s.subject_id AS id, s.subject_name AS name, s.description, u.unit_name as unit_name
                 FROM subjects s 
-                JOIN grades g ON s.grade_id = g.id
-                WHERE s.grade_id = %s AND s.is_active = 1 
-                ORDER BY s.name
-            """, (grade_id,))
+                JOIN units u ON s.unit_id = u.unit_id
+                WHERE s.unit_id = %s AND s.is_active = 1 
+                ORDER BY s.subject_name
+            """, (unit_id,))
             subjects = conn.cursor.fetchall()
             
             # Convert to list of dictionaries
@@ -132,9 +131,8 @@ def get_subjects():
                 subjects_list.append({
                     'id': subject['id'],
                     'name': subject['name'],
-                    'name_id': subject['name_id'],
                     'description': subject['description'],
-                    'grade_name': subject['grade_name']
+                    'unit_name': subject['unit_name']
                 })
             
             return jsonify({
@@ -170,11 +168,11 @@ def get_units():
         
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
-                SELECT u.id, u.name, u.name_id, u.description, s.name as subject_name
+                SELECT u.unit_id AS id, u.unit_name AS name, u.description, s.subject_name as subject_name
                 FROM units u 
-                JOIN subjects s ON u.subject_id = s.id
+                JOIN subjects s ON u.subject_id = s.subject_id
                 WHERE u.subject_id = %s AND u.is_active = 1 
-                ORDER BY u.name
+                ORDER BY u.unit_name
             """, (subject_id,))
             units = conn.cursor.fetchall()
             
@@ -184,7 +182,6 @@ def get_units():
                 units_list.append({
                     'id': unit['id'],
                     'name': unit['name'],
-                    'name_id': unit['name_id'],
                     'description': unit['description'],
                     'subject_name': unit['subject_name']
                 })
@@ -222,9 +219,9 @@ def get_topics():
         
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
-                SELECT t.id, t.name, t.description, u.name as unit_name
+                SELECT t.id, t.name, t.description, u.unit_name as unit_name
                 FROM topics t 
-                JOIN units u ON t.unit_id = u.id
+                JOIN units u ON t.unit_id = u.unit_id
                 WHERE t.unit_id = %s AND t.is_active = 1 
                 ORDER BY t.name
             """, (unit_id,))
