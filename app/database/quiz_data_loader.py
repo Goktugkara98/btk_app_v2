@@ -63,7 +63,7 @@ class QuestionLoader:
         """
         try:
             query = """
-            SELECT t.id 
+            SELECT t.topic_id 
             FROM topics t
             JOIN units u ON t.unit_id = u.unit_id
             JOIN subjects s ON u.subject_id = s.subject_id
@@ -71,7 +71,7 @@ class QuestionLoader:
             WHERE g.grade_name = %s 
             AND s.subject_name = %s 
             AND u.unit_name = %s 
-            AND t.name = %s
+            AND t.topic_name = %s
             """
 
             # Yeni şemada grade, g.grade_name ile eşleşir. Varsayılan ad: "{grade}. Sınıf"
@@ -82,7 +82,7 @@ class QuestionLoader:
                 result = conn.cursor.fetchone()
                 
                 if result:
-                    return result['id']
+                    return result['topic_id']
                 else:
                     return None
                 
@@ -102,19 +102,17 @@ class QuestionLoader:
         """
         try:
             with self.db as conn:
-                # Question'ı ekle
+                # Question'ı ekle (name->question_text, drop name_id)
                 question_query = """
-                INSERT INTO questions (name, name_id, topic_id, difficulty_level, question_type, points, description)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO questions (question_text, topic_id, difficulty_level, question_type, points, description)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """
                 
-                question_name = question_data['questionText']
-                question_name_id = f"q_{topic_id}_{hash(question_name) % 10000}"
+                question_text = question_data['questionText']
                 question_explanation = question_data.get('explanation', '')
                 
                 question_values = (
-                    question_name,
-                    question_name_id,
+                    question_text,
                     topic_id,
                     question_data['difficulty'],
                     question_data['questionType'],

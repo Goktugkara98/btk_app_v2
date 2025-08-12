@@ -59,15 +59,16 @@ class QuizSessionRepository:
                 conn.cursor.execute("""
                     INSERT INTO quiz_sessions (
                         session_id, user_id, grade_id, subject_id, unit_id, topic_id,
-                        difficulty_level, timer_enabled, timer_duration, quiz_mode, question_count
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        selection_scope, difficulty_level, timer_enabled, timer_duration, quiz_mode, question_count
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     session_data['session_id'],
                     session_data['user_id'],
                     session_data['grade_id'],
                     session_data['subject_id'],
                     session_data.get('unit_id'),
-                    session_data['topic_id'],
+                    session_data.get('topic_id'),
+                    session_data.get('selection_scope', 'topic'),
                     session_data.get('difficulty_level', 'random'),
                     session_data.get('timer_enabled', True),
                     session_data.get('timer_duration', 30),
@@ -92,12 +93,12 @@ class QuizSessionRepository:
                            g.grade_name as grade_name,
                            s.subject_name as subject_name,
                            u.unit_name as unit_name,
-                           t.name as topic_name
+                           t.topic_name as topic_name
                     FROM quiz_sessions qs
                     JOIN grades g ON qs.grade_id = g.grade_id
                     JOIN subjects s ON qs.subject_id = s.subject_id
                     LEFT JOIN units u ON qs.unit_id = u.unit_id
-                    LEFT JOIN topics t ON qs.topic_id = t.id
+                    LEFT JOIN topics t ON qs.topic_id = t.topic_id
                     WHERE qs.session_id = %s
                 """, (session_id,))
                 
@@ -116,12 +117,12 @@ class QuizSessionRepository:
                            g.grade_name as grade_name,
                            s.subject_name as subject_name,
                            u.unit_name as unit_name,
-                           t.name as topic_name
+                           t.topic_name as topic_name
                     FROM quiz_sessions qs
                     JOIN grades g ON qs.grade_id = g.grade_id
                     JOIN subjects s ON qs.subject_id = s.subject_id
                     LEFT JOIN units u ON qs.unit_id = u.unit_id
-                    LEFT JOIN topics t ON qs.topic_id = t.id
+                    LEFT JOIN topics t ON qs.topic_id = t.topic_id
                     WHERE qs.id = %s
                 """, (session_db_id,))
                 
@@ -221,7 +222,7 @@ class QuizSessionRepository:
             with self.db as conn:
                 conn.cursor.execute("""
                     SELECT qsq.*, 
-                           q.name as question_text,
+                           q.question_text as question_text,
                            q.difficulty_level,
                            q.question_type,
                            q.points
@@ -281,7 +282,7 @@ class QuizSessionRepository:
                 # Soru sonuçlarını al (is_correct ve points_earned dahil)
                 conn.cursor.execute("""
                     SELECT qsq.*, 
-                           q.name as question_text,
+                           q.question_text as question_text,
                            q.points,
                            qo.id as correct_answer_id,
                            qo.name as correct_answer_text,
@@ -376,7 +377,7 @@ class QuizSessionRepository:
                            COUNT(qo.id) as option_count
                     FROM questions q
                     LEFT JOIN question_options qo ON q.id = qo.question_id
-                    JOIN topics t ON q.topic_id = t.id
+                    JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     WHERE u.subject_id = %s 
                     AND q.is_active = 1
@@ -400,6 +401,126 @@ class QuizSessionRepository:
                 
                 return questions
                 
+        except Exception as e:
+            return []
+
+    def get_random_questions_by_unit(self, unit_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
+        """4.4.1c. Unit ID'ye göre rasgele sorular getirir."""
+        try:
+            with self.db as conn:
+                if difficulty == 'random':
+                    difficulty_filter = ""
+                    params = (unit_id, count)
+                else:
+                    difficulty_filter = "AND q.difficulty_level = %s"
+                    params = (unit_id, difficulty, count)
+
+                conn.cursor.execute(f"""
+                    SELECT q.*, 
+                           COUNT(qo.id) as option_count
+                    FROM questions q
+                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    JOIN topics t ON q.topic_id = t.topic_id
+                    WHERE t.unit_id = %s
+                    AND q.is_active = 1
+                    {difficulty_filter}
+                    GROUP BY q.id
+                    HAVING option_count >= 2
+                    ORDER BY RAND()
+                    LIMIT %s
+                """, params)
+
+                questions = conn.cursor.fetchall()
+
+                for question in questions:
+                    conn.cursor.execute("""
+                        SELECT * FROM question_options 
+                        WHERE question_id = %s AND is_active = 1
+                        ORDER BY RAND()
+                    """, (question['id'],))
+                    question['options'] = conn.cursor.fetchall()
+
+                return questions
+        except Exception as e:
+            return []
+
+    def get_random_questions_by_grade(self, grade_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
+        """4.4.1d. Grade ID'ye göre rasgele sorular getirir."""
+        try:
+            with self.db as conn:
+                if difficulty == 'random':
+                    difficulty_filter = ""
+                    params = (grade_id, count)
+                else:
+                    difficulty_filter = "AND q.difficulty_level = %s"
+                    params = (grade_id, difficulty, count)
+
+                conn.cursor.execute(f"""
+                    SELECT q.*, 
+                           COUNT(qo.id) as option_count
+                    FROM questions q
+                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    JOIN topics t ON q.topic_id = t.topic_id
+                    JOIN units u ON t.unit_id = u.unit_id
+                    JOIN subjects s ON u.subject_id = s.subject_id
+                    WHERE s.grade_id = %s
+                    AND q.is_active = 1
+                    {difficulty_filter}
+                    GROUP BY q.id
+                    HAVING option_count >= 2
+                    ORDER BY RAND()
+                    LIMIT %s
+                """, params)
+
+                questions = conn.cursor.fetchall()
+
+                for question in questions:
+                    conn.cursor.execute("""
+                        SELECT * FROM question_options 
+                        WHERE question_id = %s AND is_active = 1
+                        ORDER BY RAND()
+                    """, (question['id'],))
+                    question['options'] = conn.cursor.fetchall()
+
+                return questions
+        except Exception as e:
+            return []
+
+    def get_random_questions_global(self, difficulty: str, count: int) -> List[Dict[str, Any]]:
+        """4.4.1e. Herhangi bir kapsam olmadan rasgele sorular getirir."""
+        try:
+            with self.db as conn:
+                if difficulty == 'random':
+                    difficulty_filter = ""
+                    params = (count,)
+                else:
+                    difficulty_filter = "AND q.difficulty_level = %s"
+                    params = (difficulty, count)
+
+                conn.cursor.execute(f"""
+                    SELECT q.*, 
+                           COUNT(qo.id) as option_count
+                    FROM questions q
+                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    WHERE q.is_active = 1
+                    {difficulty_filter}
+                    GROUP BY q.id
+                    HAVING option_count >= 2
+                    ORDER BY RAND()
+                    LIMIT %s
+                """, params)
+
+                questions = conn.cursor.fetchall()
+
+                for question in questions:
+                    conn.cursor.execute("""
+                        SELECT * FROM question_options 
+                        WHERE question_id = %s AND is_active = 1
+                        ORDER BY RAND()
+                    """, (question['id'],))
+                    question['options'] = conn.cursor.fetchall()
+
+                return questions
         except Exception as e:
             return []
 
@@ -446,10 +567,11 @@ class QuizSessionRepository:
             with self.db as conn:
                 conn.cursor.execute("""
                     SELECT q.*, 
-                           t.name as topic_name,
+                           t.topic_id as topic_id,
+                           t.topic_name as topic_name,
                            s.subject_name as subject_name
                     FROM questions q
-                    JOIN topics t ON q.topic_id = t.id
+                    JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     JOIN subjects s ON u.subject_id = s.subject_id
                     WHERE q.id = %s

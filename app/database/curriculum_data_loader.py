@@ -284,20 +284,19 @@ ON DUPLICATE KEY UPDATE
             
             if db_unit_id:
                 # SQL injection'a karşı koruma
-                topic_id_escaped = topic_id.replace("'", "''")
                 topic_name_escaped = topic_name.replace("'", "''")
                 description_escaped = description.replace("'", "''")
                 
-                values.append(f"({db_unit_id}, '{topic_name_escaped}', '{topic_id_escaped}', '{description_escaped}')")
+                values.append(f"({db_unit_id}, '{topic_name_escaped}', '{description_escaped}')")
             
         if not values:
             return ""
             
         sql = f"""
-INSERT INTO topics (unit_id, name, name_id, description) VALUES
+INSERT INTO topics (unit_id, topic_name, description) VALUES
 {', '.join(values)}
 ON DUPLICATE KEY UPDATE 
-    name = VALUES(name),
+    topic_name = VALUES(topic_name),
     description = VALUES(description);
 """
         return sql

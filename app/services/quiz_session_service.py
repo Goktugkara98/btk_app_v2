@@ -78,27 +78,55 @@ class QuizSessionService:
                 'question_count': quiz_config.get('question_count', 10)
             }
 
+            # Option A: selection_scope hesapla
+            if session_data.get('topic_id'):
+                selection_scope = 'topic'
+            elif session_data.get('unit_id'):
+                selection_scope = 'unit'
+            elif session_data.get('subject_id'):
+                selection_scope = 'subject'
+            elif session_data.get('grade_id'):
+                selection_scope = 'grade'
+            else:
+                selection_scope = 'global'
+            session_data['selection_scope'] = selection_scope
+
             # Session'ı veritabanında oluştur
             success, session_db_id = self.session_repo.create_session(session_data)
             if not success:
                 return False, {'error': 'Failed to create session'}
 
-            # Rasgele soruları seç - topic_id None ise subject_id kullan
-            topic_id = quiz_config.get('topic_id')
-            
-            if topic_id is None:
-                # Topic seçilmemişse, subject'e göre soru seç
+            # Rasgele soruları seç - selection_scope'a göre
+            difficulty = quiz_config.get('difficulty_level', 'random')
+            qcount = quiz_config.get('question_count', 10)
+            if selection_scope == 'topic' and session_data.get('topic_id') is not None:
+                questions = self.session_repo.get_random_questions(
+                    topic_id=session_data['topic_id'],
+                    difficulty=difficulty,
+                    count=qcount
+                )
+            elif selection_scope == 'unit' and session_data.get('unit_id') is not None:
+                questions = self.session_repo.get_random_questions_by_unit(
+                    unit_id=session_data['unit_id'],
+                    difficulty=difficulty,
+                    count=qcount
+                )
+            elif selection_scope == 'subject' and session_data.get('subject_id') is not None:
                 questions = self.session_repo.get_random_questions_by_subject(
-                    subject_id=quiz_config['subject_id'],
-                    difficulty=quiz_config.get('difficulty_level', 'random'),
-                    count=quiz_config.get('question_count', 10)
+                    subject_id=session_data['subject_id'],
+                    difficulty=difficulty,
+                    count=qcount
+                )
+            elif selection_scope == 'grade' and session_data.get('grade_id') is not None:
+                questions = self.session_repo.get_random_questions_by_grade(
+                    grade_id=session_data['grade_id'],
+                    difficulty=difficulty,
+                    count=qcount
                 )
             else:
-                # Topic seçilmişse, topic'e göre soru seç
-                questions = self.session_repo.get_random_questions(
-                    topic_id=topic_id,
-                    difficulty=quiz_config.get('difficulty_level', 'random'),
-                    count=quiz_config.get('question_count', 10)
+                questions = self.session_repo.get_random_questions_global(
+                    difficulty=difficulty,
+                    count=qcount
                 )
 
             if not questions:

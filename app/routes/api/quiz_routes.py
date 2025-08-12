@@ -219,11 +219,11 @@ def get_topics():
         
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
-                SELECT t.id, t.name, t.description, u.unit_name as unit_name
+                SELECT t.topic_id AS id, t.topic_name AS name, t.description, u.unit_name as unit_name
                 FROM topics t 
                 JOIN units u ON t.unit_id = u.unit_id
                 WHERE t.unit_id = %s AND t.is_active = 1 
-                ORDER BY t.name
+                ORDER BY t.topic_name
             """, (unit_id,))
             topics = conn.cursor.fetchall()
             

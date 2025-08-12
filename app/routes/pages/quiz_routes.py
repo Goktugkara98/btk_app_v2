@@ -214,15 +214,15 @@ def quiz_auto_start():
                 unit_id = unit_result['id']
             
             # Mevcut konuları kontrol et
-            conn.cursor.execute("SELECT id, name FROM topics WHERE unit_id = %s AND is_active = 1", (unit_id,))
+            conn.cursor.execute("SELECT topic_id AS id, topic_name AS name FROM topics WHERE unit_id = %s AND is_active = 1", (unit_id,))
             topics = conn.cursor.fetchall()
             
             # Sıfat-fiil konusu ID'sini bul
-            conn.cursor.execute("SELECT id FROM topics WHERE name = 'Sıfat-fiil' AND unit_id = %s AND is_active = 1", (unit_id,))
+            conn.cursor.execute("SELECT topic_id AS id FROM topics WHERE topic_name = 'Sıfat-fiil' AND unit_id = %s AND is_active = 1", (unit_id,))
             topic_result = conn.cursor.fetchone()
             if not topic_result:
                 # Eğer Sıfat-fiil yoksa, ilk konuyu kullan
-                conn.cursor.execute("SELECT id FROM topics WHERE unit_id = %s AND is_active = 1 LIMIT 1", (unit_id,))
+                conn.cursor.execute("SELECT topic_id AS id FROM topics WHERE unit_id = %s AND is_active = 1 LIMIT 1", (unit_id,))
                 topic_result = conn.cursor.fetchone()
                 if not topic_result:
                     return "Hiç konu bulunamadı", 404
@@ -247,8 +247,8 @@ def quiz_auto_start():
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
                 SELECT COUNT(*) as count FROM questions q
-                JOIN topics t ON q.topic_id = t.id
-                WHERE t.id = %s AND q.is_active = 1
+                JOIN topics t ON q.topic_id = t.topic_id
+                WHERE t.topic_id = %s AND q.is_active = 1
             """, (topic_id,))
             question_count = conn.cursor.fetchone()['count']
             
@@ -256,7 +256,7 @@ def quiz_auto_start():
                 # Eğer bu konuda soru yoksa, tüm konulardan soru sayısını kontrol et
                 conn.cursor.execute("""
                     SELECT COUNT(*) as count FROM questions q
-                    JOIN topics t ON q.topic_id = t.id
+                    JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     WHERE u.unit_id = %s AND q.is_active = 1
                 """, (unit_id,))
@@ -364,15 +364,15 @@ def quiz_auto_start_educational():
                 unit_id = unit_result['id']
             
             # Mevcut konuları kontrol et
-            conn.cursor.execute("SELECT id, name FROM topics WHERE unit_id = %s AND is_active = 1", (unit_id,))
+            conn.cursor.execute("SELECT topic_id AS id, topic_name AS name FROM topics WHERE unit_id = %s AND is_active = 1", (unit_id,))
             topics = conn.cursor.fetchall()
             
             # Sıfat-fiil konusu ID'sini bul
-            conn.cursor.execute("SELECT id FROM topics WHERE name = 'Sıfat-fiil' AND unit_id = %s AND is_active = 1", (unit_id,))
+            conn.cursor.execute("SELECT topic_id AS id FROM topics WHERE topic_name = 'Sıfat-fiil' AND unit_id = %s AND is_active = 1", (unit_id,))
             topic_result = conn.cursor.fetchone()
             if not topic_result:
                 # Eğer Sıfat-fiil yoksa, ilk konuyu kullan
-                conn.cursor.execute("SELECT id FROM topics WHERE unit_id = %s AND is_active = 1 LIMIT 1", (unit_id,))
+                conn.cursor.execute("SELECT topic_id AS id FROM topics WHERE unit_id = %s AND is_active = 1 LIMIT 1", (unit_id,))
                 topic_result = conn.cursor.fetchone()
                 if not topic_result:
                     return "Hiç konu bulunamadı", 404
@@ -397,8 +397,8 @@ def quiz_auto_start_educational():
         with DatabaseConnection() as conn:
             conn.cursor.execute("""
                 SELECT COUNT(*) as count FROM questions q
-                JOIN topics t ON q.topic_id = t.id
-                WHERE t.id = %s AND q.is_active = 1
+                JOIN topics t ON q.topic_id = t.topic_id
+                WHERE t.topic_id = %s AND q.is_active = 1
             """, (topic_id,))
             question_count = conn.cursor.fetchone()['count']
             
@@ -406,7 +406,7 @@ def quiz_auto_start_educational():
                 # Eğer bu konuda soru yoksa, tüm konulardan soru sayısını kontrol et
                 conn.cursor.execute("""
                     SELECT COUNT(*) as count FROM questions q
-                    JOIN topics t ON q.topic_id = t.id
+                    JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     WHERE u.unit_id = %s AND q.is_active = 1
                 """, (unit_id,))
