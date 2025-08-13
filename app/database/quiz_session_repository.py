@@ -208,7 +208,7 @@ class QuizSessionRepository:
                         INSERT INTO quiz_session_questions (
                             session_id, question_id, question_order
                         ) VALUES (%s, %s, %s)
-                    """, (session_id, question['id'], i))
+                    """, (session_id, question['question_id'], i))
                 
                 conn.connection.commit()
                 return True
@@ -227,7 +227,7 @@ class QuizSessionRepository:
                            q.question_type,
                            q.points
                     FROM quiz_session_questions qsq
-                    JOIN questions q ON qsq.question_id = q.id
+                    JOIN questions q ON qsq.question_id = q.question_id
                     WHERE qsq.session_id = %s
                     ORDER BY qsq.question_order
                 """, (session_id,))
@@ -284,22 +284,22 @@ class QuizSessionRepository:
                     SELECT qsq.*, 
                            q.question_text as question_text,
                            q.points,
-                           qo.id as correct_answer_id,
-                           qo.name as correct_answer_text,
-                           uao.id as user_answer_id,
-                           uao.name as user_answer_text,
+                           qo.option_id as correct_answer_id,
+                           qo.option_text as correct_answer_text,
+                           uao.option_id as user_answer_id,
+                           uao.option_text as user_answer_text,
                            CASE 
-                               WHEN qsq.user_answer_option_id = qo.id THEN 1 
+                               WHEN qsq.user_answer_option_id = qo.option_id THEN 1 
                                ELSE 0 
                            END as is_correct,
                            CASE 
-                               WHEN qsq.user_answer_option_id = qo.id THEN q.points 
+                               WHEN qsq.user_answer_option_id = qo.option_id THEN q.points 
                                ELSE 0 
                            END as points_earned
                     FROM quiz_session_questions qsq
-                    JOIN questions q ON qsq.question_id = q.id
-                    LEFT JOIN question_options qo ON qo.question_id = q.id AND qo.is_correct = 1
-                    LEFT JOIN question_options uao ON qsq.user_answer_option_id = uao.id
+                    JOIN questions q ON qsq.question_id = q.question_id
+                    LEFT JOIN question_options qo ON qo.question_id = q.question_id AND qo.is_correct = 1
+                    LEFT JOIN question_options uao ON qsq.user_answer_option_id = uao.option_id
                     WHERE qsq.session_id = %s
                     ORDER BY qsq.question_order
                 """, (session['id'],))
@@ -332,13 +332,13 @@ class QuizSessionRepository:
                 
                 conn.cursor.execute(f"""
                     SELECT q.*, 
-                           COUNT(qo.id) as option_count
+                           COUNT(qo.option_id) as option_count
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
                     WHERE q.topic_id = %s 
                     AND q.is_active = 1
                     {difficulty_filter}
-                    GROUP BY q.id
+                    GROUP BY q.question_id
                     HAVING option_count >= 2
                     ORDER BY RAND()
                     LIMIT %s
@@ -349,10 +349,18 @@ class QuizSessionRepository:
                 # Her soru için seçenekleri al
                 for question in questions:
                     conn.cursor.execute("""
-                        SELECT * FROM question_options 
-                        WHERE question_id = %s AND is_active = 1
+                        SELECT 
+                            option_id AS id,
+                            option_text AS name,
+                            option_text AS option_text,
+                            is_correct,
+                            description,
+                            created_at,
+                            updated_at
+                        FROM question_options 
+                        WHERE question_id = %s 
                         ORDER BY RAND()
-                    """, (question['id'],))
+                    """, (question['question_id'],))
                     question['options'] = conn.cursor.fetchall()
                 
                 return questions
@@ -374,15 +382,15 @@ class QuizSessionRepository:
                 
                 conn.cursor.execute(f"""
                     SELECT q.*, 
-                           COUNT(qo.id) as option_count
+                           COUNT(qo.option_id) as option_count
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
                     JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     WHERE u.subject_id = %s 
                     AND q.is_active = 1
                     {difficulty_filter}
-                    GROUP BY q.id
+                    GROUP BY q.question_id
                     HAVING option_count >= 2
                     ORDER BY RAND()
                     LIMIT %s
@@ -393,10 +401,18 @@ class QuizSessionRepository:
                 # Her soru için seçenekleri al
                 for question in questions:
                     conn.cursor.execute("""
-                        SELECT * FROM question_options 
-                        WHERE question_id = %s AND is_active = 1
+                        SELECT 
+                            option_id AS id,
+                            option_text AS name,
+                            option_text AS option_text,
+                            is_correct,
+                            description,
+                            created_at,
+                            updated_at
+                        FROM question_options 
+                        WHERE question_id = %s 
                         ORDER BY RAND()
-                    """, (question['id'],))
+                    """, (question['question_id'],))
                     question['options'] = conn.cursor.fetchall()
                 
                 return questions
@@ -417,14 +433,14 @@ class QuizSessionRepository:
 
                 conn.cursor.execute(f"""
                     SELECT q.*, 
-                           COUNT(qo.id) as option_count
+                           COUNT(qo.option_id) as option_count
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
                     JOIN topics t ON q.topic_id = t.topic_id
                     WHERE t.unit_id = %s
                     AND q.is_active = 1
                     {difficulty_filter}
-                    GROUP BY q.id
+                    GROUP BY q.question_id
                     HAVING option_count >= 2
                     ORDER BY RAND()
                     LIMIT %s
@@ -434,10 +450,18 @@ class QuizSessionRepository:
 
                 for question in questions:
                     conn.cursor.execute("""
-                        SELECT * FROM question_options 
-                        WHERE question_id = %s AND is_active = 1
+                        SELECT 
+                            option_id AS id,
+                            option_text AS name,
+                            option_text AS option_text,
+                            is_correct,
+                            description,
+                            created_at,
+                            updated_at
+                        FROM question_options 
+                        WHERE question_id = %s 
                         ORDER BY RAND()
-                    """, (question['id'],))
+                    """, (question['question_id'],))
                     question['options'] = conn.cursor.fetchall()
 
                 return questions
@@ -457,16 +481,16 @@ class QuizSessionRepository:
 
                 conn.cursor.execute(f"""
                     SELECT q.*, 
-                           COUNT(qo.id) as option_count
+                           COUNT(qo.option_id) as option_count
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
                     JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     JOIN subjects s ON u.subject_id = s.subject_id
                     WHERE s.grade_id = %s
                     AND q.is_active = 1
                     {difficulty_filter}
-                    GROUP BY q.id
+                    GROUP BY q.question_id
                     HAVING option_count >= 2
                     ORDER BY RAND()
                     LIMIT %s
@@ -476,10 +500,18 @@ class QuizSessionRepository:
 
                 for question in questions:
                     conn.cursor.execute("""
-                        SELECT * FROM question_options 
-                        WHERE question_id = %s AND is_active = 1
+                        SELECT 
+                            option_id AS id,
+                            option_text AS name,
+                            option_text AS option_text,
+                            is_correct,
+                            description,
+                            created_at,
+                            updated_at
+                        FROM question_options 
+                        WHERE question_id = %s 
                         ORDER BY RAND()
-                    """, (question['id'],))
+                    """, (question['question_id'],))
                     question['options'] = conn.cursor.fetchall()
 
                 return questions
@@ -499,12 +531,12 @@ class QuizSessionRepository:
 
                 conn.cursor.execute(f"""
                     SELECT q.*, 
-                           COUNT(qo.id) as option_count
+                           COUNT(qo.option_id) as option_count
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.id = qo.question_id
+                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
                     WHERE q.is_active = 1
                     {difficulty_filter}
-                    GROUP BY q.id
+                    GROUP BY q.question_id
                     HAVING option_count >= 2
                     ORDER BY RAND()
                     LIMIT %s
@@ -514,10 +546,18 @@ class QuizSessionRepository:
 
                 for question in questions:
                     conn.cursor.execute("""
-                        SELECT * FROM question_options 
-                        WHERE question_id = %s AND is_active = 1
+                        SELECT 
+                            option_id AS id,
+                            option_text AS name,
+                            option_text AS option_text,
+                            is_correct,
+                            description,
+                            created_at,
+                            updated_at
+                        FROM question_options 
+                        WHERE question_id = %s 
                         ORDER BY RAND()
-                    """, (question['id'],))
+                    """, (question['question_id'],))
                     question['options'] = conn.cursor.fetchall()
 
                 return questions
@@ -533,7 +573,7 @@ class QuizSessionRepository:
         try:
             with self.db as conn:
                 conn.cursor.execute("""
-                    SELECT id, name
+                    SELECT option_id AS id, option_text AS name
                     FROM question_options 
                     WHERE question_id = %s AND is_correct = 1
                     LIMIT 1
@@ -550,8 +590,16 @@ class QuizSessionRepository:
         try:
             with self.db as conn:
                 conn.cursor.execute("""
-                    SELECT * FROM question_options 
-                    WHERE question_id = %s AND is_active = 1
+                    SELECT 
+                        option_id AS id,
+                        option_text AS name,
+                        option_text AS option_text,
+                        is_correct,
+                        description,
+                        created_at,
+                        updated_at
+                    FROM question_options 
+                    WHERE question_id = %s 
                     ORDER BY RAND()
                 """, (question_id,))
                 
@@ -566,15 +614,22 @@ class QuizSessionRepository:
         try:
             with self.db as conn:
                 conn.cursor.execute("""
-                    SELECT q.*, 
-                           t.topic_id as topic_id,
-                           t.topic_name as topic_name,
-                           s.subject_name as subject_name
+                    SELECT 
+                        q.question_id,
+                        q.question_text,
+                        q.difficulty_level,
+                        q.question_type,
+                        q.description,
+                        q.created_at,
+                        q.updated_at,
+                        t.topic_id as topic_id,
+                        t.topic_name as topic_name,
+                        s.subject_name as subject_name
                     FROM questions q
                     JOIN topics t ON q.topic_id = t.topic_id
                     JOIN units u ON t.unit_id = u.unit_id
                     JOIN subjects s ON u.subject_id = s.subject_id
-                    WHERE q.id = %s
+                    WHERE q.question_id = %s
                 """, (question_id,))
                 
                 question = conn.cursor.fetchone()
@@ -588,14 +643,14 @@ class QuizSessionRepository:
         try:
             with self.db as conn:
                 conn.cursor.execute("""
-                    SELECT name FROM question_options 
-                    WHERE id = %s
+                    SELECT option_text FROM question_options 
+                    WHERE option_id = %s
                 """, (answer_option_id,))
                 
                 result = conn.cursor.fetchone()
-                if result:
-                    return result[0]
+                if result and isinstance(result, dict):
+                    return result.get('option_text')
                 return None
                 
         except Exception as e:
-            return None 
+            return None

@@ -6,7 +6,7 @@
 
 QUESTIONS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS questions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
     topic_id INT NOT NULL,
     question_text TEXT NOT NULL,
     difficulty_level ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
@@ -24,16 +24,3 @@ CREATE TABLE IF NOT EXISTS questions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
-QUESTIONS_SAMPLE_DATA = """
-INSERT INTO questions (question_text, topic_id, difficulty_level, question_type, points) VALUES
--- Matematik Soruları (Sayılar konusu - topic_id: 1)
-('5 + 3 = ?', 1, 'easy', 'multiple_choice', 1),
-('12 x 4 = ?', 1, 'medium', 'multiple_choice', 2),
-('25 ÷ 5 = ?', 1, 'easy', 'multiple_choice', 1),
-('100 - 37 = ?', 1, 'medium', 'multiple_choice', 2),
-('8² = ?', 1, 'hard', 'multiple_choice', 3)
-ON DUPLICATE KEY UPDATE 
-    question_text = VALUES(question_text),
-    difficulty_level = VALUES(difficulty_level),
-    points = VALUES(points);
-"""

@@ -126,20 +126,17 @@ class QuestionLoader:
                 # Question options'ları ekle
                 for i, option in enumerate(question_data['options']):
                     option_query = """
-                    INSERT INTO question_options (question_id, name, name_id, is_correct, option_order, description)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO question_options (question_id, option_text, is_correct, description)
+                    VALUES (%s, %s, %s, %s)
                     """
                     
                     option_name = option['text']
-                    option_name_id = f"opt_{question_id}_{i+1}"
                     option_explanation = option.get('explanation', '')
                     
                     option_values = (
                         question_id,
                         option_name,
-                        option_name_id,
                         option['isCorrect'],
-                        ord(option['id']) - ord('A') + 1,  # A=1, B=2, C=3, D=4
                         option_explanation
                     )
                     

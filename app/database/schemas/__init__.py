@@ -17,10 +17,10 @@ from .units_schema import UNITS_TABLE_SQL, UNITS_SAMPLE_DATA
 from .topics_schema import TOPICS_TABLE_SQL, TOPICS_SAMPLE_DATA
 
 # Questions (Sorular) şeması
-from .questions_schema import QUESTIONS_TABLE_SQL, QUESTIONS_SAMPLE_DATA
+from .questions_schema import QUESTIONS_TABLE_SQL
 
 # Question Options (Soru Seçenekleri) şeması
-from .question_options_schema import QUESTION_OPTIONS_TABLE_SQL, QUESTION_OPTIONS_SAMPLE_DATA
+from .question_options_schema import QUESTION_OPTIONS_TABLE_SQL
 
 # Users (Kullanıcılar) şeması
 from .users_schema import USERS_TABLE_SQL, USERS_SAMPLE_DATA
@@ -37,9 +37,9 @@ __all__ = [
     'SUBJECTS_TABLE_SQL', 'SUBJECTS_SAMPLE_DATA',
     'UNITS_TABLE_SQL', 'UNITS_SAMPLE_DATA',
     'TOPICS_TABLE_SQL', 'TOPICS_SAMPLE_DATA',
-    'QUESTIONS_TABLE_SQL', 'QUESTIONS_SAMPLE_DATA',
-    'QUESTION_OPTIONS_TABLE_SQL', 'QUESTION_OPTIONS_SAMPLE_DATA',
+    'QUESTIONS_TABLE_SQL',
+    'QUESTION_OPTIONS_TABLE_SQL',
     'USERS_TABLE_SQL', 'USERS_SAMPLE_DATA',
     'QUIZ_SESSIONS_TABLE_SQL', 'QUIZ_SESSIONS_SAMPLE_DATA',
     'QUIZ_SESSION_QUESTIONS_TABLE_SQL', 'QUIZ_SESSION_QUESTIONS_SAMPLE_DATA'
-] 
+]

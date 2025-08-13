@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS quiz_session_questions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES quiz_sessions(id) ON DELETE CASCADE,
-    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_answer_option_id) REFERENCES question_options(id) ON DELETE SET NULL,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_answer_option_id) REFERENCES question_options(option_id) ON DELETE SET NULL,
     INDEX idx_session_questions_session (session_id),
     INDEX idx_session_questions_question (question_id),
     INDEX idx_session_questions_order (question_order),
@@ -28,4 +28,4 @@ CREATE TABLE IF NOT EXISTS quiz_session_questions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
-QUIZ_SESSION_QUESTIONS_SAMPLE_DATA = "" 
+QUIZ_SESSION_QUESTIONS_SAMPLE_DATA = ""

@@ -21,8 +21,8 @@ from app.database.schemas import (
     SUBJECTS_TABLE_SQL, SUBJECTS_SAMPLE_DATA,
     UNITS_TABLE_SQL, UNITS_SAMPLE_DATA,
     TOPICS_TABLE_SQL, TOPICS_SAMPLE_DATA,
-    QUESTIONS_TABLE_SQL, QUESTIONS_SAMPLE_DATA,
-    QUESTION_OPTIONS_TABLE_SQL, QUESTION_OPTIONS_SAMPLE_DATA,
+    QUESTIONS_TABLE_SQL,
+    QUESTION_OPTIONS_TABLE_SQL,
     USERS_TABLE_SQL, USERS_SAMPLE_DATA,
     QUIZ_SESSIONS_TABLE_SQL, QUIZ_SESSIONS_SAMPLE_DATA,
     QUIZ_SESSION_QUESTIONS_TABLE_SQL, QUIZ_SESSION_QUESTIONS_SAMPLE_DATA
@@ -55,8 +55,8 @@ class DatabaseMigrations:
             'subjects': (SUBJECTS_TABLE_SQL, ""),  # JSON'dan doldurulacak
             'units': (UNITS_TABLE_SQL, ""),  # JSON'dan doldurulacak
             'topics': (TOPICS_TABLE_SQL, ""),  # JSON'dan doldurulacak
-            'questions': (QUESTIONS_TABLE_SQL, QUESTIONS_SAMPLE_DATA),
-            'question_options': (QUESTION_OPTIONS_TABLE_SQL, QUESTION_OPTIONS_SAMPLE_DATA),
+            'questions': (QUESTIONS_TABLE_SQL, ""),
+            'question_options': (QUESTION_OPTIONS_TABLE_SQL, ""),
             'users': (USERS_TABLE_SQL, USERS_SAMPLE_DATA),
             'quiz_sessions': (QUIZ_SESSIONS_TABLE_SQL, QUIZ_SESSIONS_SAMPLE_DATA),
             'quiz_session_questions': (QUIZ_SESSION_QUESTIONS_TABLE_SQL, QUIZ_SESSION_QUESTIONS_SAMPLE_DATA),
@@ -783,14 +783,73 @@ ON DUPLICATE KEY UPDATE
 
     def _migrate_questions_schema(self) -> bool:
         """Existing DB'lerde questions şemasını yeni yapıya dönüştürür.
+        - id -> question_id (PK)
         - name -> question_text
         - drop name_id
         - indexes: ensure idx on topic_id, difficulty_level, question_type, is_active
         - FK: questions.topic_id -> topics.topic_id
-        Not: PK id aynı kalır (question_id'a rename edilmez).
         """
         try:
             with self.db as conn:
+                # 0) PK'yi id -> question_id olarak yeniden adlandır (FK çakışmalarını ele al)
+                conn.cursor.execute("SHOW COLUMNS FROM questions LIKE 'question_id'")
+                has_qid = bool(conn.cursor.fetchone())
+                if not has_qid:
+                    # Önce questions.id'ye referans veren FKs'leri düşür
+                    def drop_fk_if_exists(table: str, column: str, referenced_table: str):
+                        try:
+                            conn.cursor.execute(
+                                """
+                                SELECT CONSTRAINT_NAME 
+                                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                                WHERE TABLE_SCHEMA = DATABASE()
+                                  AND TABLE_NAME = %s
+                                  AND COLUMN_NAME = %s
+                                  AND REFERENCED_TABLE_NAME = %s
+                                """,
+                                (table, column, referenced_table)
+                            )
+                            row = conn.cursor.fetchone()
+                            if row and row.get('CONSTRAINT_NAME'):
+                                fk_name = row['CONSTRAINT_NAME']
+                                try:
+                                    conn.cursor.execute(f"ALTER TABLE {table} DROP FOREIGN KEY {fk_name}")
+                                    conn.connection.commit()
+                                except MySQLError:
+                                    pass
+                        except MySQLError:
+                            pass
+                    # Child tablolar: question_options, quiz_session_questions
+                    drop_fk_if_exists('question_options', 'question_id', 'questions')
+                    drop_fk_if_exists('quiz_session_questions', 'question_id', 'questions')
+
+                    # PK kolonu yeniden adlandır
+                    conn.cursor.execute("SHOW COLUMNS FROM questions LIKE 'id'")
+                    if conn.cursor.fetchone():
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE questions CHANGE COLUMN id question_id INT AUTO_INCREMENT PRIMARY KEY"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                    # Child FKs'leri question_id'ye yeniden oluştur
+                    try:
+                        conn.cursor.execute(
+                            "ALTER TABLE question_options ADD CONSTRAINT fk_question_options_question FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE"
+                        )
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                    try:
+                        conn.cursor.execute(
+                            "ALTER TABLE quiz_session_questions ADD CONSTRAINT fk_session_questions_question FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE"
+                        )
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
                 # name -> question_text
                 conn.cursor.execute("SHOW COLUMNS FROM questions LIKE 'question_text'")
                 has_qtext = bool(conn.cursor.fetchone())
@@ -887,6 +946,179 @@ ON DUPLICATE KEY UPDATE
         except Exception:
             return False
 
+    def _migrate_question_options_schema(self) -> bool:
+        """Existing DB'lerde question_options şemasını yeni yapıya dönüştürür.
+        - id -> option_id (PK)
+        - name -> option_text
+        - drop name_id, option_order, is_active
+        - ensure created_at, updated_at
+        - indexes: idx_options_question (question_id), idx_options_correct (is_correct)
+        - FKs: question_options.question_id -> questions.question_id
+               quiz_session_questions.user_answer_option_id -> question_options.option_id
+        """
+        try:
+            with self.db as conn:
+                # 1) PK id -> option_id
+                conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'option_id'")
+                has_oid = bool(conn.cursor.fetchone())
+                if not has_oid:
+                    # Drop FK from quiz_session_questions.user_answer_option_id -> question_options.id if exists
+                    try:
+                        conn.cursor.execute(
+                            """
+                            SELECT CONSTRAINT_NAME 
+                            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                            WHERE TABLE_SCHEMA = DATABASE()
+                              AND TABLE_NAME = 'quiz_session_questions'
+                              AND COLUMN_NAME = 'user_answer_option_id'
+                              AND REFERENCED_TABLE_NAME = 'question_options'
+                            """
+                        )
+                        row = conn.cursor.fetchone()
+                        if row and row.get('CONSTRAINT_NAME'):
+                            fk_name = row['CONSTRAINT_NAME']
+                            try:
+                                conn.cursor.execute(f"ALTER TABLE quiz_session_questions DROP FOREIGN KEY {fk_name}")
+                                conn.connection.commit()
+                            except MySQLError:
+                                pass
+                    except MySQLError:
+                        pass
+                    # Rename id -> option_id
+                    conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'id'")
+                    if conn.cursor.fetchone():
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE question_options CHANGE COLUMN id option_id INT AUTO_INCREMENT PRIMARY KEY"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                # 2) name -> option_text
+                conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'option_text'")
+                has_text = bool(conn.cursor.fetchone())
+                if not has_text:
+                    conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'name'")
+                    if conn.cursor.fetchone():
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE question_options CHANGE COLUMN name option_text TEXT NOT NULL"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                # 3) Drop legacy columns
+                for legacy_col in ['name_id', 'option_order', 'is_active']:
+                    try:
+                        conn.cursor.execute(f"SHOW COLUMNS FROM question_options LIKE '{legacy_col}'")
+                        if conn.cursor.fetchone():
+                            try:
+                                conn.cursor.execute(f"ALTER TABLE question_options DROP COLUMN {legacy_col}")
+                                conn.connection.commit()
+                            except MySQLError:
+                                pass
+                    except MySQLError:
+                        pass
+
+                # 4) Ensure timestamp columns
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'created_at'")
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE question_options ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM question_options LIKE 'updated_at'")
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE question_options ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # 5) Ensure indexes
+                def ensure_options_index(idx_name: str, expr: str):
+                    try:
+                        conn.cursor.execute("SHOW INDEX FROM question_options WHERE Key_name = %s", (idx_name,))
+                        if not conn.cursor.fetchone():
+                            conn.cursor.execute(f"CREATE INDEX {idx_name} ON question_options ({expr})")
+                            conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                ensure_options_index('idx_options_question', 'question_id')
+                ensure_options_index('idx_options_correct', 'is_correct')
+
+                # 6) Ensure FK to questions(question_id)
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT CONSTRAINT_NAME 
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'question_options'
+                          AND COLUMN_NAME = 'question_id'
+                          AND REFERENCED_TABLE_NAME = 'questions'
+                        """
+                    )
+                    row = conn.cursor.fetchone()
+                    if row and row.get('CONSTRAINT_NAME'):
+                        fk_name = row['CONSTRAINT_NAME']
+                        try:
+                            conn.cursor.execute(f"ALTER TABLE question_options DROP FOREIGN KEY {fk_name}")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE question_options ADD CONSTRAINT fk_question_options_question FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # 7) Ensure FK from quiz_session_questions.user_answer_option_id -> question_options.option_id
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT CONSTRAINT_NAME 
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'quiz_session_questions'
+                          AND COLUMN_NAME = 'user_answer_option_id'
+                          AND REFERENCED_TABLE_NAME = 'question_options'
+                        """
+                    )
+                    row = conn.cursor.fetchone()
+                    if row and row.get('CONSTRAINT_NAME'):
+                        fk_name = row['CONSTRAINT_NAME']
+                        try:
+                            conn.cursor.execute(f"ALTER TABLE quiz_session_questions DROP FOREIGN KEY {fk_name}")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_session_questions ADD CONSTRAINT fk_session_questions_answer_option FOREIGN KEY (user_answer_option_id) REFERENCES question_options(option_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+            return True
+        except Exception:
+            return False
+
     def run_migrations(self):
         """Ana migration işlemini çalıştırır.
         
@@ -902,7 +1134,14 @@ ON DUPLICATE KEY UPDATE
                 self._migrate_units_schema()
                 self._migrate_topics_schema()
                 self._migrate_questions_schema()
+                self._migrate_question_options_schema()
                 self._migrate_quiz_sessions_schema()
+                # Mevcut veritabanında da JSON'dan curriculum verilerini senkronize et
+                # 1..12 sınıfları seed et (boşsa) ve JSON verilerini yükle
+                if not self._seed_grades_1_to_12_if_empty():
+                    return False
+                if not self._populate_from_json():
+                    return False
                 return True
             
             # Tabloları oluştur
