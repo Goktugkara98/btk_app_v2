@@ -1,0 +1,68 @@
+Mevcut durum ve karşılaştırma
+app/database/schemas/quiz_sessions_schema.py
+ şu alanları içeriyor:
+
+id (PK, INT), session_id (UNIQUE, VARCHAR(50))
+user_id, grade_id, subject_id, unit_id NULL, topic_id NULL
+selection_scope, quiz_mode, difficulty_level
+timer_enabled, timer_duration, remaining_time_seconds
+question_count
+status
+start_time, end_time
+total_score, correct_answers, completion_time_seconds
+created_at, updated_at
+İndeksler: user_id, session_id, selection_scope, status, start_time, (grade_id, subject_id)
+FK’ler: users, grades, subjects (CASCADE), units (SET NULL), topics (CASCADE)
+Senin listene göre neredeyse tüm alanlar mevcut. Aşağıdaki küçük farklar ve öneriler var.
+
+Eksikler/uyumsuzluklar ve öneriler
+İşimlendirme tutarlılığı
+Sen: remaining_time, completion_time
+Şema: remaining_time_seconds, completion_time_seconds
+Öneri: Her ikisini de “_seconds” ile netleştirelim ve timer_duration’ı da timer_duration_seconds yapalım.
+question,count
+Büyük olasılıkla question_count. Zaten var.
+selection_scope
+Senin listende yok ama şemada var ve kritik. Seçim düzeyini (topic/unit/subject/grade/global) belirliyor; bırakılmalı.
+NOT NULL kısıtları
+Şu an grade_id ve subject_id NOT NULL. selection_scope “global” veya sadece grade düzeyi olduğunda subject_id NULL olabilmeli.
+Öneri: grade_id ve subject_id için NULL desteği verip, uygulama düzeyinde scope’a göre doğrulayalım.
+FK silme davranışı
+Şu an: grades/subjects -> ON DELETE CASCADE, units -> SET NULL, topics -> CASCADE.
+Öneri: Oturum kayıtlarını tarihsel kayıt olarak korumak istiyorsak hepsini SET NULL yapalım. Aksi halde bir konu/sınıf silinince oturumlar siliniyor.
+session_id uzunluğu
+50 yeterli ama UUID string kullanıyorsak 36. Güvende kalmak için 64’e çıkarmak opsiyonel.
+Ek indeksler
+(user_id, status, start_time DESC) bileşik indeks, “kullanıcının aktif oturumu” sorgularını hızlandırır.
+İzleme alanları (opsiyonel)
+last_activity_at: oturum kalp atışı/etkinlik takibi
+random_seed: soru sırasını deterministik yeniden üretmek için
+answered_count: anlık ilerleme (child tablodan hesaplanabilir ama performans için tutulabilir)
+abandoned_reason: oturum niye yarım kaldı
+Önerilen hedef şema ayarları (özet)
+İsimler: timer_duration_seconds, remaining_time_seconds, completion_time_seconds
+NULL stratejisi:
+grade_id, subject_id, unit_id, topic_id: NULL olabilir; scope’a göre doğrulama uygulama tarafında
+FK davranışı:
+Tümü ON DELETE SET NULL (tarihsel kayıtları korumak için)
+Ek alanlar (opsiyonel ama yararlı):
+last_activity_at TIMESTAMP NULL
+random_seed VARCHAR(32) NULL
+İndeksler:
+Ek bileşik: (user_id, status, start_time)
+Mevcut indeksler korunur
+Migration adımları (kısa)
+Kolon yeniden adları: timer_duration -> timer_duration_seconds
+Kolonlar için NULL izinleri: grade_id, subject_id’i NULL yap
+FK’leri DROP/ADD ile SET NULL’a çevir
+Yeni kolonlar (opsiyonel): last_activity_at, random_seed
+İndeks ekleme: (user_id, status, start_time)
+İstersen bu değişiklikleri 
+quiz_sessions_schema.py
+ ve 
+_migrate_quiz_sessions_schema()
+ içinde uygulayıp, güvenli bir migration akışı çıkarabilirim. Onaylıyor musun?
+
+Zorunlu: isimlendirme düzeltmeleri, NULL stratejisi, FK SET NULL
+Opsiyonel: last_activity_at, random_seed, bileşik indeks, session_id boyutu 64
+Önceliklendirmeyi belirtirsen hemen patch’i hazırlarım.
