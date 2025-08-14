@@ -101,15 +101,231 @@ class DatabaseMigrations:
         except Exception:
             return False
 
+    def _get_column_type(self, conn, table: str, column: str) -> str:
+        """INFORMATION_SCHEMA yerine SHOW COLUMNS ile bir kolunun türünü döndürür."""
+        try:
+            conn.cursor.execute(f"SHOW COLUMNS FROM {table} LIKE %s", (column,))
+            row = conn.cursor.fetchone()
+            if not row:
+                return ""
+            # DictCursor ise dict, değilse sequence olabilir
+            if isinstance(row, dict):
+                return row.get('Type', '') or ''
+            try:
+                return row['Type']  # type: ignore[index]
+            except Exception:
+                # Position-based fallback (SHOW COLUMNS returns: Field, Type, ...)
+                return str(row[1]) if len(row) > 1 else ''  # type: ignore[index]
+        except MySQLError:
+            return ""
+
+    def _migrate_chat_sessions_quiz_session_fk(self, conn) -> None:
+        """chat_sessions.quiz_session_id kolonunu VARCHAR(64)'e dönüştürür ve
+        quiz_sessions(session_id) FK'sini idempotent olarak tesis eder."""
+        try:
+            cs_col_type = (self._get_column_type(conn, 'chat_sessions', 'quiz_session_id') or '').lower()
+
+            if cs_col_type and 'int' in cs_col_type:
+                # Geçici kolon ekle
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM chat_sessions LIKE 'quiz_session_id_str'")
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE chat_sessions ADD COLUMN quiz_session_id_str VARCHAR(64) NULL AFTER session_id"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # Eski numeric id -> yeni session_id eşlemesini doldur
+                try:
+                    conn.cursor.execute(
+                        """
+                        UPDATE chat_sessions cs
+                        JOIN quiz_sessions qs ON cs.quiz_session_id = qs.id
+                        SET cs.quiz_session_id_str = qs.session_id
+                        WHERE cs.quiz_session_id_str IS NULL
+                        """
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # Eski FK (varsa) düşür
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT CONSTRAINT_NAME
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'chat_sessions'
+                          AND COLUMN_NAME = 'quiz_session_id'
+                          AND REFERENCED_TABLE_NAME IS NOT NULL
+                        """
+                    )
+                    row = conn.cursor.fetchone()
+                    if row and row.get('CONSTRAINT_NAME'):
+                        fk_name = row['CONSTRAINT_NAME']
+                        try:
+                            conn.cursor.execute(f"ALTER TABLE chat_sessions DROP FOREIGN KEY {fk_name}")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                # Eski indeks (varsa) düşür
+                try:
+                    conn.cursor.execute(
+                        "SHOW INDEX FROM chat_sessions WHERE Column_name = 'quiz_session_id' AND Key_name <> 'PRIMARY'"
+                    )
+                    idx = conn.cursor.fetchone()
+                    if idx and idx.get('Key_name'):
+                        idx_name = idx['Key_name']
+                        try:
+                            conn.cursor.execute(f"DROP INDEX {idx_name} ON chat_sessions")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                # Kolonu değiştir
+                try:
+                    conn.cursor.execute("ALTER TABLE chat_sessions DROP COLUMN quiz_session_id")
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE chat_sessions CHANGE COLUMN quiz_session_id_str quiz_session_id VARCHAR(64) NOT NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # Yeni FK ekle
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE chat_sessions ADD CONSTRAINT fk_chat_quiz_session FOREIGN KEY (quiz_session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # İndeksi garanti et
+                try:
+                    conn.cursor.execute(
+                        "SHOW INDEX FROM chat_sessions WHERE Key_name = %s",
+                        ("idx_quiz_session",)
+                    )
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "CREATE INDEX idx_quiz_session ON chat_sessions(quiz_session_id)"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+
+            elif cs_col_type and 'varchar' in cs_col_type:
+                # Uzunluğu normalize et
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE chat_sessions MODIFY COLUMN quiz_session_id VARCHAR(64) NOT NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # FK varlığını garanti et
+                try:
+                    conn.cursor.execute(
+                        """
+                        SELECT 1
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'chat_sessions'
+                          AND COLUMN_NAME = 'quiz_session_id'
+                          AND REFERENCED_TABLE_NAME = 'quiz_sessions'
+                          AND REFERENCED_COLUMN_NAME = 'session_id'
+                        LIMIT 1
+                        """
+                    )
+                    has_fk = conn.cursor.fetchone()
+                    if not has_fk:
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE chat_sessions ADD CONSTRAINT fk_chat_quiz_session FOREIGN KEY (quiz_session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                # İndeksi garanti et
+                try:
+                    conn.cursor.execute(
+                        "SHOW INDEX FROM chat_sessions WHERE Key_name = %s",
+                        ("idx_quiz_session",)
+                    )
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "CREATE INDEX idx_quiz_session ON chat_sessions(quiz_session_id)"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+        except Exception:
+            # Bu adımda hata olsa bile diğer migration adımlarını etkilemesin
+            pass
+
+    def _drop_fk_for_column(self, conn, table: str, column: str) -> None:
+        """Belirtilen tabloda, belirtilen kolona tanımlı FK varsa düşürür."""
+        try:
+            conn.cursor.execute(
+                """
+                SELECT CONSTRAINT_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = %s
+                  AND REFERENCED_TABLE_NAME IS NOT NULL
+                """,
+                (table, column)
+            )
+            row = conn.cursor.fetchone()
+            if row and row.get('CONSTRAINT_NAME'):
+                fk_name = row['CONSTRAINT_NAME']
+                try:
+                    conn.cursor.execute(f"ALTER TABLE {table} DROP FOREIGN KEY {fk_name}")
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+        except MySQLError:
+            pass
+
     def _migrate_quiz_sessions_schema(self) -> bool:
-        """Existing DB'lerde quiz_sessions şemasını Option A için günceller.
-        - topic_id: NULLable yapılır
-        - selection_scope ENUM('topic','unit','subject','grade','global') DEFAULT 'topic' eklenir
-        - idx_sessions_scope indeksi eklenir
+        """Apply mandatory schema updates to quiz_sessions for existing databases.
+        - Ensure selection_scope exists and is indexed (backward step kept)
+        - Make grade_id, subject_id, unit_id, topic_id NULLable
+        - Set FKs on these columns to ON DELETE SET NULL
+        - Rename timer_duration -> timer_duration_seconds and convert minutes to seconds
+        - Ensure timer_duration_seconds has DEFAULT 1800
+        - Extend session_id to VARCHAR(64)
         """
         try:
             with self.db as conn:
-                # Make topic_id nullable if not already
+                # 0) Ensure session_id length is 64
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions MODIFY COLUMN session_id VARCHAR(64) UNIQUE NOT NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # 1) Make topic_id nullable if not already (legacy step)
                 try:
                     conn.cursor.execute(
                         "ALTER TABLE quiz_sessions MODIFY COLUMN topic_id INT NULL"
@@ -118,10 +334,10 @@ class DatabaseMigrations:
                 except MySQLError:
                     pass
 
-                # Add selection_scope if missing
-                conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'selection_scope'")
-                if not conn.cursor.fetchone():
-                    try:
+                # 2) Add selection_scope if missing (legacy step)
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'selection_scope'")
+                    if not conn.cursor.fetchone():
                         conn.cursor.execute(
                             """
                             ALTER TABLE quiz_sessions
@@ -131,10 +347,10 @@ class DatabaseMigrations:
                             """
                         )
                         conn.connection.commit()
-                    except MySQLError:
-                        pass
+                except MySQLError:
+                    pass
 
-                # Ensure index on selection_scope
+                # 3) Ensure index on selection_scope
                 try:
                     conn.cursor.execute(
                         "SHOW INDEX FROM quiz_sessions WHERE Key_name = %s",
@@ -146,6 +362,310 @@ class DatabaseMigrations:
                         )
                         conn.connection.commit()
                 except MySQLError:
+                    pass
+
+                # 4) Rename timer_duration to timer_duration_seconds and convert values
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'timer_duration_seconds'")
+                    has_seconds = bool(conn.cursor.fetchone())
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'timer_duration'")
+                    has_minutes = bool(conn.cursor.fetchone())
+                    if has_minutes and not has_seconds:
+                        # Rename the column
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE quiz_sessions CHANGE COLUMN timer_duration timer_duration_seconds INT DEFAULT 1800"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                        # Convert stored values from minutes to seconds
+                        try:
+                            conn.cursor.execute(
+                                "UPDATE quiz_sessions SET timer_duration_seconds = timer_duration_seconds * 60 WHERE timer_duration_seconds IS NOT NULL"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                    else:
+                        # Ensure default is 1800 on existing seconds column
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE quiz_sessions MODIFY COLUMN timer_duration_seconds INT DEFAULT 1800"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except MySQLError:
+                    pass
+
+                # 5) Ensure remaining_time_seconds column exists (defensive)
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'remaining_time_seconds'")
+                    if not conn.cursor.fetchone():
+                        conn.cursor.execute(
+                            "ALTER TABLE quiz_sessions ADD COLUMN remaining_time_seconds INT DEFAULT 0 AFTER timer_duration_seconds"
+                        )
+                        conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # 6) Make FK columns NULLable
+                for col in ("grade_id", "subject_id", "unit_id", "topic_id"):
+                    try:
+                        conn.cursor.execute(f"ALTER TABLE quiz_sessions MODIFY COLUMN {col} INT NULL")
+                        conn.connection.commit()
+                    except MySQLError:
+                        pass
+
+                # 7) Drop existing FKs for these columns and recreate with ON DELETE SET NULL
+                for col in ("grade_id", "subject_id", "unit_id", "topic_id"):
+                    self._drop_fk_for_column(conn, 'quiz_sessions', col)
+
+                # Recreate FKs with ON DELETE SET NULL
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions ADD CONSTRAINT fk_quiz_sessions_grade FOREIGN KEY (grade_id) REFERENCES grades(grade_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions ADD CONSTRAINT fk_quiz_sessions_subject FOREIGN KEY (subject_id) REFERENCES subjects(subject_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions ADD CONSTRAINT fk_quiz_sessions_unit FOREIGN KEY (unit_id) REFERENCES units(unit_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+                try:
+                    conn.cursor.execute(
+                        "ALTER TABLE quiz_sessions ADD CONSTRAINT fk_quiz_sessions_topic FOREIGN KEY (topic_id) REFERENCES topics(topic_id) ON DELETE SET NULL"
+                    )
+                    conn.connection.commit()
+                except MySQLError:
+                    pass
+
+                # 8) Migrate quiz_session_questions.session_id (INT -> VARCHAR(64)) referencing quiz_sessions(session_id)
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_session_questions LIKE 'session_id'")
+                    qsq_col = conn.cursor.fetchone()
+                    col_type = (qsq_col or {}).get('Type', '') if isinstance(qsq_col, dict) else (qsq_col['Type'] if qsq_col and 'Type' in qsq_col else '')
+                except MySQLError:
+                    col_type = ''
+
+                try:
+                    if col_type and 'int' in col_type.lower():
+                        # Add temp column
+                        try:
+                            conn.cursor.execute("SHOW COLUMNS FROM quiz_session_questions LIKE 'session_id_str'")
+                            if not conn.cursor.fetchone():
+                                conn.cursor.execute(
+                                    "ALTER TABLE quiz_session_questions ADD COLUMN session_id_str VARCHAR(64) NULL AFTER id"
+                                )
+                                conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Populate temp column via join
+                        try:
+                            conn.cursor.execute(
+                                """
+                                UPDATE quiz_session_questions qsq
+                                JOIN quiz_sessions qs ON qsq.session_id = qs.id
+                                SET qsq.session_id_str = qs.session_id
+                                WHERE qsq.session_id_str IS NULL
+                                """
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Drop FK on old session_id if exists
+                        try:
+                            conn.cursor.execute(
+                                """
+                                SELECT CONSTRAINT_NAME
+                                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                                WHERE TABLE_SCHEMA = DATABASE()
+                                  AND TABLE_NAME = 'quiz_session_questions'
+                                  AND COLUMN_NAME = 'session_id'
+                                  AND REFERENCED_TABLE_NAME IS NOT NULL
+                                """
+                            )
+                            row = conn.cursor.fetchone()
+                            if row and row.get('CONSTRAINT_NAME'):
+                                fk_name = row['CONSTRAINT_NAME']
+                                try:
+                                    conn.cursor.execute(f"ALTER TABLE quiz_session_questions DROP FOREIGN KEY {fk_name}")
+                                    conn.connection.commit()
+                                except MySQLError:
+                                    pass
+                        except MySQLError:
+                            pass
+
+                        # Drop index on session_id if any (non-primary)
+                        try:
+                            conn.cursor.execute(
+                                "SHOW INDEX FROM quiz_session_questions WHERE Column_name = 'session_id' AND Key_name <> 'PRIMARY'"
+                            )
+                            idx = conn.cursor.fetchone()
+                            if idx and idx.get('Key_name'):
+                                idx_name = idx['Key_name']
+                                try:
+                                    conn.cursor.execute(f"DROP INDEX {idx_name} ON quiz_session_questions")
+                                    conn.connection.commit()
+                                except MySQLError:
+                                    pass
+                        except MySQLError:
+                            pass
+
+                        # Replace old column with new
+                        try:
+                            conn.cursor.execute("ALTER TABLE quiz_session_questions DROP COLUMN session_id")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE quiz_session_questions CHANGE COLUMN session_id_str session_id VARCHAR(64) NOT NULL"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Add FK to quiz_sessions(session_id)
+                        try:
+                            conn.cursor.execute(
+                                "ALTER TABLE quiz_session_questions ADD CONSTRAINT fk_qsq_session FOREIGN KEY (session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE"
+                            )
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Ensure index on session_id
+                        try:
+                            conn.cursor.execute(
+                                "SHOW INDEX FROM quiz_session_questions WHERE Key_name = %s",
+                                ("idx_session_questions_session",)
+                            )
+                            if not conn.cursor.fetchone():
+                                conn.cursor.execute(
+                                    "CREATE INDEX idx_session_questions_session ON quiz_session_questions(session_id)"
+                                )
+                                conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                except Exception:
+                    pass
+
+                # Ensure FK exists even if column already VARCHAR
+                try:
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_session_questions LIKE 'session_id'")
+                    qsq_col2 = conn.cursor.fetchone()
+                    col_type2 = (qsq_col2 or {}).get('Type', '') if isinstance(qsq_col2, dict) else (qsq_col2['Type'] if qsq_col2 and 'Type' in qsq_col2 else '')
+                    if col_type2 and 'varchar' in col_type2.lower():
+                        # Check if there is already an FK to quiz_sessions(session_id)
+                        conn.cursor.execute(
+                            """
+                            SELECT 1
+                            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                            WHERE TABLE_SCHEMA = DATABASE()
+                              AND TABLE_NAME = 'quiz_session_questions'
+                              AND COLUMN_NAME = 'session_id'
+                              AND REFERENCED_TABLE_NAME = 'quiz_sessions'
+                              AND REFERENCED_COLUMN_NAME = 'session_id'
+                            LIMIT 1
+                            """
+                        )
+                        has_fk = conn.cursor.fetchone()
+                        if not has_fk:
+                            try:
+                                conn.cursor.execute(
+                                    "ALTER TABLE quiz_session_questions ADD CONSTRAINT fk_qsq_session FOREIGN KEY (session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE"
+                                )
+                                conn.connection.commit()
+                            except MySQLError:
+                                pass
+                except MySQLError:
+                    pass
+
+                # 8.5) Migrate chat_sessions.quiz_session_id to VARCHAR(64) referencing quiz_sessions(session_id)
+                self._migrate_chat_sessions_quiz_session_fk(conn)
+
+                # 9) Switch quiz_sessions PK from id to session_id and drop id
+                try:
+                    # Only proceed if id column exists
+                    conn.cursor.execute("SHOW COLUMNS FROM quiz_sessions LIKE 'id'")
+                    if conn.cursor.fetchone():
+                        # Drop any remaining FKs referencing quiz_sessions.id (defensive)
+                        try:
+                            conn.cursor.execute(
+                                """
+                                SELECT CONSTRAINT_NAME, TABLE_NAME
+                                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                                WHERE TABLE_SCHEMA = DATABASE()
+                                  AND REFERENCED_TABLE_NAME = 'quiz_sessions'
+                                  AND REFERENCED_COLUMN_NAME = 'id'
+                                """
+                            )
+                            for fk in conn.cursor.fetchall() or []:
+                                fk_name = fk.get('CONSTRAINT_NAME')
+                                tbl = fk.get('TABLE_NAME')
+                                if fk_name and tbl:
+                                    try:
+                                        conn.cursor.execute(f"ALTER TABLE {tbl} DROP FOREIGN KEY {fk_name}")
+                                        conn.connection.commit()
+                                    except MySQLError:
+                                        pass
+                        except MySQLError:
+                            pass
+
+                        # Drop PRIMARY KEY on id
+                        try:
+                            conn.cursor.execute("ALTER TABLE quiz_sessions DROP PRIMARY KEY")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Drop unique index on session_id if exists (to allow PK)
+                        try:
+                            conn.cursor.execute(
+                                "SELECT Key_name FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quiz_sessions' AND COLUMN_NAME = 'session_id' AND NON_UNIQUE = 0 AND INDEX_NAME <> 'PRIMARY'"
+                            )
+                            idx_row = conn.cursor.fetchone()
+                            if idx_row:
+                                idx_name = idx_row.get('Key_name') or idx_row.get('INDEX_NAME')
+                                if idx_name:
+                                    try:
+                                        conn.cursor.execute(f"DROP INDEX {idx_name} ON quiz_sessions")
+                                        conn.connection.commit()
+                                    except MySQLError:
+                                        pass
+                        except MySQLError:
+                            pass
+
+                        # Add PRIMARY KEY(session_id)
+                        try:
+                            conn.cursor.execute("ALTER TABLE quiz_sessions ADD PRIMARY KEY (session_id)")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+
+                        # Finally drop id column
+                        try:
+                            conn.cursor.execute("ALTER TABLE quiz_sessions DROP COLUMN id")
+                            conn.connection.commit()
+                        except MySQLError:
+                            pass
+                except Exception:
                     pass
 
             return True

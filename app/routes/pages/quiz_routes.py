@@ -454,7 +454,7 @@ def initialize_database():
     """4.1.10. Veritabanını manuel olarak başlatır."""
     try:
         from app.database.db_connection import DatabaseConnection
-        from app.database.db_migrations import DatabaseMigrations
+        from app.database.db_migrations_v2 import DatabaseMigrations
         from app.database.quiz_data_loader import QuestionLoader
         
         # Run migrations

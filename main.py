@@ -1,7 +1,7 @@
 from flask import Flask, session
 from config import Config
 from app.database.db_connection import DatabaseConnection
-from app.database.db_migrations import DatabaseMigrations
+from app.database.db_migrations_v2 import DatabaseMigrations
 from app.database.quiz_data_loader import QuestionLoader
 import os
 import secrets
@@ -26,6 +26,8 @@ def create_app(config_class=Config):
         db_connection = DatabaseConnection()
         migrations = DatabaseMigrations(db_connection)
         migrations.run_migrations()
+        # Ensure curriculum seed data is loaded (grades, subjects, units, topics)
+        migrations.seed_initial_data()
         
         question_loader = QuestionLoader(db_connection=db_connection)
         

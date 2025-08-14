@@ -76,7 +76,7 @@ class ChatRepository:
                 query = """
                     SELECT cs.*, qs.session_id as quiz_session_id
                     FROM chat_sessions cs
-                    JOIN quiz_sessions qs ON cs.quiz_session_id = qs.id
+                    JOIN quiz_sessions qs ON cs.quiz_session_id = qs.session_id
                     WHERE cs.question_id = %s
                     ORDER BY cs.created_at DESC
                     LIMIT 1

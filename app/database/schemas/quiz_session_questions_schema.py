@@ -7,7 +7,7 @@
 QUIZ_SESSION_QUESTIONS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS quiz_session_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    session_id INT NOT NULL,
+    session_id VARCHAR(64) NOT NULL,
     question_id INT NOT NULL,
     question_order INT NOT NULL,
     user_answer_option_id INT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS quiz_session_questions (
     answered_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (session_id) REFERENCES quiz_sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
     FOREIGN KEY (user_answer_option_id) REFERENCES question_options(option_id) ON DELETE SET NULL,
     INDEX idx_session_questions_session (session_id),

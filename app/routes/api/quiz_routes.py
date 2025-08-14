@@ -400,9 +400,14 @@ def get_session_status(session_id):
         
         # Calculate remaining time (prefer persisted value, else compute)
         remaining_time_seconds = session_info['session'].get('remaining_time_seconds') or 0
-        if (not remaining_time_seconds) and session_info['session']['timer_enabled'] and session_info['session']['timer_duration']:
+        timer_enabled = bool(session_info['session'].get('timer_enabled'))
+        # Support both legacy minutes field and new seconds field
+        timer_duration_seconds = session_info['session'].get('timer_duration_seconds')
+        if not timer_duration_seconds:
+            legacy_minutes = session_info['session'].get('timer_duration')
+            timer_duration_seconds = int(legacy_minutes) * 60 if legacy_minutes else 0
+        if (not remaining_time_seconds) and timer_enabled and timer_duration_seconds:
             start_time = session_info['session']['start_time']
-            timer_duration = session_info['session']['timer_duration']
             if start_time:
                 try:
                     from datetime import datetime
@@ -415,7 +420,7 @@ def get_session_status(session_id):
                         start_datetime = start_time
                     current_datetime = datetime.now()
                     elapsed_seconds = int((current_datetime - start_datetime).total_seconds())
-                    remaining_time_seconds = max(0, (timer_duration * 60) - elapsed_seconds)
+                    remaining_time_seconds = max(0, timer_duration_seconds - elapsed_seconds)
                 except Exception as e:
                     remaining_time_seconds = 0
         
@@ -433,11 +438,13 @@ def get_session_status(session_id):
                         'difficulty_level': question_details.get('difficulty_level')
                     }
         
+        # Expose timer_duration in minutes for frontend compatibility
+        timer_duration_minutes = int((timer_duration_seconds or 0) // 60)
         status_data = {
             'session_id': session_id,
             'is_completed': session_info['session']['status'] == 'completed',
-            'timer_enabled': session_info['session']['timer_enabled'],
-            'timer_duration': session_info['session']['timer_duration'],
+            'timer_enabled': timer_enabled,
+            'timer_duration': timer_duration_minutes,
             'total_questions': total_questions,
             'answered_questions': answered_questions,
             'progress_percentage': progress_percentage,

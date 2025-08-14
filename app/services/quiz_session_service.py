@@ -92,7 +92,7 @@ class QuizSessionService:
             session_data['selection_scope'] = selection_scope
 
             # Session'ı veritabanında oluştur
-            success, session_db_id = self.session_repo.create_session(session_data)
+            success, created_session_id = self.session_repo.create_session(session_data)
             if not success:
                 return False, {'error': 'Failed to create session'}
 
@@ -133,17 +133,18 @@ class QuizSessionService:
                 return False, {'error': 'No questions available for the selected criteria'}
 
             # Session'a soruları ekle
-            if not self.session_repo.add_session_questions(session_db_id, questions):
+            if not self.session_repo.add_session_questions(created_session_id, questions):
                 return False, {'error': 'Failed to add questions to session'}
 
             # Session bilgilerini getir
-            session_info = self.session_repo.get_session_by_id(session_db_id)
+            session_info = self.session_repo.get_session(created_session_id)
             if not session_info:
                 return False, {'error': 'Failed to retrieve session info'}
 
             result_data = {
                 'session_id': session_info['session_id'],
-                'session_db_id': session_db_id,
+                # Back-compat: expose session_db_id same as session_id
+                'session_db_id': created_session_id,
                 'questions_count': len(questions),
                 'timer_duration': session_data['timer_duration'],
                 'quiz_mode': session_data['quiz_mode']
@@ -161,7 +162,23 @@ class QuizSessionService:
                 return None
 
             # Session'daki soruları getir
-            questions = self.session_repo.get_session_questions(session['id'])
+            questions = self.session_repo.get_session_questions(session['session_id'])
+            
+            # Backward compatibility: expose timer_duration (minutes) derived from timer_duration_seconds
+            try:
+                if 'timer_duration' not in session or session.get('timer_duration') is None:
+                    seconds_val = session.get('timer_duration_seconds')
+                    session['timer_duration'] = int((seconds_val or 0) // 60)
+            except Exception:
+                # Best-effort; don't fail get_session_info on mapping issues
+                session['timer_duration'] = session.get('timer_duration', 30)
+            
+            # Ensure remaining_time_seconds key exists
+            if session.get('remaining_time_seconds') is None:
+                session['remaining_time_seconds'] = 0
+            
+            # Normalize boolean for timer_enabled if needed
+            session['timer_enabled'] = bool(session.get('timer_enabled', True))
             
             return {
                 'session': session,
@@ -197,7 +214,7 @@ class QuizSessionService:
             }
 
             # Cevabı güncelle
-            if not self.session_repo.update_answer(session['id'], question_id, answer_update_data):
+            if not self.session_repo.update_answer(session['session_id'], question_id, answer_update_data):
                 return False, {'error': 'Failed to update answer'}
 
             return True, {
@@ -242,7 +259,7 @@ class QuizSessionService:
             if not session:
                 return []
 
-            questions = self.session_repo.get_session_questions(session['id'])
+            questions = self.session_repo.get_session_questions(session['session_id'])
             return questions
 
         except Exception as e:

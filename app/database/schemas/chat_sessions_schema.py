@@ -11,7 +11,7 @@ def get_chat_sessions_schema():
     CREATE TABLE IF NOT EXISTS chat_sessions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         session_id VARCHAR(255) UNIQUE NOT NULL COMMENT 'Unique chat session identifier',
-        quiz_session_id VARCHAR(255) NOT NULL COMMENT 'Quiz session reference',
+        quiz_session_id VARCHAR(64) NOT NULL COMMENT 'Quiz session reference',
         question_id INT NOT NULL COMMENT 'Specific question this chat is about',
         user_id INT COMMENT 'User who owns this chat session',
         
@@ -29,8 +29,8 @@ def get_chat_sessions_schema():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         
-        -- Foreign key constraints (temporarily disabled for development)
-        -- FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
+        -- Foreign key constraints
+        FOREIGN KEY (quiz_session_id) REFERENCES quiz_sessions(session_id) ON DELETE CASCADE,
         
         -- Indexes for performance
         INDEX idx_quiz_session (quiz_session_id),

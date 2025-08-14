@@ -86,12 +86,12 @@ class JSONDataLoader:
         self.subjects_data = subjects
         return subjects
     
-    def extract_units(self) -> List[Tuple[str, str, str, str]]:
+    def extract_units(self) -> List[Tuple[int, str, str, str, str]]:
         """
         Tüm grade'lerden üniteleri çıkarır.
         
         Returns:
-            (unit_id, unit_name, subject_code, description) listesi
+            (grade_level, subject_code, unit_id, unit_name, description) listesi
         """
         units = []
         
@@ -108,21 +108,22 @@ class JSONDataLoader:
                     
                     if unit_id and unit_name:
                         units.append((
+                            grade_level,
+                            course_id,
                             unit_id,
                             unit_name,
-                            course_id,
                             f'{unit_name} ünitesi'
                         ))
                                 
         self.units_data = units
         return units
     
-    def extract_topics(self) -> List[Tuple[str, str, str, str]]:
+    def extract_topics(self) -> List[Tuple[int, str, str, str, str, str]]:
         """
         Tüm grade'lerden konuları çıkarır.
         
         Returns:
-            (topic_id, topic_name, unit_id, açıklama) listesi
+            (grade_level, subject_code, unit_id, topic_id, topic_name, açıklama) listesi
         """
         topics = []
         
@@ -130,6 +131,7 @@ class JSONDataLoader:
             courses = grade_data.get('subjects', [])
             
             for course in courses:
+                course_id = course.get('subjectId')
                 units_list = course.get('units', [])
                 
                 for unit in units_list:
@@ -147,17 +149,21 @@ class JSONDataLoader:
                                 
                                 if topic_id and topic_name:
                                     topics.append((
+                                        grade_level,
+                                        course_id,
+                                        unit_id,
                                         topic_id,
                                         topic_name,
-                                        unit_id,
                                         f'{unit_name} - {topic_name}'
                                     ))
                             elif isinstance(topic, str) and topic:
                                 # Eski format: string (geriye uyumluluk için)
                                 topics.append((
+                                    grade_level,
+                                    course_id,
+                                    unit_id,
                                     topic.lower().replace(' ', '_'),
                                     topic,
-                                    unit_id,
                                     f'{unit_name} - {topic}'
                                 ))
                                 
@@ -229,13 +235,13 @@ ON DUPLICATE KEY UPDATE
 """
         return sql
     
-    def generate_units_sql(self, subject_id_map: Dict[str, int]) -> str:
+    def generate_units_sql(self, subject_id_map: Dict[Tuple[int, str], int]) -> str:
         """
         Ünite verilerinden SQL insert ifadesi oluşturur.
         
         Args:
-            subject_id_map: Ders kodu -> veritabanı ID eşlemesi
-            
+            subject_id_map: (grade_level, subject_code) -> veritabanı subject_id eşlemesi
+        
         Returns:
             SQL insert ifadesi
         """
@@ -243,8 +249,8 @@ ON DUPLICATE KEY UPDATE
             return ""
             
         values = []
-        for unit_id, unit_name, subject_code, description in self.units_data:
-            subject_id = subject_id_map.get(subject_code)
+        for grade_level, subject_code, unit_id, unit_name, description in self.units_data:
+            subject_id = subject_id_map.get((grade_level, subject_code))
             
             if subject_id:
                 # SQL injection'a karşı koruma
@@ -265,13 +271,13 @@ ON DUPLICATE KEY UPDATE
 """
         return sql
     
-    def generate_topics_sql(self, unit_id_map: Dict[str, int]) -> str:
+    def generate_topics_sql(self, unit_id_map: Dict[Tuple[int, str, str], int]) -> str:
         """
         Konu verilerinden SQL insert ifadesi oluşturur.
         
         Args:
-            unit_id_map: Ünite ID'si -> veritabanı ID eşlemesi
-            
+            unit_id_map: (grade_level, subject_code, unit_id) -> veritabanı unit_id eşlemesi
+        
         Returns:
             SQL insert ifadesi
         """
@@ -279,8 +285,8 @@ ON DUPLICATE KEY UPDATE
             return ""
             
         values = []
-        for topic_id, topic_name, unit_id, description in self.topics_data:
-            db_unit_id = unit_id_map.get(unit_id)
+        for grade_level, subject_code, unit_id, topic_id, topic_name, description in self.topics_data:
+            db_unit_id = unit_id_map.get((grade_level, subject_code, unit_id))
             
             if db_unit_id:
                 # SQL injection'a karşı koruma
@@ -341,23 +347,30 @@ ON DUPLICATE KEY UPDATE
         grade_id_map = {}
         
         try:
-            with db_connection as conn:
-                for grade_level in self.grades_data.keys():
-                    grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
-                    conn.cursor.execute(
-                        "SELECT grade_id FROM grades WHERE grade_name = %s",
-                        (grade_name,)
-                    )
-                    result = conn.cursor.fetchone()
-                    if result:
-                        grade_id_map[grade_level] = result['grade_id']
-                        
+            # Use existing connection; ensure cursor exists
+            conn = db_connection
+            # Ensure connection and cursor
+            try:
+                conn._ensure_connection()
+            except Exception:
+                return {}
+            if not conn.cursor:
+                conn.cursor = conn.connection.cursor(dictionary=True)
+            for grade_level in self.grades_data.keys():
+                grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
+                conn.cursor.execute(
+                    "SELECT grade_id FROM grades WHERE grade_name = %s",
+                    (grade_name,)
+                )
+                result = conn.cursor.fetchone()
+                if result:
+                    grade_id_map[grade_level] = result['grade_id']
         except Exception as e:
-            pass
+            return {}
             
         return grade_id_map
     
-    def get_subject_id_map(self, db_connection) -> Dict[str, int]:
+    def get_subject_id_map(self, db_connection) -> Dict[Tuple[int, str], int]:
         """
         Veritabanından ders kodlarını ID'lere eşler.
         
@@ -365,28 +378,32 @@ ON DUPLICATE KEY UPDATE
             db_connection: Veritabanı bağlantısı
             
         Returns:
-            Ders kodu -> ID eşlemesi
+            (grade_level, subject_code) -> subject_id eşlemesi
         """
-        subject_id_map = {}
+        subject_id_map: Dict[Tuple[int, str], int] = {}
         
         try:
-            with db_connection as conn:
-                for grade_level, subject_code, subject_name, description in self.subjects_data:
-                    grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
-                    conn.cursor.execute(
-                        "SELECT s.subject_id FROM subjects s JOIN grades g ON s.grade_id = g.grade_id WHERE s.subject_name = %s AND g.grade_name = %s",
-                        (subject_name, grade_name)
-                    )
-                    result = conn.cursor.fetchone()
-                    if result:
-                        subject_id_map[subject_code] = result['subject_id']
-            
+            conn = db_connection
+            try:
+                conn._ensure_connection()
+            except Exception:
+                return {}
+            if not conn.cursor:
+                conn.cursor = conn.connection.cursor(dictionary=True)
+            for grade_level, subject_code, subject_name, description in self.subjects_data:
+                grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
+                conn.cursor.execute(
+                    "SELECT s.subject_id FROM subjects s JOIN grades g ON s.grade_id = g.grade_id WHERE s.subject_name = %s AND g.grade_name = %s",
+                    (subject_name, grade_name)
+                )
+                result = conn.cursor.fetchone()
+                if result:
+                    subject_id_map[(grade_level, subject_code)] = result['subject_id']
             return subject_id_map
-            
         except Exception:
             return {}
         
-    def get_unit_id_map(self, db_connection) -> Dict[str, int]:
+    def get_unit_id_map(self, db_connection) -> Dict[Tuple[int, str, str], int]:
         """
         Veritabanından ünite ID'lerini veritabanı ID'lerine eşler.
         
@@ -394,27 +411,40 @@ ON DUPLICATE KEY UPDATE
             db_connection: Veritabanı bağlantısı
             
         Returns:
-            Ünite ID'si -> veritabanı ID eşlemesi
+            (grade_level, subject_code, unit_id) -> veritabanı unit_id eşlemesi
         """
-        unit_id_map = {}
+        unit_id_map: Dict[Tuple[int, str, str], int] = {}
         try:
-            with db_connection as conn:
-                for unit_id, unit_name, subject_code, description in self.units_data:
-                    # Derse göre üniteyi bulmak için subject_name'e ihtiyaç var
-                    subject_name = None
-                    for gl, sc, sn, _ in self.subjects_data:
-                        if sc == subject_code:
-                            subject_name = sn
-                            break
-                    if not subject_name:
-                        continue
-                    conn.cursor.execute(
-                        "SELECT u.unit_id FROM units u JOIN subjects s ON u.subject_id = s.subject_id WHERE u.unit_name = %s AND s.subject_name = %s",
-                        (unit_name, subject_name)
-                    )
-                    result = conn.cursor.fetchone()
-                    if result:
-                        unit_id_map[unit_id] = result['unit_id']
+            conn = db_connection
+            try:
+                conn._ensure_connection()
+            except Exception:
+                return {}
+            if not conn.cursor:
+                conn.cursor = conn.connection.cursor(dictionary=True)
+            for grade_level, subject_code, unit_id, unit_name, description in self.units_data:
+                # Derse göre üniteyi bulmak için grade_name ve subject_name'e ihtiyaç var (ayrışık seçim)
+                grade_name = self.grades_data.get(grade_level, {}).get('gradeName', f'{grade_level}. Sınıf')
+                subject_name = None
+                for gl, sc, sn, _ in self.subjects_data:
+                    if gl == grade_level and sc == subject_code:
+                        subject_name = sn
+                        break
+                if not subject_name:
+                    continue
+                conn.cursor.execute(
+                    """
+                    SELECT u.unit_id
+                    FROM units u
+                    JOIN subjects s ON u.subject_id = s.subject_id
+                    JOIN grades g ON s.grade_id = g.grade_id
+                    WHERE u.unit_name = %s AND s.subject_name = %s AND g.grade_name = %s
+                    """,
+                    (unit_name, subject_name, grade_name)
+                )
+                result = conn.cursor.fetchone()
+                if result:
+                    unit_id_map[(grade_level, subject_code, unit_id)] = result['unit_id']
         except Exception:
             return {}
         return unit_id_map

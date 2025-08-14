@@ -52,14 +52,14 @@ class QuizSessionRepository:
     # 4.2. Quiz Session İşlemleri
     # -------------------------------------------------------------------------
     
-    def create_session(self, session_data: Dict[str, Any]) -> Tuple[bool, Optional[int]]:
+    def create_session(self, session_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """4.2.1. Yeni quiz session'ı oluşturur."""
         try:
             with self.db as conn:
                 conn.cursor.execute("""
                     INSERT INTO quiz_sessions (
                         session_id, user_id, grade_id, subject_id, unit_id, topic_id,
-                        selection_scope, difficulty_level, timer_enabled, timer_duration, quiz_mode, question_count
+                        selection_scope, difficulty_level, timer_enabled, timer_duration_seconds, quiz_mode, question_count
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     session_data['session_id'],
@@ -71,15 +71,12 @@ class QuizSessionRepository:
                     session_data.get('selection_scope', 'topic'),
                     session_data.get('difficulty_level', 'random'),
                     session_data.get('timer_enabled', True),
-                    session_data.get('timer_duration', 30),
+                    int(session_data.get('timer_duration', 30)) * 60,
                     session_data.get('quiz_mode', 'educational'),
                     session_data.get('question_count', 10)
                 ))
-                
-                session_db_id = conn.cursor.lastrowid
                 conn.connection.commit()
-                
-                return True, session_db_id
+                return True, session_data['session_id']
                 
         except Exception as e:
             return False, None
@@ -95,8 +92,8 @@ class QuizSessionRepository:
                            u.unit_name as unit_name,
                            t.topic_name as topic_name
                     FROM quiz_sessions qs
-                    JOIN grades g ON qs.grade_id = g.grade_id
-                    JOIN subjects s ON qs.subject_id = s.subject_id
+                    LEFT JOIN grades g ON qs.grade_id = g.grade_id
+                    LEFT JOIN subjects s ON qs.subject_id = s.subject_id
                     LEFT JOIN units u ON qs.unit_id = u.unit_id
                     LEFT JOIN topics t ON qs.topic_id = t.topic_id
                     WHERE qs.session_id = %s
@@ -108,29 +105,7 @@ class QuizSessionRepository:
         except Exception as e:
             return None
 
-    def get_session_by_id(self, session_db_id: int) -> Optional[Dict[str, Any]]:
-        """4.2.2b. Session DB ID'ye göre quiz session'ı getirir."""
-        try:
-            with self.db as conn:
-                conn.cursor.execute("""
-                    SELECT qs.*, 
-                           g.grade_name as grade_name,
-                           s.subject_name as subject_name,
-                           u.unit_name as unit_name,
-                           t.topic_name as topic_name
-                    FROM quiz_sessions qs
-                    JOIN grades g ON qs.grade_id = g.grade_id
-                    JOIN subjects s ON qs.subject_id = s.subject_id
-                    LEFT JOIN units u ON qs.unit_id = u.unit_id
-                    LEFT JOIN topics t ON qs.topic_id = t.topic_id
-                    WHERE qs.id = %s
-                """, (session_db_id,))
-                
-                session = conn.cursor.fetchone()
-                return session
-                
-        except Exception as e:
-            return None
+    # get_session_by_id removed: session_id string is the primary identifier
 
     def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
         """4.2.3. Quiz session'ı günceller."""
@@ -199,7 +174,7 @@ class QuizSessionRepository:
     # 4.3. Quiz Session Questions İşlemleri
     # -------------------------------------------------------------------------
     
-    def add_session_questions(self, session_id: int, questions: List[Dict[str, Any]]) -> bool:
+    def add_session_questions(self, session_id: str, questions: List[Dict[str, Any]]) -> bool:
         """4.3.1. Session'a soruları ekler."""
         try:
             with self.db as conn:
@@ -216,7 +191,7 @@ class QuizSessionRepository:
         except Exception as e:
             return False
 
-    def get_session_questions(self, session_id: int) -> List[Dict[str, Any]]:
+    def get_session_questions(self, session_id: str) -> List[Dict[str, Any]]:
         """4.3.2. Session'daki soruları getirir."""
         try:
             with self.db as conn:
@@ -238,7 +213,7 @@ class QuizSessionRepository:
         except Exception as e:
             return []
 
-    def update_answer(self, session_id: int, question_id: int, answer_data: Dict[str, Any]) -> bool:
+    def update_answer(self, session_id: str, question_id: int, answer_data: Dict[str, Any]) -> bool:
         """4.3.3. Soru cevabını günceller."""
         try:
             with self.db as conn:
@@ -302,7 +277,7 @@ class QuizSessionRepository:
                     LEFT JOIN question_options uao ON qsq.user_answer_option_id = uao.option_id
                     WHERE qsq.session_id = %s
                     ORDER BY qsq.question_order
-                """, (session['id'],))
+                """, (session['session_id'],))
                 
                 questions = conn.cursor.fetchall()
                 
