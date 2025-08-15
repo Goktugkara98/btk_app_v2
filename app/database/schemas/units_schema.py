@@ -20,6 +20,3 @@ CREATE TABLE IF NOT EXISTS units (
     UNIQUE KEY unique_unit_per_subject (subject_id, unit_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-# JSON dosyalarından dinamik olarak doldurulacak
-UNITS_SAMPLE_DATA = "" 

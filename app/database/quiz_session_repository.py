@@ -33,6 +33,9 @@
 # 3.0. GEREKLİ KÜTÜPHANELER VE MODÜLLER
 # =============================================================================
 from typing import Dict, List, Optional, Tuple, Any
+import os
+import time
+import random
 from app.database.db_connection import DatabaseConnection
 
 # =============================================================================
@@ -47,6 +50,11 @@ class QuizSessionRepository:
     def __init__(self):
         """Repository'yi başlatır."""
         self.db = DatabaseConnection()
+        # PERF logging toggle (env PERF_LOG = 1/true)
+        try:
+            self._perf = str(os.getenv('PERF_LOG', '0')).lower() in ('1', 'true', 't', 'yes', 'y')
+        except Exception:
+            self._perf = False
 
     # -------------------------------------------------------------------------
     # 4.2. Quiz Session İşlemleri
@@ -293,250 +301,185 @@ class QuizSessionRepository:
     # 4.4. Soru Seçimi İşlemleri
     # -------------------------------------------------------------------------
     
-    def get_random_questions(self, topic_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
-        """4.4.1. Belirli kriterlere göre rasgele sorular getirir."""
+    def _random_sample_questions(self, joins_sql: str, where_sql: str, params: tuple, count: int) -> List[Dict[str, Any]]:
+        """ID tabanlı rastgele örnekleme uygular. RAND() ve OFFSET kullanmaz.
+        - 1) Filtreli MIN/MAX question_id aralığını bulur
+        - 2) Bu aralıkta rastgele id'lerden >= id ile ilk kaydı LIMIT 1 çekerek toplar
+        - 3) Eksik kalırsa sıralı doldurma yapar
+        """
         try:
             with self.db as conn:
-                # Zorluk seviyesine göre filtreleme
-                if difficulty == 'random':
-                    difficulty_filter = ""
-                    params = (topic_id, count)
-                else:
-                    difficulty_filter = "AND q.difficulty_level = %s"
-                    params = (topic_id, difficulty, count)
-                
+                # 1) Sınırları al
+                if self._perf:
+                    t_bounds = time.perf_counter()
                 conn.cursor.execute(f"""
-                    SELECT q.*, 
-                           COUNT(qo.option_id) as option_count
+                    SELECT MIN(q.question_id) AS min_id, MAX(q.question_id) AS max_id
                     FROM questions q
-                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
-                    WHERE q.topic_id = %s 
-                    AND q.is_active = 1
-                    {difficulty_filter}
-                    GROUP BY q.question_id
-                    HAVING option_count >= 2
-                    ORDER BY RAND()
-                    LIMIT %s
+                    {joins_sql}
+                    WHERE {where_sql}
                 """, params)
-                
-                questions = conn.cursor.fetchall()
-                
-                # Her soru için seçenekleri al
-                for question in questions:
-                    conn.cursor.execute("""
-                        SELECT 
-                            option_id AS id,
-                            option_text AS name,
-                            option_text AS option_text,
-                            is_correct,
-                            description,
-                            created_at,
-                            updated_at
-                        FROM question_options 
-                        WHERE question_id = %s 
-                        ORDER BY RAND()
-                    """, (question['question_id'],))
-                    question['options'] = conn.cursor.fetchall()
-                
-                return questions
-                
-        except Exception as e:
+                row = conn.cursor.fetchone()
+                if not row or row.get('min_id') is None or row.get('max_id') is None:
+                    return []
+                min_id = int(row.get('min_id'))
+                max_id = int(row.get('max_id'))
+                if self._perf:
+                    print(f"[PERF][Repo] _random_sample bounds: {(time.perf_counter()-t_bounds)*1000:.1f} ms (min={min_id}, max={max_id})")
+                if min_id > max_id:
+                    return []
+
+                # 2) Rastgele örnekler
+                sample_budget = min(5 * max(1, count), 1000)
+                seen_ids = set()
+                out: List[Dict[str, Any]] = []
+                if self._perf:
+                    t_sample = time.perf_counter()
+                for _ in range(sample_budget):
+                    if len(out) >= count:
+                        break
+                    r = random.randint(min_id, max_id)
+                    conn.cursor.execute(f"""
+                        SELECT q.*
+                        FROM questions q
+                        {joins_sql}
+                        WHERE {where_sql} AND q.question_id >= %s
+                        ORDER BY q.question_id
+                        LIMIT 1
+                    """, params + (r,))
+                    one = conn.cursor.fetchone()
+                    if one and one.get('question_id') not in seen_ids:
+                        seen_ids.add(one['question_id'])
+                        out.append(one)
+                if self._perf:
+                    print(f"[PERF][Repo] _random_sample loop: {(time.perf_counter()-t_sample)*1000:.1f} ms, collected={len(out)}")
+
+                # 3) Eksik kalırsa sıralı doldur
+                if len(out) < count:
+                    need = count - len(out)
+                    if self._perf:
+                        t_fill = time.perf_counter()
+                    conn.cursor.execute(f"""
+                        SELECT q.*
+                        FROM questions q
+                        {joins_sql}
+                        WHERE {where_sql}
+                        ORDER BY q.question_id
+                        LIMIT %s
+                    """, params + (max(need * 3, need),))
+                    rows = conn.cursor.fetchall()
+                    for rrow in rows:
+                        qid = rrow.get('question_id')
+                        if qid not in seen_ids:
+                            seen_ids.add(qid)
+                            out.append(rrow)
+                            if len(out) >= count:
+                                break
+                    if self._perf:
+                        print(f"[PERF][Repo] _random_sample fill: {(time.perf_counter()-t_fill)*1000:.1f} ms, after_fill={len(out)}")
+                try:
+                    random.shuffle(out)
+                except Exception:
+                    pass
+                return out[:count]
+        except Exception:
+            return []
+
+    def get_random_questions(self, topic_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
+        """4.4.1. Belirli kriterlere göre ID tabanlı rastgele sorular getirir."""
+        try:
+            # Filtreleri hazırla
+            diff_sql = "" if difficulty == 'random' else " AND q.difficulty_level = %s"
+            where_sql = (
+                "q.topic_id = %s AND q.is_active = 1" + diff_sql +
+                " AND (SELECT COUNT(1) FROM question_options qo WHERE qo.question_id = q.question_id) >= 2"
+            )
+            params = (topic_id,) if difficulty == 'random' else (topic_id, difficulty)
+            if self._perf:
+                t0 = time.perf_counter()
+            questions = self._random_sample_questions("", where_sql, params, count)
+            if self._perf:
+                print(f"[PERF][Repo] get_random_questions sample: {(time.perf_counter()-t0)*1000:.1f} ms, n={len(questions)}")
+            return questions
+        except Exception:
             return []
 
     def get_random_questions_by_subject(self, subject_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
-        """4.4.1b. Subject ID'ye göre rasgele sorular getirir."""
+        """4.4.1b. Subject ID'ye göre ID tabanlı rastgele sorular getirir."""
         try:
-            with self.db as conn:
-                # Zorluk seviyesine göre filtreleme
-                if difficulty == 'random':
-                    difficulty_filter = ""
-                    params = (subject_id, count)
-                else:
-                    difficulty_filter = "AND q.difficulty_level = %s"
-                    params = (subject_id, difficulty, count)
-                
-                conn.cursor.execute(f"""
-                    SELECT q.*, 
-                           COUNT(qo.option_id) as option_count
-                    FROM questions q
-                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
-                    JOIN topics t ON q.topic_id = t.topic_id
-                    JOIN units u ON t.unit_id = u.unit_id
-                    WHERE u.subject_id = %s 
-                    AND q.is_active = 1
-                    {difficulty_filter}
-                    GROUP BY q.question_id
-                    HAVING option_count >= 2
-                    ORDER BY RAND()
-                    LIMIT %s
-                """, params)
-                
-                questions = conn.cursor.fetchall()
-                
-                # Her soru için seçenekleri al
-                for question in questions:
-                    conn.cursor.execute("""
-                        SELECT 
-                            option_id AS id,
-                            option_text AS name,
-                            option_text AS option_text,
-                            is_correct,
-                            description,
-                            created_at,
-                            updated_at
-                        FROM question_options 
-                        WHERE question_id = %s 
-                        ORDER BY RAND()
-                    """, (question['question_id'],))
-                    question['options'] = conn.cursor.fetchall()
-                
-                return questions
-                
-        except Exception as e:
+            joins_sql = "JOIN topics t ON q.topic_id = t.topic_id JOIN units u ON t.unit_id = u.unit_id"
+            diff_sql = "" if difficulty == 'random' else " AND q.difficulty_level = %s"
+            where_sql = (
+                "u.subject_id = %s AND q.is_active = 1" + diff_sql +
+                " AND (SELECT COUNT(1) FROM question_options qo WHERE qo.question_id = q.question_id) >= 2"
+            )
+            params = (subject_id,) if difficulty == 'random' else (subject_id, difficulty)
+            if self._perf:
+                t0 = time.perf_counter()
+            questions = self._random_sample_questions(joins_sql, where_sql, params, count)
+            if self._perf:
+                print(f"[PERF][Repo] get_random_questions_by_subject sample: {(time.perf_counter()-t0)*1000:.1f} ms, n={len(questions)}")
+            return questions
+        except Exception:
             return []
 
     def get_random_questions_by_unit(self, unit_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
-        """4.4.1c. Unit ID'ye göre rasgele sorular getirir."""
+        """4.4.1c. Unit ID'ye göre ID tabanlı rastgele sorular getirir."""
         try:
-            with self.db as conn:
-                if difficulty == 'random':
-                    difficulty_filter = ""
-                    params = (unit_id, count)
-                else:
-                    difficulty_filter = "AND q.difficulty_level = %s"
-                    params = (unit_id, difficulty, count)
-
-                conn.cursor.execute(f"""
-                    SELECT q.*, 
-                           COUNT(qo.option_id) as option_count
-                    FROM questions q
-                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
-                    JOIN topics t ON q.topic_id = t.topic_id
-                    WHERE t.unit_id = %s
-                    AND q.is_active = 1
-                    {difficulty_filter}
-                    GROUP BY q.question_id
-                    HAVING option_count >= 2
-                    ORDER BY RAND()
-                    LIMIT %s
-                """, params)
-
-                questions = conn.cursor.fetchall()
-
-                for question in questions:
-                    conn.cursor.execute("""
-                        SELECT 
-                            option_id AS id,
-                            option_text AS name,
-                            option_text AS option_text,
-                            is_correct,
-                            description,
-                            created_at,
-                            updated_at
-                        FROM question_options 
-                        WHERE question_id = %s 
-                        ORDER BY RAND()
-                    """, (question['question_id'],))
-                    question['options'] = conn.cursor.fetchall()
-
-                return questions
-        except Exception as e:
+            joins_sql = "JOIN topics t ON q.topic_id = t.topic_id"
+            diff_sql = "" if difficulty == 'random' else " AND q.difficulty_level = %s"
+            where_sql = (
+                "t.unit_id = %s AND q.is_active = 1" + diff_sql +
+                " AND (SELECT COUNT(1) FROM question_options qo WHERE qo.question_id = q.question_id) >= 2"
+            )
+            params = (unit_id,) if difficulty == 'random' else (unit_id, difficulty)
+            if self._perf:
+                t0 = time.perf_counter()
+            questions = self._random_sample_questions(joins_sql, where_sql, params, count)
+            if self._perf:
+                print(f"[PERF][Repo] get_random_questions_by_unit sample: {(time.perf_counter()-t0)*1000:.1f} ms, n={len(questions)}")
+            return questions
+        except Exception:
             return []
 
     def get_random_questions_by_grade(self, grade_id: int, difficulty: str, count: int) -> List[Dict[str, Any]]:
-        """4.4.1d. Grade ID'ye göre rasgele sorular getirir."""
+        """4.4.1d. Grade ID'ye göre ID tabanlı rastgele sorular getirir."""
         try:
-            with self.db as conn:
-                if difficulty == 'random':
-                    difficulty_filter = ""
-                    params = (grade_id, count)
-                else:
-                    difficulty_filter = "AND q.difficulty_level = %s"
-                    params = (grade_id, difficulty, count)
-
-                conn.cursor.execute(f"""
-                    SELECT q.*, 
-                           COUNT(qo.option_id) as option_count
-                    FROM questions q
-                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
-                    JOIN topics t ON q.topic_id = t.topic_id
-                    JOIN units u ON t.unit_id = u.unit_id
-                    JOIN subjects s ON u.subject_id = s.subject_id
-                    WHERE s.grade_id = %s
-                    AND q.is_active = 1
-                    {difficulty_filter}
-                    GROUP BY q.question_id
-                    HAVING option_count >= 2
-                    ORDER BY RAND()
-                    LIMIT %s
-                """, params)
-
-                questions = conn.cursor.fetchall()
-
-                for question in questions:
-                    conn.cursor.execute("""
-                        SELECT 
-                            option_id AS id,
-                            option_text AS name,
-                            option_text AS option_text,
-                            is_correct,
-                            description,
-                            created_at,
-                            updated_at
-                        FROM question_options 
-                        WHERE question_id = %s 
-                        ORDER BY RAND()
-                    """, (question['question_id'],))
-                    question['options'] = conn.cursor.fetchall()
-
-                return questions
-        except Exception as e:
+            joins_sql = (
+                "JOIN topics t ON q.topic_id = t.topic_id "
+                "JOIN units u ON t.unit_id = u.unit_id "
+                "JOIN subjects s ON u.subject_id = s.subject_id"
+            )
+            diff_sql = "" if difficulty == 'random' else " AND q.difficulty_level = %s"
+            where_sql = (
+                "s.grade_id = %s AND q.is_active = 1" + diff_sql +
+                " AND (SELECT COUNT(1) FROM question_options qo WHERE qo.question_id = q.question_id) >= 2"
+            )
+            params = (grade_id,) if difficulty == 'random' else (grade_id, difficulty)
+            if self._perf:
+                t0 = time.perf_counter()
+            questions = self._random_sample_questions(joins_sql, where_sql, params, count)
+            if self._perf:
+                print(f"[PERF][Repo] get_random_questions_by_grade sample: {(time.perf_counter()-t0)*1000:.1f} ms, n={len(questions)}")
+            return questions
+        except Exception:
             return []
 
     def get_random_questions_global(self, difficulty: str, count: int) -> List[Dict[str, Any]]:
-        """4.4.1e. Herhangi bir kapsam olmadan rasgele sorular getirir."""
+        """4.4.1e. Herhangi bir kapsam olmadan ID tabanlı rastgele sorular getirir."""
         try:
-            with self.db as conn:
-                if difficulty == 'random':
-                    difficulty_filter = ""
-                    params = (count,)
-                else:
-                    difficulty_filter = "AND q.difficulty_level = %s"
-                    params = (difficulty, count)
-
-                conn.cursor.execute(f"""
-                    SELECT q.*, 
-                           COUNT(qo.option_id) as option_count
-                    FROM questions q
-                    LEFT JOIN question_options qo ON q.question_id = qo.question_id
-                    WHERE q.is_active = 1
-                    {difficulty_filter}
-                    GROUP BY q.question_id
-                    HAVING option_count >= 2
-                    ORDER BY RAND()
-                    LIMIT %s
-                """, params)
-
-                questions = conn.cursor.fetchall()
-
-                for question in questions:
-                    conn.cursor.execute("""
-                        SELECT 
-                            option_id AS id,
-                            option_text AS name,
-                            option_text AS option_text,
-                            is_correct,
-                            description,
-                            created_at,
-                            updated_at
-                        FROM question_options 
-                        WHERE question_id = %s 
-                        ORDER BY RAND()
-                    """, (question['question_id'],))
-                    question['options'] = conn.cursor.fetchall()
-
-                return questions
-        except Exception as e:
+            diff_sql = "" if difficulty == 'random' else " AND q.difficulty_level = %s"
+            where_sql = (
+                "q.is_active = 1" + diff_sql +
+                " AND (SELECT COUNT(1) FROM question_options qo WHERE qo.question_id = q.question_id) >= 2"
+            )
+            params = tuple() if difficulty == 'random' else (difficulty,)
+            if self._perf:
+                t0 = time.perf_counter()
+            questions = self._random_sample_questions("", where_sql, params, count)
+            if self._perf:
+                print(f"[PERF][Repo] get_random_questions_global sample: {(time.perf_counter()-t0)*1000:.1f} ms, n={len(questions)}")
+            return questions
+        except Exception:
             return []
 
     # -------------------------------------------------------------------------
@@ -564,6 +507,8 @@ class QuizSessionRepository:
         """4.5.2. Soru seçeneklerini getirir."""
         try:
             with self.db as conn:
+                if self._perf:
+                    t0 = time.perf_counter()
                 conn.cursor.execute("""
                     SELECT 
                         option_id AS id,
@@ -574,11 +519,17 @@ class QuizSessionRepository:
                         created_at,
                         updated_at
                     FROM question_options 
-                    WHERE question_id = %s 
-                    ORDER BY RAND()
+                    WHERE question_id = %s
                 """, (question_id,))
                 
                 options = conn.cursor.fetchall()
+                if self._perf:
+                    print(f"[PERF][Repo] get_question_options query: {(time.perf_counter()-t0)*1000:.1f} ms")
+                # Python tarafında rastgele sırala (SQL'de RAND() yerine)
+                try:
+                    random.shuffle(options)
+                except Exception:
+                    pass
                 return options
                 
         except Exception as e:
@@ -594,6 +545,7 @@ class QuizSessionRepository:
                         q.question_text,
                         q.difficulty_level,
                         q.question_type,
+                        q.points as points,
                         q.description,
                         q.created_at,
                         q.updated_at,

@@ -20,6 +20,3 @@ CREATE TABLE IF NOT EXISTS topics (
     UNIQUE KEY unique_topic_per_unit (unit_id, topic_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-# JSON dosyalarından dinamik olarak doldurulacak
-TOPICS_SAMPLE_DATA = "" 

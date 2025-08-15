@@ -16,6 +16,3 @@ CREATE TABLE IF NOT EXISTS grades (
     INDEX idx_grades_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-# JSON dosyalarından dinamik olarak doldurulacak
-GRADES_SAMPLE_DATA = ""

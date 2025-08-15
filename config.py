@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return str(val).lower() in ("true", "1", "t", "yes", "y")
+
 class Config:
     """Base configuration."""
     # Application settings
@@ -21,6 +27,14 @@ class Config:
         'use_unicode': True,
         'autocommit': True
     }
+
+    # Auto-migrate/seed/index behavior (gated by env)
+    AUTO_MIGRATE = _env_bool('AUTO_MIGRATE', True)
+    AUTO_SEED_CURR = _env_bool('AUTO_SEED_CURR', True)
+    AUTO_CREATE_INDEXES = _env_bool('AUTO_CREATE_INDEXES', True)
+    AUTO_SEED_QUESTIONS = _env_bool('AUTO_SEED_QUESTIONS', True)
+    AUTO_SEED_USERS = _env_bool('AUTO_SEED_USERS', False)
+    QUESTIONS_DIR = os.environ.get('QUESTIONS_DIR', 'app/data/quiz_banks')
 
 
 class DevelopmentConfig(Config):

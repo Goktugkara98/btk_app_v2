@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS question_options (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
     INDEX idx_options_question (question_id),
-    INDEX idx_options_correct (is_correct)
+    INDEX idx_options_correct (is_correct),
+    INDEX idx_options_qid_correct (question_id, is_correct)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """

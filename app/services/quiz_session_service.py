@@ -29,6 +29,7 @@
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import time
+import os
 
 from app.database.quiz_session_repository import QuizSessionRepository
 
@@ -46,6 +47,11 @@ class QuizSessionService:
     def __init__(self):
         """4.1.1. Servisin kurucu metodu."""
         self.session_repo = QuizSessionRepository()
+        # PERF logging toggle (env PERF_LOG = 1/true)
+        try:
+            self._perf = str(os.getenv('PERF_LOG', '0')).lower() in ('1', 'true', 't', 'yes', 'y')
+        except Exception:
+            self._perf = False
 
     # -------------------------------------------------------------------------
     # 4.2. Quiz Session Yönetimi
@@ -53,6 +59,7 @@ class QuizSessionService:
     def start_quiz_session(self, user_id: int, quiz_config: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
         """4.2.1. Yeni bir quiz session başlatır."""
         try:
+            t_total = time.perf_counter() if self._perf else None
             # Gerekli alanları kontrol et - sadece grade_id ve subject_id zorunlu
             required_fields = ['grade_id', 'subject_id']
             for field in required_fields:
@@ -92,13 +99,17 @@ class QuizSessionService:
             session_data['selection_scope'] = selection_scope
 
             # Session'ı veritabanında oluştur
+            t0 = time.perf_counter() if self._perf else None
             success, created_session_id = self.session_repo.create_session(session_data)
             if not success:
                 return False, {'error': 'Failed to create session'}
+            if self._perf:
+                print(f"[PERF][Service] create_session: {(time.perf_counter()-t0)*1000:.1f} ms")
 
             # Rasgele soruları seç - selection_scope'a göre
             difficulty = quiz_config.get('difficulty_level', 'random')
             qcount = quiz_config.get('question_count', 10)
+            t1 = time.perf_counter() if self._perf else None
             if selection_scope == 'topic' and session_data.get('topic_id') is not None:
                 questions = self.session_repo.get_random_questions(
                     topic_id=session_data['topic_id'],
@@ -128,18 +139,26 @@ class QuizSessionService:
                     difficulty=difficulty,
                     count=qcount
                 )
+            if self._perf:
+                print(f"[PERF][Service] select_random_questions ({selection_scope}): {(time.perf_counter()-t1)*1000:.1f} ms, n={len(questions)}")
 
             if not questions:
                 return False, {'error': 'No questions available for the selected criteria'}
 
             # Session'a soruları ekle
+            t2 = time.perf_counter() if self._perf else None
             if not self.session_repo.add_session_questions(created_session_id, questions):
                 return False, {'error': 'Failed to add questions to session'}
+            if self._perf:
+                print(f"[PERF][Service] add_session_questions: {(time.perf_counter()-t2)*1000:.1f} ms, n={len(questions)}")
 
             # Session bilgilerini getir
+            t3 = time.perf_counter() if self._perf else None
             session_info = self.session_repo.get_session(created_session_id)
             if not session_info:
                 return False, {'error': 'Failed to retrieve session info'}
+            if self._perf:
+                print(f"[PERF][Service] get_session_info(load): {(time.perf_counter()-t3)*1000:.1f} ms")
 
             result_data = {
                 'session_id': session_info['session_id'],
@@ -149,6 +168,8 @@ class QuizSessionService:
                 'timer_duration': session_data['timer_duration'],
                 'quiz_mode': session_data['quiz_mode']
             }
+            if self._perf and t_total is not None:
+                print(f"[PERF][Service] start_quiz_session total: {(time.perf_counter()-t_total)*1000:.1f} ms")
             return True, result_data
 
         except Exception as e:
@@ -157,13 +178,19 @@ class QuizSessionService:
     def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
         """4.2.2. Session bilgilerini getirir."""
         try:
+            t0 = time.perf_counter() if self._perf else None
             session = self.session_repo.get_session(session_id)
             if not session:
                 return None
+            if self._perf:
+                print(f"[PERF][Service] get_session: {(time.perf_counter()-t0)*1000:.1f} ms")
 
             # Session'daki soruları getir
+            t1 = time.perf_counter() if self._perf else None
             questions = self.session_repo.get_session_questions(session['session_id'])
-            
+            if self._perf:
+                print(f"[PERF][Service] get_session_questions: {(time.perf_counter()-t1)*1000:.1f} ms, n={len(questions)}")
+
             # Backward compatibility: expose timer_duration (minutes) derived from timer_duration_seconds
             try:
                 if 'timer_duration' not in session or session.get('timer_duration') is None:
@@ -172,14 +199,14 @@ class QuizSessionService:
             except Exception:
                 # Best-effort; don't fail get_session_info on mapping issues
                 session['timer_duration'] = session.get('timer_duration', 30)
-            
+
             # Ensure remaining_time_seconds key exists
             if session.get('remaining_time_seconds') is None:
                 session['remaining_time_seconds'] = 0
-            
+
             # Normalize boolean for timer_enabled if needed
             session['timer_enabled'] = bool(session.get('timer_enabled', True))
-            
+
             return {
                 'session': session,
                 'questions': questions,
@@ -194,16 +221,22 @@ class QuizSessionService:
         """4.2.3. Soru cevabını gönderir ve sonucu hesaplar."""
         try:
             # Session'ı getir
+            t0 = time.perf_counter() if self._perf else None
             session = self.session_repo.get_session(session_id)
             if not session:
                 return False, {'error': 'Session not found'}
+            if self._perf:
+                print(f"[PERF][Service] submit_answer.get_session: {(time.perf_counter()-t0)*1000:.1f} ms")
 
             if session['status'] != 'active':
                 return False, {'error': 'Session is not active'}
 
             # Cevap sonucunu hesapla
+            t1 = time.perf_counter() if self._perf else None
             answer_result = self.calculate_answer_result(question_id, answer_data.get('user_answer_option_id'))
-            
+            if self._perf:
+                print(f"[PERF][Service] calculate_answer_result: {(time.perf_counter()-t1)*1000:.1f} ms")
+
             # Cevap verilerini hazırla
             # Puan hesaplama session_results'da yapılacak, burada sadece doğru/yanlış kaydediyoruz
             answer_update_data = {
@@ -214,8 +247,11 @@ class QuizSessionService:
             }
 
             # Cevabı güncelle
+            t2 = time.perf_counter() if self._perf else None
             if not self.session_repo.update_answer(session['session_id'], question_id, answer_update_data):
                 return False, {'error': 'Failed to update answer'}
+            if self._perf:
+                print(f"[PERF][Service] update_answer: {(time.perf_counter()-t2)*1000:.1f} ms")
 
             return True, {
                 'is_correct': answer_result['is_correct'],
@@ -230,9 +266,12 @@ class QuizSessionService:
         """4.2.4. Session'ı tamamlar ve sonuçları hesaplar."""
         try:
             # Session sonuçlarını hesapla
+            t0 = time.perf_counter() if self._perf else None
             results = self.calculate_session_results(session_id)
             if not results:
                 return False, {'error': 'Failed to calculate results'}
+            if self._perf:
+                print(f"[PERF][Service] calculate_session_results: {(time.perf_counter()-t0)*1000:.1f} ms")
 
             # Session'ı tamamla - eski format için uyumlu veri hazırla
             session_completion_data = {
@@ -240,9 +279,12 @@ class QuizSessionService:
                 'correct_answers': results.get('correctAnswers', 0),
                 'completion_time_seconds': results.get('completionTime', 0)
             }
-            
+
+            t1 = time.perf_counter() if self._perf else None
             if not self.session_repo.complete_session(session_id, session_completion_data):
                 return False, {'error': 'Failed to complete session'}
+            if self._perf:
+                print(f"[PERF][Service] complete_session(update): {(time.perf_counter()-t1)*1000:.1f} ms")
 
             return True, results
 
@@ -295,7 +337,7 @@ class QuizSessionService:
 
             # Kullanıcının cevabını kontrol et
             is_correct = user_answer_id == correct_answer['id'] if user_answer_id else False
-            
+
             # Puan hesaplama artık session_results'da yapılıyor
             # Burada sadece doğru/yanlış kontrolü yapıyoruz
             points_earned = 0  # Puan hesaplama session_results'da yapılacak
@@ -317,9 +359,12 @@ class QuizSessionService:
         """4.3.3. Session sonuçlarını hesaplar."""
         try:
             # Session sonuçlarını getir
+            t0 = time.perf_counter() if self._perf else None
             results = self.session_repo.get_session_results(session_id)
             if not results:
                 return None
+            if self._perf:
+                print(f"[PERF][Service] get_session_results: {(time.perf_counter()-t0)*1000:.1f} ms")
 
             session = results['session']
             questions = results['questions']
@@ -328,7 +373,7 @@ class QuizSessionService:
             total_questions = len(questions)
             answered_questions = len([q for q in questions if q['user_answer_option_id'] is not None])
             correct_answers = len([q for q in questions if q['is_correct']])
-            
+
             # Puan hesaplama: Her soru 100/toplam_soru puanına sahip
             points_per_question = 100 / total_questions if total_questions > 0 else 0
             total_score = correct_answers * points_per_question
@@ -347,9 +392,10 @@ class QuizSessionService:
             # Ders bazlı analiz
             subjects_analysis = {}
             difficulty_analysis = {'easy': 0, 'medium': 0, 'hard': 0}
-            
+
             # Soru detaylarını hazırla
             questions_details = []
+            t_details_total = time.perf_counter() if self._perf else None
             for i, question in enumerate(questions):
                 # Soru durumunu belirle
                 if question['user_answer_option_id'] is None:
@@ -358,41 +404,44 @@ class QuizSessionService:
                     status = 'correct'
                 else:
                     status = 'incorrect'
-                
+
                 # Soru detaylarını al
+                t_det = time.perf_counter() if self._perf else None
                 question_details = self.get_question_details(question['question_id'])
-                
+                if self._perf:
+                    print(f"[PERF][Service] get_question_details[{i}]: {(time.perf_counter()-t_det)*1000:.1f} ms (qid={question['question_id']})")
+
                 # Ders analizi için
                 subject_name = question_details.get('subject_name') if question_details else question.get('subject_name', 'Bilinmeyen')
                 topic_name = question_details.get('topic_name') if question_details else question.get('topic_name', 'Bilinmeyen')
                 difficulty = question_details.get('difficulty_level') if question_details else question.get('difficulty_level', 'medium')
-                
+
                 if subject_name and subject_name != 'Bilinmeyen':
                     if subject_name not in subjects_analysis:
                         subjects_analysis[subject_name] = {'total': 0, 'correct': 0}
                     subjects_analysis[subject_name]['total'] += 1
                     if status == 'correct':
                         subjects_analysis[subject_name]['correct'] += 1
-                
+
                 # Zorluk analizi için
                 if difficulty in difficulty_analysis:
                     difficulty_analysis[difficulty] += 1
-                
+
                 # Cevap bilgilerini al
                 user_answer_text = question.get('user_answer_text', 'Cevaplanmadı')
                 correct_answer_text = question.get('correct_answer_text', 'Bilinmiyor')
                 explanation = question_details.get('description', 'Açıklama bulunamadı') if question_details else 'Açıklama bulunamadı'
-                
+
                 # Eğer session_results'dan gelen veriler yoksa, ayrı ayrı al
                 if user_answer_text == 'Cevaplanmadı' and question['user_answer_option_id'] is not None:
                     user_answer = self.session_repo.get_answer_option_text(question['user_answer_option_id'])
                     user_answer_text = user_answer if user_answer else 'Bilinmiyor'
-                
+
                 if correct_answer_text == 'Bilinmiyor':
                     correct_answer = self.session_repo.get_correct_answer(question['question_id'])
                     if correct_answer:
                         correct_answer_text = correct_answer.get('name', 'Bilinmiyor')
-                
+
                 # Soru detayları
                 question_detail = {
                     'text': question.get('question_text', 'Soru metni bulunamadı'),

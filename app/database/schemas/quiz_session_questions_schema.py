@@ -27,5 +27,3 @@ CREATE TABLE IF NOT EXISTS quiz_session_questions (
     UNIQUE KEY unique_session_question (session_id, question_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-QUIZ_SESSION_QUESTIONS_SAMPLE_DATA = ""

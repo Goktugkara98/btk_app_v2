@@ -85,7 +85,7 @@ class ChatRepository:
                 result = conn.cursor.fetchone()
                 
                 if result:
-                    return dict(zip([col[0] for col in conn.cursor.description], result))
+                    return result
                 return None
                 
         except Exception as e:
@@ -266,11 +266,8 @@ class ChatRepository:
                 conn.cursor.execute(query, (chat_session_id, limit))
                 results = conn.cursor.fetchall()
                 
-                messages = []
-                for row in results:
-                    messages.append(dict(zip([col[0] for col in conn.cursor.description], row)))
-                
-                return messages[::-1]  # Chronological order
+                # With dictionary=True cursor, results are already list[dict]
+                return results[::-1]  # Chronological order
                 
         except Exception as e:
             return []
@@ -354,7 +351,7 @@ class ChatRepository:
                 result = conn.cursor.fetchone()
                 
                 if result:
-                    return dict(zip([col[0] for col in conn.cursor.description], result))
+                    return result
                 return {}
                 
         except Exception as e:

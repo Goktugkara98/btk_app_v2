@@ -29,21 +29,3 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_users_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-USERS_SAMPLE_DATA = """
-INSERT INTO users (username, email, password_hash, first_name, last_name, phone, birth_date, gender, country, city, school, bio, is_admin) VALUES
-('admin', 'admin@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Admin', 'User', '+90 555 123 4567', '1990-01-01', 'male', 'Turkey', 'Ankara', 'BTK Akademi', 'Sistem yöneticisi', true),
-('demo_user', 'demo@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Demo', 'User', '+90 555 987 6543', '2000-05-15', 'female', 'Turkey', 'Istanbul', 'Demo Okulu', 'Demo kullanıcı hesabı', false),
-('test_user', 'test@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Test', 'User', '+90 555 111 2222', '1995-12-20', 'other', 'Turkey', 'Izmir', 'Test Okulu', 'Test kullanıcı hesabı', false)
-ON DUPLICATE KEY UPDATE 
-    username = VALUES(username),
-    first_name = VALUES(first_name),
-    last_name = VALUES(last_name),
-    phone = VALUES(phone),
-    birth_date = VALUES(birth_date),
-    gender = VALUES(gender),
-    country = VALUES(country),
-    city = VALUES(city),
-    school = VALUES(school),
-    bio = VALUES(bio);
-"""

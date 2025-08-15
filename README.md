@@ -240,15 +240,23 @@ FLUSH PRIVILEGES;
 
 ```bash
 # .env dosyası
-DB_HOST=localhost
-DB_USER=btk_user
-DB_PASSWORD=your_password
-DB_NAME=btk_app
-DB_PORT=3306
+MYSQL_HOST=localhost
+MYSQL_USER=btk_user
+MYSQL_PASSWORD=your_password
+MYSQL_DB=btk_app
+MYSQL_PORT=3306
 
 # Uygulama Konfigürasyonu
 SECRET_KEY=your-secret-key-here
 FLASK_DEBUG=True
+
+# Otomatik DB Görevleri (startup gating)
+AUTO_MIGRATE=True
+AUTO_CREATE_INDEXES=True
+AUTO_SEED_CURR=True
+AUTO_SEED_QUESTIONS=True
+AUTO_SEED_USERS=False
+QUESTIONS_DIR=app/data/quiz_banks
 
 # AI Servisleri (Opsiyonel)
 GEMINI_API_KEY=your-gemini-api-key-here
@@ -296,11 +304,12 @@ python main.py
 ## 📊 Veritabanı
 
 ### **Otomatik Kurulum**
-Uygulama ilk çalıştırıldığında:
-1. Veritabanı tabloları otomatik oluşturulur
-2. Müfredat verileri JSON dosyalarından yüklenir
-3. Soru bankaları otomatik yüklenir
-4. Chat session ve message tabloları oluşturulur
+Uygulama ilk çalıştırıldığında (ortam değişkenleri ile kontrol edilir):
+1. Veritabanı tabloları otomatik oluşturulur — `AUTO_MIGRATE=True`
+2. Müfredat (sınıflar/dersler/üniteler/konular) yüklenir — `AUTO_SEED_CURR=True`
+3. Performans index'leri oluşturulur — `AUTO_CREATE_INDEXES=True`
+4. Soru bankaları ilk kurulumda yüklenir (eğer `questions` tablosu boşsa) — `AUTO_SEED_QUESTIONS=True`, `QUESTIONS_DIR`
+5. Geliştirme kullanıcıları seed edilir (opsiyonel) — `AUTO_SEED_USERS=True`
 
 ### **Veritabanı Yapısı**
 - **grades**: Sınıf bilgileri
@@ -314,6 +323,33 @@ Uygulama ilk çalıştırıldığında:
 - **quiz_session_questions**: Quiz oturum soruları
 - **chat_sessions**: AI chat oturumları
 - **chat_messages**: AI chat mesajları
+
+### **Komut Satırı Araçları (CLI)**
+
+Migrasyon ve seeding işlemlerini uygulama dışında yönetmek için CLI script'leri eklenmiştir.
+
+```bash
+# Tabloları oluştur ve eksik index'leri uygula (idempotent)
+python scripts/migrate.py --indexes
+
+# Tabloları düşür ve yeniden oluştur (DİKKAT: verileri siler) + index'ler
+python scripts/migrate.py --force-recreate --indexes -y
+
+# Müfredat + soruları seed et (varsayılan davranış)
+python scripts/seed.py
+
+# Sadece soruları belirli bir dizinden seed et
+python scripts/seed.py --questions --dir app/data/quiz_banks
+
+# Varsayılan geliştirme kullanıcılarını seed et
+python scripts/seed.py --users
+```
+
+Notlar:
+- Tüm işlemler idempotent tasarlanmıştır (güvenle tekrar çalıştırılabilir).
+- Production ortamında otomatik seeding'i kapatmanız önerilir (`AUTO_SEED_* = False`).
+- Windows'ta komutları `python` yerine `py` ile çalıştırmanız gerekebilir (örn: `py scripts\migrate.py --indexes`).
+- `--force-recreate` varsayılan olarak onay ister. `-y/--yes` ile prompt olmadan çalıştırabilirsiniz.
 
 ## 🔧 API Dokümantasyonu
 

@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS questions (
     INDEX idx_questions_topic (topic_id),
     INDEX idx_questions_difficulty (difficulty_level),
     INDEX idx_questions_type (question_type),
-    INDEX idx_questions_active (is_active)
+    INDEX idx_questions_active (is_active),
+    INDEX idx_q_topic_active_diff_qid (topic_id, is_active, difficulty_level, question_id),
+    INDEX idx_q_active_diff_qid (is_active, difficulty_level, question_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-

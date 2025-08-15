@@ -20,6 +20,3 @@ CREATE TABLE IF NOT EXISTS subjects (
     UNIQUE KEY unique_subject_per_grade (grade_id, subject_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-# JSON dosyalarından dinamik olarak doldurulacak
-SUBJECTS_SAMPLE_DATA = "" 

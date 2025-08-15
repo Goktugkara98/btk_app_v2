@@ -39,5 +39,3 @@ CREATE TABLE IF NOT EXISTS quiz_sessions (
     INDEX idx_sessions_grade_subject (grade_id, subject_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-
-QUIZ_SESSIONS_SAMPLE_DATA = ""

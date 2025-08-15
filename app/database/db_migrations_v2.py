@@ -1,269 +1,226 @@
 # =============================================================================
-# Veritabanı Geçişleri (V2) - Temiz, Modüler, Idempotent
+# Veritabanı Geçişleri - Yeniden Düzenlenmiş Sürüm
 # =============================================================================
-# Amaç: Sadece tanımlanmış şemalardan tablolar oluşturmak.
+# Amaç: Bu modül, veritabanı şemalarını yönetir. Tanımlanmış Python
+# şemalarından tablolar oluşturur, başlangıç verilerini ekler ve veritabanı
+# bakım işlemlerini gerçekleştirir. Tüm işlemler idempotent (tekrarlanabilir)
+# olacak şekilde tasarlanmıştır.
 #
 # İçindekiler:
 #
-# 1. Başlatma ve Sonlandırma (Initialization and Finalization)
+# 1. Kurulum ve Yaşam Döngüsü (Setup & Lifecycle)
 #    1.1. __init__(self, db_connection)
 #    1.2. __del__(self)
 #
-# 2. Özel Yardımcı Fonksiyonlar (Private Helper Functions)
-#    2.1. _exec(self, conn, sql, params)
-#    2.2. _fetchone(self, conn, sql, params)
-#    2.3. _ensure_tables(self)
+# 2. Genel API: Tablo Yönetimi (Public API: Table Management)
+#    2.1. run_migrations(self)
+#    2.2. create_tables(self)
+#    2.3. drop_all_tables(self)
+#    2.4. force_recreate(self)
 #
-# 3. Genel Arayüz (Public Interface)
-#    3.1. run_migrations(self)
-#    3.2. create_tables(self)
-#    3.3. drop_all_tables(self)
-#    3.4. force_recreate(self)
-#    3.5. get_table_info(self)
-#    3.6. seed_initial_data(self)
-
-# 4. Veri Doldurucular (Seeders)
-#    4.1. _seed_grades_if_empty(self, conn)
-#    4.2. _seed_curriculum_from_json(self, conn)
+# 3. Genel API: Veri Doldurma ve Bakım (Public API: Data Seeding & Maintenance)
+#    3.1. seed_initial_data(self)
+#    3.2. create_missing_indexes(self)
+#    3.3. get_table_info(self)
+#
+# 4. Dahili Yardımcılar: Veritabanı İşlemleri (Internal Helpers: Database Operations)
+#    4.1. _exec(self, conn, sql, params)
+#    4.2. _fetchone(self, conn, sql, params)
+#    4.3. _ensure_tables(self)
+#
+# 5. Dahili Yardımcılar: Veri Doldurucular (Internal Helpers: Seeders)
+#    5.1. _seed_grades_if_empty(self, conn)
+#    5.2. _seed_curriculum_from_json(self, conn)
 # =============================================================================
 
 from typing import Optional, Dict
 from mysql.connector import Error as MySQLError
 
 from app.database.db_connection import DatabaseConnection
-from app.database.schemas import (
-    GRADES_TABLE_SQL,
-    SUBJECTS_TABLE_SQL,
-    UNITS_TABLE_SQL,
-    TOPICS_TABLE_SQL,
-    QUESTIONS_TABLE_SQL,
-    QUESTION_OPTIONS_TABLE_SQL,
-    USERS_TABLE_SQL,
-    QUIZ_SESSIONS_TABLE_SQL,
-    QUIZ_SESSION_QUESTIONS_TABLE_SQL,
-)
-from app.database.schemas.chat_sessions_schema import get_chat_sessions_schema
-from app.database.schemas.chat_messages_schema import get_chat_messages_schema
-from app.database.curriculum_data_loader import JSONDataLoader
+from app.database.migrations import SchemaManager, IndexManager
+from app.database.seeders import SeedManager
 
 
 class DatabaseMigrations:
     """
-    Temiz geçiş yöneticisi.
+    Veritabanı şemalarını, verilerini ve index'lerini yönetir.
     - Python şemalarından tablolar oluşturur.
+    - Başlangıç verilerini (seed) ekler.
+    - Performans için gerekli index'leri oluşturur.
     """
 
     # =========================================================================
-    # 1. Başlatma ve Sonlandırma (Initialization and Finalization)
+    # 1. Kurulum ve Yaşam Döngüsü (Setup & Lifecycle)
     # =========================================================================
 
     def __init__(self, db_connection: Optional[DatabaseConnection] = None) -> None:
         """
-        1.1. Sınıfı başlatır ve veritabanı bağlantısını ayarlar.
+        1.1. Sınıfı başlatır, veritabanı bağlantısını kurar ve tablo
+             şemalarını tanımlar.
+        
+        Args:
+            db_connection: Mevcut bir DatabaseConnection nesnesi. Eğer
+                           sağlanmazsa, sınıf kendi bağlantısını oluşturur.
         """
         self.db = db_connection or DatabaseConnection()
         self.own_connection = db_connection is None
 
-        # Şema SQL kayıt defteri
-        self.table_schemas = {
-            'grades': (GRADES_TABLE_SQL, ''),
-            'subjects': (SUBJECTS_TABLE_SQL, ''),
-            'units': (UNITS_TABLE_SQL, ''),
-            'topics': (TOPICS_TABLE_SQL, ''),
-            'questions': (QUESTIONS_TABLE_SQL, ''),
-            'question_options': (QUESTION_OPTIONS_TABLE_SQL, ''),
-            'users': (USERS_TABLE_SQL, ''),
-            'quiz_sessions': (QUIZ_SESSIONS_TABLE_SQL, ''),
-            'quiz_session_questions': (QUIZ_SESSION_QUESTIONS_TABLE_SQL, ''),
-            'chat_sessions': (get_chat_sessions_schema(), ''),
-            'chat_messages': (get_chat_messages_schema(), ''),
-        }
-        # Yabancı anahtar (FK) kısıtlamalarına uygun oluşturma sırası
-        self.table_order = [
-            'grades', 'subjects', 'units', 'topics',
-            'questions', 'question_options', 'users',
-            'quiz_sessions', 'quiz_session_questions',
-            'chat_sessions', 'chat_messages'
-        ]
+        # Yeni yöneticiler (delegasyon)
+        self.schema_manager = SchemaManager(self.db)
+        self.index_manager = IndexManager(self.db)
+        self.seed_manager = SeedManager(self.db)
+
+        # Raporlama ve yardımcı fonksiyonlar için tablo sırası
+        self.table_order = self.schema_manager.table_order
 
     def __del__(self) -> None:
         """
-        1.2. Sınıf tarafından oluşturulan veritabanı bağlantısını kapatır.
+        1.2. Eğer bağlantı bu sınıf tarafından oluşturulduysa, sınıf
+             yok edildiğinde veritabanı bağlantısını güvenli bir şekilde kapatır.
         """
         if self.own_connection:
             try:
                 self.db.close()
             except Exception:
+                # Bağlantı zaten kapalıysa veya bir hata oluşursa sessizce geç.
                 pass
 
     # =========================================================================
-    # 2. Özel Yardımcı Fonksiyonlar (Private Helper Functions)
-    # =========================================================================
-
-    def _exec(self, conn, sql: str, params: tuple | None = None) -> bool:
-        """
-        2.1. Verilen SQL sorgusunu parametrelerle birlikte çalıştırır ve commit eder.
-        """
-        try:
-            if params:
-                conn.cursor.execute(sql, params)
-            else:
-                conn.cursor.execute(sql)
-            conn.connection.commit()
-            return True
-        except MySQLError:
-            return False
-
-    def _fetchone(self, conn, sql: str, params: tuple | None = None):
-        """
-        2.2. Verilen SQL sorgusunu çalıştırır ve tek bir sonuç satırı döndürür.
-        """
-        try:
-            if params:
-                conn.cursor.execute(sql, params)
-            else:
-                conn.cursor.execute(sql)
-            return conn.cursor.fetchone()
-        except MySQLError:
-            return None
-
-    def _ensure_tables(self) -> bool:
-        """
-        2.3. Tanımlanmış sıraya göre tüm tabloların veritabanında var olmasını sağlar.
-        """
-        try:
-            with self.db as conn:
-                for table in self.table_order:
-                    create_sql, _ = self.table_schemas[table]
-                    if not self._exec(conn, create_sql):
-                        return False
-                return True
-        except Exception:
-            return False
-
-    # =========================================================================
-    # 3. Genel Arayüz (Public Interface)
+    # 2. Genel API: Tablo Yönetimi (Public API: Table Management)
     # =========================================================================
 
     def run_migrations(self) -> bool:
         """
-        3.1. Yalnızca Python şemalarına göre tablolar oluşturur.
-             Burada sütun/kısıtlama geçişleri veya veri değişiklikleri yapılmaz.
+        2.1. Ana geçiş fonksiyonu. Veritabanındaki tüm tabloların tanımlanmış
+             şemalara göre var olmasını sağlar. Sadece eksik tabloları oluşturur.
+        
+        Returns:
+            Tüm tablolar başarıyla oluşturulduysa veya zaten varsa True,
+            aksi takdirde False.
         """
-        return self._ensure_tables()
+        return self.schema_manager.ensure_tables()
 
     def create_tables(self) -> bool:
         """
-        3.2. Şemalara göre tabloları oluşturur. `run_migrations` için bir takma addır.
+        2.2. `run_migrations` için bir takma addır (alias). Anlaşılırlığı artırmak
+             için kullanılır.
         """
-        return self._ensure_tables()
+        return self.run_migrations()
 
     def drop_all_tables(self) -> bool:
         """
-        3.3. Yabancı anahtar (FK) kısıtlamalarını dikkate alarak tüm tabloları siler.
+        2.3. Yabancı anahtar (FK) kısıtlamalarına uygun bir sırayla
+             tüm yönetilen tabloları veritabanından siler.
+        
+        Returns:
+            İşlem başarılı olursa True, aksi takdirde False.
         """
-        try:
-            with self.db as conn:
-                # FK'ları onurlandırmak için ters sırada sil
-                for table in reversed(self.table_order):
-                    self._exec(conn, f"DROP TABLE IF EXISTS {table}")
-            return True
-        except Exception:
-            return False
+        return self.schema_manager.drop_all_tables()
 
     def force_recreate(self) -> bool:
         """
-        3.4. Tüm tabloları siler ve ardından yeniden oluşturur.
+        2.4. Tüm tabloları siler ve ardından şemalara göre yeniden oluşturur.
+             Test veya geliştirme ortamlarında veritabanını sıfırlamak için kullanışlıdır.
+        
+        Returns:
+            Silme ve yeniden oluşturma işlemleri başarılı olursa True.
         """
-        return self.drop_all_tables() and self.create_tables()
+        return self.schema_manager.force_recreate()
 
-    def get_table_info(self) -> Dict[str, int]:
-        """
-        3.5. Her tablodaki satır sayısını içeren bir sözlük döndürür.
-        """
-        out: Dict[str, int] = {}
-        try:
-            with self.db as conn:
-                for t in self.table_order:
-                    row = self._fetchone(conn, f"SELECT COUNT(*) AS cnt FROM {t}")
-                    out[t] = (row.get('cnt') if isinstance(row, dict) else 0) if row else 0
-        except Exception:
-            pass
-        return out
+    # =========================================================================
+    # 3. Genel API: Veri Doldurma ve Bakım (Public API: Data Seeding & Maintenance)
+    # =========================================================================
 
     def seed_initial_data(self) -> bool:
         """
-        3.6. Uygulama için gerekli başlangıç verilerini (seed) ekler.
-             Şemalara göre tabloları garanti altına alır, ardından seed işlemlerini uygular.
+        3.1. Uygulamanın çalışması için gerekli olan başlangıç verilerini
+             veritabanına ekler. Önce tabloların var olduğundan emin olur,
+             ardından veri doldurma (seeding) işlemlerini çalıştırır.
+        
+        Returns:
+            İşlem başarılı olursa True, aksi takdirde False.
         """
         try:
-            if not self._ensure_tables():
+            if not self.schema_manager.ensure_tables():
                 return False
-            with self.db as conn:
-                self._seed_grades_if_empty(conn)
-                self._seed_curriculum_from_json(conn)
+            # Delegasyon seeding
+            self.seed_manager.seed_grades_if_empty()
+            self.seed_manager.seed_curriculum()
             return True
         except Exception:
             return False
 
+    def create_missing_indexes(self) -> bool:
+        """
+        3.2. Sık yapılan sorguları hızlandırmak için kritik olan veritabanı
+             index'lerini oluşturur. Eğer index zaten varsa, hiçbir işlem yapmaz.
+        
+        Returns:
+            İşlem başarılı olursa True, aksi takdirde False.
+        """
+        return self.index_manager.ensure_indexes()
+
+    def get_table_info(self) -> Dict[str, int]:
+        """
+        3.3. Her tablodaki mevcut satır sayısını içeren bir sözlük döndürür.
+             Veritabanının durumunu kontrol etmek için kullanılır.
+        
+        Returns:
+            {'tablo_adi': satir_sayisi} formatında bir sözlük.
+        """
+        info: Dict[str, int] = {}
+        try:
+            with self.db as conn:
+                for table_name in self.table_order:
+                    row = self._fetchone(conn, f"SELECT COUNT(*) AS cnt FROM {table_name}")
+                    info[table_name] = row.get('cnt') if isinstance(row, dict) and row else 0
+        except Exception:
+            # Bir tablo henüz yoksa veya başka bir hata oluşursa, o tablo için 0 döndür.
+            pass
+        return info
+
     # =========================================================================
-    # 4. Veri Doldurucular (Seeders)
+    # 4. Dahili Yardımcılar: Veritabanı İşlemleri (Internal Helpers: Database Operations)
+    # =========================================================================
+
+    def _exec(self, conn, sql: str, params: tuple | None = None) -> bool:
+        """
+        4.1. Verilen SQL sorgusunu (INSERT, UPDATE, DELETE, CREATE vb.)
+             çalıştırır ve işlemi commit eder. Hata yönetimini basitleştirir.
+        """
+        try:
+            cursor = conn.cursor
+            cursor.execute(sql, params or ())
+            conn.connection.commit()
+            return True
+        except MySQLError:
+            # Hata durumunda False döndürerek çağıran fonksiyona bilgi ver.
+            return False
+
+    def _fetchone(self, conn, sql: str, params: tuple | None = None):
+        """
+        4.2. Verilen SQL sorgusunu (SELECT) çalıştırır ve tek bir sonuç
+             satırını döndürür. Hata yönetimini basitleştirir.
+        """
+        try:
+            cursor = conn.cursor
+            cursor.execute(sql, params or ())
+            return cursor.fetchone()
+        except MySQLError:
+            return None
+
+    def _ensure_tables(self) -> bool:
+        """Geriye dönük uyumluluk için bıraktık; yeni akış SchemaManager'a delege edilir."""
+        return self.schema_manager.ensure_tables()
+
+    # =========================================================================
+    # 5. Dahili Yardımcılar: Veri Doldurucular (Internal Helpers: Seeders)
     # =========================================================================
 
     def _seed_grades_if_empty(self, conn) -> None:
-        """
-        4.1. Grades tablosunu 1..12 sınıf temel verileriyle doldurur.
-             Zaten veri varsa işlemi atlar; yoksa idempotent şekilde ekler/günceller.
-        """
-        row = self._fetchone(conn, "SELECT COUNT(*) AS cnt FROM grades")
-        count = (row.get('cnt') if isinstance(row, dict) else 0) if row else 0
-        if count and count > 0:
-            return
-        values = []
-        for i in range(1, 13):
-            name = f"{i}. Sınıf".replace("'", "''")
-            desc = f"{i}. Sınıf seviyesi".replace("'", "''")
-            values.append(f"({i}, '{name}', '{desc}', 1)")
-        sql = (
-            "INSERT INTO grades (grade_id, grade_name, description, is_active) VALUES "
-            + ", ".join(values)
-            + " ON DUPLICATE KEY UPDATE grade_name=VALUES(grade_name), description=VALUES(description), is_active=VALUES(is_active)"
-        )
-        self._exec(conn, sql)
+        """Geriye dönük uyumluluk: yeni akış SeedManager üzerinden."""
+        self.seed_manager.seed_grades_if_empty()
 
     def _seed_curriculum_from_json(self, conn) -> None:
-        """
-        4.2. Müfredat verilerini JSON dosyalarından yükler ve idempotent olarak
-             grades/subjects/units/topics tablolarına yazar.
-        """
-        try:
-            loader = JSONDataLoader()
-            # JSON'ları yükle ve bellek yapıları oluştur
-            loader.load_all_grade_files()
-            loader.extract_subjects()
-            loader.extract_units()
-            loader.extract_topics()
-
-            # Grades: doğrudan SQL üret ve çalıştır
-            grades_sql = loader.generate_grades_sql()
-            if grades_sql:
-                self._exec(conn, grades_sql)
-
-            # Haritaları çıkar ve alt tabloları sırayla doldur
-            grade_id_map = loader.get_grade_id_map(conn)
-            subjects_sql = loader.generate_subjects_sql(grade_id_map)
-            if subjects_sql:
-                self._exec(conn, subjects_sql)
-
-            subject_id_map = loader.get_subject_id_map(conn)
-            units_sql = loader.generate_units_sql(subject_id_map)
-            if units_sql:
-                self._exec(conn, units_sql)
-
-            unit_id_map = loader.get_unit_id_map(conn)
-            topics_sql = loader.generate_topics_sql(unit_id_map)
-            if topics_sql:
-                self._exec(conn, topics_sql)
-        except Exception:
-            # Sessizce geç: JSON yoksa ya da hatalıysa uygulamayı engellemesin
-            pass
+        """Geriye dönük uyumluluk: yeni akış SeedManager üzerinden."""
+        self.seed_manager.seed_curriculum()
