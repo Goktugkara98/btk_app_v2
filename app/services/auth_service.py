@@ -10,7 +10,7 @@ from functools import wraps
 from flask import session, redirect, url_for, jsonify, request
 from typing import Optional, Dict, Any, Callable
 from werkzeug.security import check_password_hash
-from app.database.user_repository import UserRepository
+from app.database.repositories.user_repository import UserRepository
 
 class AuthenticationService:
     """

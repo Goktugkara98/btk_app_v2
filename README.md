@@ -90,9 +90,8 @@ btk_app/
 │   │
 │   ├── database/               # Veritabanı modülü
 │   │   ├── db_connection.py    # Veritabanı bağlantısı
-│   │   ├── db_migrations.py    # Tablo oluşturma
-│   │   ├── quiz_data_loader.py  # Quiz veri yükleme
-│   │   ├── curriculum_data_loader.py # Müfredat veri yükleme
+│   │   ├── db_migrations_v2.py # Migrasyon ve seeding orkestrasyonu
+│   │   ├── seeders/            # Curriculum, Questions, Users seeder'ları
 │   │   ├── user_repository.py  # Kullanıcı repository
 │   │   ├── quiz_repository.py  # Quiz repository
 │   │   ├── quiz_session_repository.py # Quiz session repository
@@ -341,6 +340,9 @@ python scripts/seed.py
 # Sadece soruları belirli bir dizinden seed et
 python scripts/seed.py --questions --dir app/data/quiz_banks
 
+# Tek bir soru dosyasını seed et
+python scripts/seed.py --questions --file app/data/quiz_banks/grade_8/turkish/verbals/participle.json
+
 # Varsayılan geliştirme kullanıcılarını seed et
 python scripts/seed.py --users
 ```
@@ -350,6 +352,7 @@ Notlar:
 - Production ortamında otomatik seeding'i kapatmanız önerilir (`AUTO_SEED_* = False`).
 - Windows'ta komutları `python` yerine `py` ile çalıştırmanız gerekebilir (örn: `py scripts\migrate.py --indexes`).
 - `--force-recreate` varsayılan olarak onay ister. `-y/--yes` ile prompt olmadan çalıştırabilirsiniz.
+- Eski `app/database/quiz_data_cli.py` CLI script'i depreke edilmiştir; tüm seeding akışları `scripts/seed.py` üzerinden yürütülür.
 
 ## 🔧 API Dokümantasyonu
 

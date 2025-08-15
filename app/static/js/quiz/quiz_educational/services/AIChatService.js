@@ -181,13 +181,26 @@ class AIChatService {
 
     /**
      * Kullanıcının yazdığı bir mesajı AI servisine gönderir ve yanıtını alır.
-     * @param {string} message - Kullanıcının gönderdiği metin mesajı.
-     * @param {number} currentQuestionId - Mesajın ilgili olduğu soru kimliği.
-     * @param {boolean} isFirstMessage - Bu mesajın o soru için ilk mesaj olup olmadığı.
-     * @param {('direct'|'wrong_answer'|'quick_action')} scenarioType - Mesaj senaryosu.
+     * @param {Object} messageData - Mesaj verisi paketi
+     * @param {string} messageData.message - Kullanıcının gönderdiği metin mesajı
+     * @param {number} messageData.questionId - Mesajın ilgili olduğu soru kimliği
+     * @param {boolean} messageData.isFirstMessage - Bu mesajın o soru için ilk mesaj olup olmadığı
+     * @param {('direct'|'wrong_answer'|'quick_action')} messageData.scenarioType - Mesaj senaryosu
+     * @param {Object} messageData.questionContext - Soru bilgileri (text, options)
+     * @param {Object} messageData.userAction - Kullanıcı aksiyonu detayları
      * @returns {Promise<Object>} Başarılı ise AI yanıtını içeren nesne.
      */
-    async sendChatMessage(message, currentQuestionId = null, isFirstMessage = false, scenarioType = 'direct') {
+    async sendChatMessage(messageData) {
+      // Mesaj verilerini çıkar
+      const {
+        message,
+        questionId = null,
+        isFirstMessage = false,
+        scenarioType = 'direct',
+        questionContext = null,
+        userAction = {}
+      } = messageData;
+
       if (!this.isEnabled || !this.chatSessionId) {
         throw new Error('AI Chat service is not available or session not started.');
       }
@@ -195,7 +208,7 @@ class AIChatService {
         throw new Error('Message cannot be empty.');
       }
 
-      const key = currentQuestionId || 'default';
+      const key = questionId || 'default';
       const prevController = this.messageControllers.get(key);
       if (prevController) {
         prevController.abort();
@@ -204,18 +217,24 @@ class AIChatService {
       this.messageControllers.set(key, controller);
       
       try {
+        // Gelişmiş request body oluştur
         const requestBody = {
           message: message.trim(),
           chat_session_id: this.chatSessionId,
-          question_id: currentQuestionId,
+          question_id: questionId,
+          is_first_message: !!isFirstMessage,
+          scenario_type: scenarioType,
+          user_action: {
+            type: userAction.type || 'direct_message', // 'direct_message', 'wrong_answer', 'quick_action'
+            trigger: userAction.trigger || 'user_input', // 'user_input', 'auto_trigger', 'button_click'
+            context: userAction.context || {} // Ek bağlam bilgileri
+          },
           debug: window.QUIZ_CONFIG?.aiDebug ?? true
         };
-        // Senaryo ve ilk mesaj bayrağını ekle
-        requestBody.is_first_message = !!isFirstMessage;
-        requestBody.scenario_type = scenarioType || 'direct';
 
-        if (isFirstMessage && currentQuestionId) {
-          requestBody.question_context = this.getCurrentQuestionData();
+        // Soru bağlamını ekle (her zaman, sadece ilk mesajda değil)
+        if (questionContext || (questionId && this.getCurrentQuestionData())) {
+          requestBody.question_context = questionContext || this.getCurrentQuestionData();
         }
 
         // Debug: Log the exact outgoing request payload to the console (F12)
@@ -281,13 +300,25 @@ class AIChatService {
      * ========================================================================= */
 
     /**
-     * Önceden tanımlanmış eylemi (yalnızca "açıkla") AI servisine gönderir.
-     * @param {string} action - Gerçekleştirilecek eylemin adı ('explain').
-     * @param {number} questionId - Eylemin ilgili olduğu soru kimliği.
-     * @param {boolean} isFirstMessage - Bu eylemin o soru için ilk etkileşim olup olmadığı.
+     * Önceden tanımlanmış eylemi AI servisine gönderir.
+     * @param {Object} actionData - Eylem verisi paketi
+     * @param {string} actionData.action - Gerçekleştirilecek eylemin adı ('explain')
+     * @param {number} actionData.questionId - Eylemin ilgili olduğu soru kimliği
+     * @param {boolean} actionData.isFirstMessage - Bu eylemin o soru için ilk etkileşim olup olmadığı
+     * @param {Object} actionData.questionContext - Soru bilgileri
+     * @param {Object} actionData.userAction - Kullanıcı aksiyonu detayları
      * @returns {Promise<Object>} Başarılı ise AI yanıtını içeren nesne.
      */
-    async sendQuickAction(action, questionId, isFirstMessage = false) {
+    async sendQuickAction(actionData) {
+      // Eylem verilerini çıkar
+      const {
+        action,
+        questionId = null,
+        isFirstMessage = false,
+        questionContext = null,
+        userAction = {}
+      } = actionData;
+
       if (!this.isEnabled || !this.chatSessionId) {
         return { success: false, error: 'AI Chat service is not available or session not started.' };
       }
@@ -301,18 +332,25 @@ class AIChatService {
       this.quickActionControllers.set(key, controller);
 
       try {
+        // Gelişmiş request body oluştur
         const requestBody = {
           action,
           chat_session_id: this.chatSessionId,
           question_id: questionId,
+          is_first_message: !!isFirstMessage,
+          scenario_type: 'quick_action',
+          user_action: {
+            type: 'quick_action',
+            trigger: 'button_click',
+            action_name: action,
+            context: userAction.context || {}
+          },
           debug: window.QUIZ_CONFIG?.aiDebug ?? true
         };
-        // Senaryo ve ilk mesaj bayrağını ekle
-        requestBody.is_first_message = !!isFirstMessage;
-        requestBody.scenario_type = 'quick_action';
 
-        if (isFirstMessage && questionId) {
-          requestBody.question_context = this.getCurrentQuestionData();
+        // Soru bağlamını ekle (her zaman)
+        if (questionContext || (questionId && this.getCurrentQuestionData())) {
+          requestBody.question_context = questionContext || this.getCurrentQuestionData();
         }
 
         // Debug: Log the exact outgoing quick-action request payload

@@ -24,7 +24,7 @@
 # =============================================================================
 # 3.0. GEREKLİ KÜTÜPHANELER VE MODÜLLER
 # =============================================================================
-from flask import Blueprint, render_template, session, redirect, url_for, request
+from flask import Blueprint, render_template, session, redirect, url_for, request, current_app
 
 # Import authentication service
 try:
@@ -135,7 +135,7 @@ def quiz_auto_start():
     """4.1.7. Otomatik quiz başlatma - testuser ile 8. sınıf Türkçe sıfat-fiil konusu."""
     try:
         from app.database.db_connection import DatabaseConnection
-        from app.database.user_repository import UserRepository
+        from app.database.repositories.user_repository import UserRepository
         from app.services.quiz_session_service import QuizSessionService
         import hashlib
         
@@ -285,7 +285,7 @@ def quiz_auto_start_educational():
     """4.1.9. Otomatik öğretici quiz başlatma - testuser ile 8. sınıf Türkçe sıfat-fiil konusu."""
     try:
         from app.database.db_connection import DatabaseConnection
-        from app.database.user_repository import UserRepository
+        from app.database.repositories.user_repository import UserRepository
         from app.services.quiz_session_service import QuizSessionService
         import hashlib
         
@@ -455,16 +455,13 @@ def initialize_database():
     try:
         from app.database.db_connection import DatabaseConnection
         from app.database.db_migrations_v2 import DatabaseMigrations
-        from app.database.quiz_data_loader import QuestionLoader
         
-        # Run migrations
+        # Run migrations and seed questions via orchestrator
         db_connection = DatabaseConnection()
         migrations = DatabaseMigrations(db_connection)
         migrations.run_migrations()
-        
-        # Load question data
-        question_loader = QuestionLoader(db_connection=db_connection)
-        results = question_loader.process_all_question_files()
+        questions_dir = current_app.config.get('QUESTIONS_DIR', 'app/data/quiz_banks')
+        results = migrations.seed_questions_from_dir(questions_dir)
         
         total_success = 0
         total_questions = 0
@@ -477,4 +474,4 @@ def initialize_database():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return f"❌ Database initialization error: {str(e)}", 500 
+        return f"❌ Database initialization error: {str(e)}", 500

@@ -8,7 +8,7 @@ import uuid
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
-from .db_connection import DatabaseConnection
+from ..db_connection import DatabaseConnection
 
 class ChatRepository:
     """

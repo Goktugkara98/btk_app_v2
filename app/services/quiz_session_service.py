@@ -31,7 +31,7 @@ from datetime import datetime
 import time
 import os
 
-from app.database.quiz_session_repository import QuizSessionRepository
+from app.database.repositories.quiz_session_repository import QuizSessionRepository
 
 # =============================================================================
 # 4.0. QUIZSESSIONSERVICE SINIFI

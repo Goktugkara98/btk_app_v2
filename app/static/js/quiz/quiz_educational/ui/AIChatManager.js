@@ -362,12 +362,26 @@ class AIChatManager {
             // AI'ya mesaj gönder
             // İlk etkileşimde soru bağlamını (question_context) ekle
             const isFirstForInteraction = !this.firstInteractionSent.has(qId);
-            const response = await this.aiChatService.sendChatMessage(
-                message,
-                this.currentQuestionId,
-                isFirstForInteraction,
-                'wrong_answer'
-            );
+            
+            // Mesaj verisi paketini hazırla
+            const messageData = {
+                message: message,
+                questionId: this.currentQuestionId,
+                isFirstMessage: isFirstForInteraction,
+                scenarioType: 'wrong_answer',
+                questionContext: this.aiChatService.getCurrentQuestionData(),
+                userAction: {
+                    type: 'wrong_answer',
+                    trigger: 'auto_trigger',
+                    context: {
+                        selectedAnswer: userAnswerText2,
+                        correctAnswer: correctAnswerText2,
+                        timestamp: now
+                    }
+                }
+            };
+            
+            const response = await this.aiChatService.sendChatMessage(messageData);
             
             if (response.success) {
                 // AI yanıtını chat'e ekle
@@ -595,6 +609,85 @@ class AIChatManager {
         });
     }
 
+    /**
+     * handleQuickAction - Hızlı eylem handler'ı
+     */
+    async handleQuickAction(action) {
+        if (!this.sessionId) {
+            this.getSessionId();
+            if (!this.sessionId) {
+                this.addMessage('system', 'Quiz session bilgisi bulunamadı. Lütfen sayfayı yenileyin. 🔄');
+                return;
+            }
+        }
+        
+        // Chat session'ı başlat (eğer başlatılmamışsa)
+        await this.initializeChatSession();
+        
+        // Bu soru için unique request ID oluştur
+        const requestId = ++this.requestCounter;
+        this.pendingRequests.set(this.currentQuestionId, requestId);
+        
+        // Loading durumu göster
+        this.showTyping();
+        
+        // İlk etkileşim kontrolü (kullanıcı mesajlarından bağımsız)
+        const isFirstMessage = !this.firstInteractionSent.has(this.currentQuestionId);
+        
+        try {
+            // Eylem verisi paketini hazırla
+            const actionData = {
+                action: action,
+                questionId: this.currentQuestionId,
+                isFirstMessage: isFirstMessage,
+                questionContext: this.aiChatService.getCurrentQuestionData(),
+                userAction: {
+                    type: 'quick_action',
+                    trigger: 'button_click',
+                    action_name: action,
+                    context: {
+                        buttonId: `quick-action-${action}`,
+                        timestamp: Date.now()
+                    }
+                }
+            };
+            
+            const response = await this.aiChatService.sendQuickAction(actionData);
+            
+            // Typing'i gizle
+            this.hideTyping();
+            
+            // Request geçerliliğini kontrol et
+            const currentRequestId = this.pendingRequests.get(this.currentQuestionId);
+            if (currentRequestId !== requestId) {
+                return; // Bu request artık geçerli değil, cevabı gösterme
+            }
+            
+            // Request'i temizle
+            this.pendingRequests.delete(this.currentQuestionId);
+            
+            // İlk etkileşim başarıyla gönderildiyse işaretle
+            if (isFirstMessage) {
+                this.firstInteractionSent.add(this.currentQuestionId);
+            }
+            
+            // AI cevabını göster
+            if (response.success && response.message) {
+                const actionText = 'Açıklama';
+                this.addMessage('ai', response.message, actionText);
+            } else {
+                this.addMessage('system', `Üzgünüm, ${action} alınamadı: ${response.error || 'Bilinmeyen hata'}`);
+            }
+        } catch (error) {
+            this.hideTyping();
+            
+            // Request'i temizle
+            this.pendingRequests.delete(this.currentQuestionId);
+            
+            this.addMessage('system', 'Bağlantı hatası. Lütfen tekrar deneyin. 😞');
+        }
+    }
+
   /* =========================================================================
    * 5) Yardımcılar | Helpers
    * ========================================================================= */
@@ -655,17 +748,30 @@ class AIChatManager {
         const isFirstMessage = !this.firstUserMessageSent.has(this.currentQuestionId);
         
         try {
-            // AI'dan yanıt al
-            const response = await this.aiChatService.sendChatMessage(
-                message, 
-                this.currentQuestionId,
-                isFirstMessage,
-                'direct'
-            );
+            // Mesaj verisi paketini hazırla
+            const messageData = {
+                message: message,
+                questionId: this.currentQuestionId,
+                isFirstMessage: isFirstMessage,
+                scenarioType: 'direct',
+                questionContext: this.aiChatService.getCurrentQuestionData(),
+                userAction: {
+                    type: 'direct_message',
+                    trigger: 'user_input',
+                    context: {
+                        inputMethod: 'text_input',
+                        messageLength: message.length
+                    }
+                }
+            };
             
+            // AI'dan yanıt al
+            const response = await this.aiChatService.sendChatMessage(messageData);
+            
+            // Typing'i gizle
             this.hideTyping();
             
-            // Request'in hala geçerli olup olmadığını kontrol et
+            // Request geçerliliğini kontrol et
             const currentRequestId = this.pendingRequests.get(this.currentQuestionId);
             if (currentRequestId !== requestId) {
                 return; // Bu request artık geçerli değil, cevabı gösterme
@@ -677,75 +783,13 @@ class AIChatManager {
             // İlk kullanıcı mesajı başarıyla gönderildiyse işaretle
             if (isFirstMessage) {
                 this.firstUserMessageSent.add(this.currentQuestionId);
-                this.firstInteractionSent.add(this.currentQuestionId);
-                // Geriye dönük uyumluluk için
-                this.firstMessageSent.add(this.currentQuestionId);
             }
             
             // AI cevabını göster
             if (response.success && response.message) {
                 this.addMessage('ai', response.message);
             } else {
-                this.addMessage('system', `Üzgünüm, bir hata oluştu: ${response.error || 'Bilinmeyen hata'}`);
-            }
-        } catch (error) {
-            this.hideTyping();
-            
-            // Request'i temizle
-            this.pendingRequests.delete(this.currentQuestionId);
-            
-            this.addMessage('system', 'Bağlantı hatası. Lütfen tekrar deneyin. 😞');
-        }
-    }
-
-    /**
-     * handleQuickAction - Hızlı eylem işler
-     */
-    async handleQuickAction(action) {
-        
-        if (!this.sessionId || !this.currentQuestionId) {
-            this.addMessage('system', 'Önce bir soru yüklenmeli. 🤨');
-            return;
-        }
-
-        // Chat session'ı başlat (eğer başlatılmamışsa)
-        await this.initializeChatSession();
-
-        // Bu soru için unique request ID oluştur
-        const requestId = ++this.requestCounter;
-        this.pendingRequests.set(this.currentQuestionId, requestId);
-
-        // Loading durumu göster
-        this.showTyping();
-        
-        // İlk etkileşim kontrolü (hızlı eylemler için)
-        const isFirstMessage = !this.firstInteractionSent.has(this.currentQuestionId);
-        
-        try {
-            const response = await this.aiChatService.sendQuickAction(action, this.currentQuestionId, isFirstMessage);
-            
-            this.hideTyping();
-            
-            // Request'in hala geçerli olup olmadığını kontrol et
-            const currentRequestId = this.pendingRequests.get(this.currentQuestionId);
-            if (currentRequestId !== requestId) {
-                return; // Bu request artık geçerli değil, cevabı gösterme
-            }
-            
-            // Request'i temizle
-            this.pendingRequests.delete(this.currentQuestionId);
-            
-            // İlk etkileşim başarıyla gönderildiyse işaretle
-            if (isFirstMessage) {
-                this.firstInteractionSent.add(this.currentQuestionId);
-            }
-            
-            // AI cevabını göster
-            if (response.success && response.message) {
-                const actionText = 'Açıklama';
-                this.addMessage('ai', response.message, actionText);
-            } else {
-                this.addMessage('system', `Üzgünüm, ${action} alınamadı: ${response.error || 'Bilinmeyen hata'}`);
+                this.addMessage('system', `Üzgünüm, mesaj gönderilemedi: ${response.error || 'Bilinmeyen hata'}`);
             }
         } catch (error) {
             this.hideTyping();

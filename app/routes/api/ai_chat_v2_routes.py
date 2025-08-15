@@ -269,21 +269,43 @@ def send_chat_message():
                 'message': 'Request data is required'
             }), 400
         
-        # Required fields
-        required_fields = ['message', 'chat_session_id']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'{field} is required'
-                }), 400
+        # Handle both old and new message structure
+        if 'message' in data and isinstance(data['message'], str):
+            # Old structure - direct message string
+            message = data['message']
+            chat_session_id = data['chat_session_id']
+            question_id = data.get('question_id')
+            question_context = data.get('question_context')
+            is_first_message = bool(data.get('is_first_message', False))
+            scenario_type = data.get('scenario_type', 'direct')
+            user_action = data.get('userAction', {})
+        elif 'message' in data and isinstance(data['message'], dict):
+            # New structured message format
+            message_data = data['message'] if 'message' in data else data
+            message = message_data.get('message', '')
+            chat_session_id = data['chat_session_id']
+            question_id = message_data.get('questionId')
+            question_context = message_data.get('questionContext')
+            is_first_message = bool(message_data.get('isFirstMessage', False))
+            scenario_type = message_data.get('scenarioType', 'direct')
+            user_action = message_data.get('userAction', {})
+        else:
+            # New direct structure
+            message = data.get('message', '')
+            chat_session_id = data['chat_session_id']
+            question_id = data.get('questionId')
+            question_context = data.get('questionContext')
+            is_first_message = bool(data.get('isFirstMessage', False))
+            scenario_type = data.get('scenarioType', 'direct')
+            user_action = data.get('userAction', {})
         
-        message = data['message']
-        chat_session_id = data['chat_session_id']
-        question_id = data.get('question_id')
-        question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
-        is_first_message = bool(data.get('is_first_message', False))
-        scenario_type = data.get('scenario_type', 'direct')
+        # Required fields validation
+        if not message or not chat_session_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'message and chat_session_id are required'
+            }), 400
+        
         debug = bool(data.get('debug'))
         
         # Mesaj validasyonu
@@ -309,29 +331,29 @@ def send_chat_message():
         import time
         start_time = time.time()
         
-        # Gemini için structured contents oluştur (geçmiş + render edilmiş şablon)
-        built = chat_session_service.build_gemini_contents_scenario(
-            chat_session_id=chat_session_id,
-            user_message=sanitized_message,
-            scenario_type=scenario_type,
-            is_first_message=is_first_message,
-            question_context=question_context,
-            files_only=True,
-        )
-        contents = built.get('contents', [])
-        final_user_text = built.get('final_user_text', '')
-        if not contents or not str(final_user_text).strip():
+        # Message servisine tüm mesaj bilgilerini gönder ve tam promptu al
+        message_info = {
+            'user_message': sanitized_message,
+            'scenario_type': scenario_type,
+            'is_first_message': is_first_message,
+            'question_context': question_context,
+            'user_action': user_action,
+            'question_id': question_id,
+            'chat_session_id': chat_session_id
+        }
+        
+        # Message servisinden tam promptu ve Gemini contents'ini al
+        processed_message = chat_message_service.process_message_with_full_prompt(message_info)
+        
+        if not processed_message['success']:
             return jsonify({
                 'status': 'error',
-                'message': 'Scenario template not found or empty'
+                'message': processed_message['error']
             }), 500
-        
-        # Kullanıcı mesajını artık geçmişe ekle (prompt zaten oluşturuldu)
-        user_metadata = chat_message_service.create_message_metadata('user', question_id=question_id)
-        chat_session_service.add_message(
-            chat_session_id, 'user', sanitized_message,
-            action_type='general', metadata=user_metadata
-        )
+            
+        contents = processed_message['contents']
+        full_prompt = processed_message['full_prompt']
+        final_user_text = processed_message['final_user_text']
 
         # AI'dan yanıt al (structured contents)
         ai_response = gemini_service.generate_content(contents=contents)
@@ -404,21 +426,43 @@ def quick_action():
                 'message': 'Request data is required'
             }), 400
         
-        # Required fields
-        required_fields = ['action', 'chat_session_id', 'question_id']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'{field} is required'
-                }), 400
+        # Handle both old and new action structure
+        if 'action' in data and isinstance(data['action'], str):
+            # Old structure - direct action string
+            action = data['action']
+            chat_session_id = data['chat_session_id']
+            question_id = data['question_id']
+            question_context = data.get('question_context')
+            is_first_message = bool(data.get('is_first_message', False))
+            scenario_type = data.get('scenario_type', 'quick_action')
+            user_action = data.get('userAction', {})
+        elif 'action' in data and isinstance(data['action'], dict):
+            # New structured action format
+            action_data = data['action'] if 'action' in data else data
+            action = action_data.get('action', '')
+            chat_session_id = data['chat_session_id']
+            question_id = action_data.get('questionId')
+            question_context = action_data.get('questionContext')
+            is_first_message = bool(action_data.get('isFirstMessage', False))
+            scenario_type = 'quick_action'
+            user_action = action_data.get('userAction', {})
+        else:
+            # New direct structure
+            action = data.get('action', '')
+            chat_session_id = data['chat_session_id']
+            question_id = data.get('questionId')
+            question_context = data.get('questionContext')
+            is_first_message = bool(data.get('isFirstMessage', False))
+            scenario_type = 'quick_action'
+            user_action = data.get('userAction', {})
         
-        action = data['action']
-        chat_session_id = data['chat_session_id']
-        question_id = data['question_id']
-        question_context = data.get('question_context')  # Yeni: Soru ve şıkların içeriği
-        is_first_message = bool(data.get('is_first_message', False))
-        scenario_type = data.get('scenario_type', 'quick_action')
+        # Required fields validation
+        if not action or not chat_session_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'action and chat_session_id are required'
+            }), 400
+        
         debug = bool(data.get('debug'))
         
         # Chat session kontrol
@@ -461,7 +505,7 @@ def quick_action():
             }), 503
         
         # Senaryoya göre structured contents oluştur (yalnız dosya bazlı şablon zorunlu)
-        built = chat_session_service.build_gemini_contents_scenario(
+        built = chat_message_service.build_gemini_contents_for_scenario(
             chat_session_id=chat_session_id,
             user_message='',
             scenario_type='quick_action',
@@ -477,6 +521,15 @@ def quick_action():
                 'status': 'error',
                 'message': 'Invalid action or template not found'
             }), 400
+        
+        # Enhanced metadata for quick action
+        action_metadata = {
+            'action_name': action,
+            'question_id': question_id,
+            'scenario_type': scenario_type,
+            'user_action': user_action,
+            'is_first_message': is_first_message
+        }
         
         # AI'dan yanıt al (structured contents)
         ai_response = gemini_service.generate_content(contents=contents)
@@ -575,7 +628,7 @@ def reload_scenarios():
                 'status': 'error',
                 'message': 'Chat session service not available'
             }), 503
-        ok = chat_session_service.reload_scenarios()
+        ok = chat_message_service.reload_scenarios()
         return jsonify({
             'status': 'success' if ok else 'error',
             'reloaded': ok

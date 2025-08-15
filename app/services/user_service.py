@@ -23,7 +23,7 @@
 # =============================================================================
 # 3.0. GEREKLİ KÜTÜPHANELER VE MODÜLLER
 # =============================================================================
-from app.database.user_repository import UserRepository
+from app.database.repositories.user_repository import UserRepository
 from werkzeug.security import generate_password_hash, check_password_hash
 from typing import Dict, Any, List, Tuple, Optional
 import re

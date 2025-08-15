@@ -1,0 +1,21 @@
+{
+  "intro": "Sen Daima adında yardımcı bir AI öğretmensin. Öğrencilere quiz sorularında yardım ediyorsun. Açıklamalarını basit, anlaşılır ve eğitici yapmalısın.",
+  "context": {
+    "history": {
+      "last_n": 2,
+      "truncate_chars": 200,
+      "label_user": "Kullanıcı",
+      "label_ai": "AI"
+    },
+    "question": {
+      "include_on_first": true,
+      "include_on_followup": true,
+      "labels": {
+        "question": "Soru",
+        "options": "Şıklar"
+      },
+      "option_format": "{index}) {text}"
+    }
+  },
+  "vars": {}
+}

@@ -21,7 +21,11 @@
 # 3. Genel API: Veri Doldurma ve Bakım (Public API: Data Seeding & Maintenance)
 #    3.1. seed_initial_data(self)
 #    3.2. create_missing_indexes(self)
-#    3.3. get_table_info(self)
+#    3.3. seed_default_users(self)
+#    3.4. seed_questions_from_dir(self)
+#    3.4.b. seed_questions_file(self)
+#    3.5. seed_questions_if_empty(self)
+#    3.6. get_table_info(self)
 #
 # 4. Dahili Yardımcılar: Veritabanı İşlemleri (Internal Helpers: Database Operations)
 #    4.1. _exec(self, conn, sql, params)
@@ -33,7 +37,7 @@
 #    5.2. _seed_curriculum_from_json(self, conn)
 # =============================================================================
 
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 from mysql.connector import Error as MySQLError
 
 from app.database.db_connection import DatabaseConnection
@@ -160,9 +164,66 @@ class DatabaseMigrations:
         """
         return self.index_manager.ensure_indexes()
 
+    def seed_default_users(self) -> bool:
+        """
+        3.3. Geliştirme/test için varsayılan kullanıcıları ekler (idempotent).
+             Tablo varlığını garanti eder ve UsersSeeder'a delege eder.
+        """
+        try:
+            if not self.schema_manager.ensure_tables():
+                return False
+            return self.seed_manager.seed_default_users()
+        except Exception:
+            return False
+
+    def seed_questions_from_dir(self, directory: str) -> Dict[str, Tuple[int, int]]:
+        """
+        3.4. Belirtilen dizindeki tüm soru JSON dosyalarını işler ve ekler.
+             Tablo varlığını garanti eder ve QuestionsSeeder'a delege eder.
+
+        Returns:
+            Dosya adı -> (başarılı, toplam) sözlüğü.
+        """
+        try:
+            if not self.schema_manager.ensure_tables():
+                return {}
+            return self.seed_manager.seed_questions_from_dir(directory)
+        except Exception:
+            return {}
+
+    def seed_questions_file(self, file_path: str) -> Tuple[int, int]:
+        """
+        3.4.b. Tek bir soru JSON dosyasını işler ve ekler.
+        """
+        try:
+            if not self.schema_manager.ensure_tables():
+                return (0, 0)
+            return self.seed_manager.seed_questions_file(file_path)
+        except Exception:
+            return (0, 0)
+
+    def seed_questions_if_empty(self, directory: str) -> Optional[Dict[str, Tuple[int, int]]]:
+        """
+        3.5. Veritabanında hiç soru yoksa, verilen dizinden soruları seed eder.
+
+        Returns:
+            Seed işlemi yapıldıysa sonuç sözlüğü, aksi halde None.
+        """
+        try:
+            if not self.schema_manager.ensure_tables():
+                return {}
+            with self.db as conn:
+                conn.cursor.execute("SELECT COUNT(*) as count FROM questions")
+                question_count = (conn.cursor.fetchone() or {}).get('count', 0)
+            if (question_count or 0) == 0:
+                return self.seed_manager.seed_questions_from_dir(directory)
+            return None
+        except Exception:
+            return {}
+
     def get_table_info(self) -> Dict[str, int]:
         """
-        3.3. Her tablodaki mevcut satır sayısını içeren bir sözlük döndürür.
+        3.6. Her tablodaki mevcut satır sayısını içeren bir sözlük döndürür.
              Veritabanının durumunu kontrol etmek için kullanılır.
         
         Returns:

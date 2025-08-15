@@ -2,7 +2,6 @@ from flask import Flask, session
 from config import Config
 from app.database.db_connection import DatabaseConnection
 from app.database.db_migrations_v2 import DatabaseMigrations
-from app.database.seeders import SeedManager
 import os
 import secrets
 
@@ -25,7 +24,6 @@ def create_app(config_class=Config):
     try:
         db_connection = DatabaseConnection()
         migrations = DatabaseMigrations(db_connection)
-        seed_manager = SeedManager(db_connection)
 
         # Gated operations per environment flags
         if app.config.get('AUTO_MIGRATE', True):
@@ -40,15 +38,11 @@ def create_app(config_class=Config):
             migrations.create_missing_indexes()
 
         if app.config.get('AUTO_SEED_USERS', False):
-            seed_manager.seed_default_users()
+            migrations.seed_default_users()
 
         if app.config.get('AUTO_SEED_QUESTIONS', True):
-            with db_connection as conn:
-                conn.cursor.execute("SELECT COUNT(*) as count FROM questions")
-                question_count = (conn.cursor.fetchone() or {}).get('count', 0)
-            if (question_count or 0) == 0:
-                questions_dir = app.config.get('QUESTIONS_DIR', 'app/data/quiz_banks')
-                seed_manager.seed_questions_from_dir(questions_dir)
+            questions_dir = app.config.get('QUESTIONS_DIR', 'app/data/quiz_banks')
+            migrations.seed_questions_if_empty(questions_dir)
 
         app.config['DB_CONNECTION'] = db_connection
         

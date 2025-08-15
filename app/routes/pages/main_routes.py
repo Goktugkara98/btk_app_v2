@@ -58,4 +58,9 @@ def contact():
 def serve_data(filename):
     """4.2.1. app/data dizininden veri dosyalarını sunar."""
     data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
-    return send_from_directory(data_dir, filename) 
+    return send_from_directory(data_dir, filename)
+
+@main_bp.route('/favicon.ico')
+def favicon():
+    """Favicon dosyasını sunar."""
+    return send_from_directory(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static'), 'favicon.ico')

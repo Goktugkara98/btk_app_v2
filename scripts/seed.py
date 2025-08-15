@@ -9,7 +9,6 @@ if str(ROOT) not in sys.path:
 
 from app.database.db_connection import DatabaseConnection
 from app.database.db_migrations_v2 import DatabaseMigrations
-from app.database.seeders import SeedManager
 
 DEFAULT_QUESTIONS_DIR = 'app/data/quiz_banks'
 
@@ -25,6 +24,12 @@ def main(argv=None) -> int:
         "--questions",
         action="store_true",
         help="Seed questions and options from JSON files",
+    )
+    parser.add_argument(
+        "--file",
+        dest="file",
+        default=None,
+        help="Path to a single question JSON file to seed",
     )
     parser.add_argument(
         "--users",
@@ -53,7 +58,6 @@ def main(argv=None) -> int:
 
     db = DatabaseConnection()
     migrations = DatabaseMigrations(db)
-    seed_manager = SeedManager(db)
 
     if not args.no_ensure:
         migrations.run_migrations()
@@ -61,22 +65,25 @@ def main(argv=None) -> int:
     overall_ok = True
 
     if do_curriculum:
-        ok_grades = seed_manager.seed_grades_if_empty()
-        ok_curr = seed_manager.seed_curriculum()
-        overall_ok = overall_ok and ok_grades and ok_curr
-        print(f"seed grades_if_empty: {ok_grades}")
-        print(f"seed curriculum: {ok_curr}")
+        ok_curr_all = migrations.seed_initial_data()
+        overall_ok = overall_ok and ok_curr_all
+        print(f"seed initial curriculum (grades+subjects+units+topics): {ok_curr_all}")
 
     if do_questions:
-        directory = args.directory or DEFAULT_QUESTIONS_DIR
-        results = seed_manager.seed_questions_from_dir(directory)
-        total_success = sum((s for (s, t) in results.values()), 0)
-        total_questions = sum((t for (s, t) in results.values()), 0)
-        print(f"seed questions from '{directory}': {total_success}/{total_questions} inserted")
-        overall_ok = overall_ok and (total_success >= 0)  # not strictly failure-driven
+        if args.file:
+            success, total = migrations.seed_questions_file(args.file)
+            print(f"seed questions file '{args.file}': {success}/{total} inserted")
+            overall_ok = overall_ok and (success >= 0)
+        else:
+            directory = args.directory or DEFAULT_QUESTIONS_DIR
+            results = migrations.seed_questions_from_dir(directory)
+            total_success = sum((s for (s, t) in results.values()), 0)
+            total_questions = sum((t for (s, t) in results.values()), 0)
+            print(f"seed questions from '{directory}': {total_success}/{total_questions} inserted")
+            overall_ok = overall_ok and (total_success >= 0)  # not strictly failure-driven
 
     if do_users:
-        ok_users = seed_manager.seed_default_users()
+        ok_users = migrations.seed_default_users()
         print(f"seed default users: {ok_users}")
         overall_ok = overall_ok and ok_users
 
