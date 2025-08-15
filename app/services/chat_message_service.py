@@ -48,6 +48,40 @@ class ChatMessageService:
             self.scenario_base_dir = os.path.join(app_dir, 'data', 'ai_scenarios')
         except Exception:
             self.scenario_base_dir = None
+    
+    # =============================================================================
+    # MESSAGE STORAGE
+    # =============================================================================
+    
+    def add_message(self, chat_session_id: str, message_type: str, content: str, action_type: Optional[str] = None, 
+                   ai_model: Optional[str] = None, prompt_used: Optional[str] = None, 
+                   response_time_ms: Optional[int] = None, metadata: Optional[Dict] = None) -> Optional[int]:
+        """
+        Chat session'a yeni mesaj ekler.
+        
+        Args:
+            chat_session_id: Chat session ID
+            message_type: 'user', 'ai', 'system'
+            content: Mesaj içeriği
+            action_type: Action tipi (optional)
+            ai_model: Kullanılan AI modeli (optional)
+            prompt_used: AI'ya gönderilen prompt (optional)
+            response_time_ms: Yanıt süresi (optional)
+            metadata: Ek bilgiler (optional)
+            
+        Returns:
+            Message ID veya None
+        """
+        if self.chat_repo:
+            try:
+                return self.chat_repo.add_message(
+                    chat_session_id, message_type, content, action_type, 
+                    ai_model, prompt_used, response_time_ms, metadata
+                )
+            except Exception as e:
+                print(f"[ERROR] Failed to add message: {e}")
+                return None
+        return None
         
         # Quick action template base directory (file-based per action)
         self.quick_action_template_dir = os.path.abspath(

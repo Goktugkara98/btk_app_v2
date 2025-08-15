@@ -153,7 +153,7 @@ def start_chat_session():
         # Eğer yeni session oluşturulduysa welcome mesajı ekle
         if chat_session_id and not chat_session_service.get_session(chat_session_id):
             welcome_message = chat_message_service.create_system_message('session_started')
-            chat_session_service.add_message(
+            chat_message_service.add_message(
                 chat_session_id, 'system', welcome_message, 
                 metadata={'question_id': question_id}
             )
@@ -377,7 +377,7 @@ def send_chat_message():
             ai_metadata['prompt_contents'] = contents
         except Exception:
             pass
-        ai_message_id = chat_session_service.add_message(
+        ai_message_id = chat_message_service.add_message(
             chat_session_id, 'ai', formatted_response,
             action_type='general',
             ai_model='gemini-2.5-flash',
@@ -550,7 +550,7 @@ def quick_action():
             ai_metadata['prompt_contents'] = contents
         except Exception:
             pass
-        chat_session_service.add_message(
+        chat_message_service.add_message(
             chat_session_id, 'ai', formatted_response,
             action_type='general',
             ai_model='gemini-2.5-flash',
