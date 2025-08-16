@@ -2,18 +2,21 @@
    MODERN AI CHAT PANEL - TEMIZ LAYOUT
    ============================================================================= */
 
-/* AI Chat Panel - Hero Style Glassmorphism */
-.quiz-body.educational .ai-chat-wrapper {
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+/* AI Chat Panel - Fixed Height Approach */
+.quiz-body.educational .ai-chat-wrapper,
+.quiz-body.educational #ai-chat-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    position: relative;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
@@ -59,18 +62,50 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #43cea2;
-    box-shadow: 0 0 0 2px rgba(67, 206, 162, 0.3);
-    animation: gentlePulse 2s ease-in-out infinite;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
 }
 
-/* AI Chat Messages - Ortada, büyük alan */
+.status-indicator.online {
+    background-color: #10b981;
+}
+
+.status-indicator.thinking {
+    background-color: #f59e0b;
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.typing {
+    background-color: #3b82f6;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+/* AI Chat Messages Container - Wrapper */
+.ai-chat-messages-container {
+    flex: 1 1 auto;
+    min-height: 350px !important;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* AI Chat Messages - İçerik alanı */
 .ai-chat-messages {
     flex: 1 1 auto;
     overflow-y: auto;
-    margin-bottom: 1rem;
-    height: 400px; /* Sabit yükseklik */
-    max-height: 400px; /* Maksimum yükseklik sınırı */
+    min-height: 0;
+    max-height: 100%;
     scroll-behavior: smooth; /* Yumuşak kaydırma */
     scrollbar-width: thin;
     scrollbar-color: rgba(124, 58, 237, 0.3) transparent;
@@ -111,6 +146,8 @@
     display: inline-block;
     max-width: 80%;
     border: 1px solid rgba(0, 0, 0, 0.1);
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .ai-message-text {
@@ -128,26 +165,38 @@
     text-align: right;
 }
 
-/* Quick Actions - Messages'ın altında, Input'un üstünde */
+/* Quick Actions - Alt kısım */
 .quick-actions {
     flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.quick-actions-row {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.quick-actions-row:first-child {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.quick-actions-row:last-child {
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .quick-action-btn {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.8);
     color: var(--color-text-primary, #1e293b);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -180,6 +229,7 @@
 /* AI Chat Input - En altta, sabit */
 .ai-chat-input {
     flex: 0 0 auto;
+    margin-bottom: 0;
 }
 
 .input-wrapper {
@@ -363,12 +413,14 @@
 /* Responsive Design */
 @media (max-width: 991px) {
     .quiz-body.educational .ai-chat-wrapper {
-        margin-top: 12px;
-        height: 400px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
     
     .ai-chat-messages {
-        min-height: 180px;
+        flex: 1 1 auto;
     }
     
     .quick-actions {
@@ -380,7 +432,10 @@
 
 @media (max-width: 767px) {
     .quiz-body.educational .ai-chat-wrapper {
-        height: 350px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         padding: 1rem;
     }
     
@@ -389,7 +444,7 @@
     }
     
     .ai-chat-messages {
-        min-height: 150px;
+        flex: 1 1 auto;
         margin-bottom: 1rem;
     }
     
@@ -473,8 +528,10 @@
     color: white;
     padding: 0.75rem 1rem;
     border-radius: 1rem 1rem 0.25rem 1rem;
-    max-width: 80%;
+    max-width: 70%;
     position: relative;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .user-message-text {

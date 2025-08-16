@@ -144,19 +144,32 @@ export class UIManager {
     // Seçenek Seçimi (Event Delegation ile)
     this.elements.optionsContainer?.addEventListener('click', (e) => {
       const optionElement = e.target.closest('.option-item');
+      console.log('[DEBUG] UIManager option clicked:', { optionElement, dataset: optionElement?.dataset });
+      
       if (optionElement?.dataset.questionId && optionElement?.dataset.optionId) {
         // Eğer bir cevap zaten gönderiliyorsa, yeni bir işlem yapma.
         if (stateManager.getState('isSubmitting')) {
+          console.log('[DEBUG] UIManager: Submission in progress, ignoring click');
           return;
         }
         
         const { questionId, optionId } = optionElement.dataset;
+        console.log('[DEBUG] UIManager extracted data:', { questionId, optionId });
+        
         const currentAnswers = stateManager.getState('answers');
         const currentAnswer = currentAnswers.get(parseInt(questionId, 10));
         const numericOptionId = parseInt(optionId, 10);
         
+        console.log('[DEBUG] UIManager current state:', { 
+          currentAnswers: Array.from(currentAnswers.entries()), 
+          currentAnswer, 
+          numericOptionId,
+          isAlreadySelected: parseInt(currentAnswer, 10) === numericOptionId
+        });
+        
         // Eğer tıklanan seçenek zaten seçiliyse, seçimi kaldır
-        if (String(currentAnswer) === String(numericOptionId)) {
+        if (parseInt(currentAnswer, 10) === numericOptionId) {
+          console.log('[DEBUG] UIManager: Removing already selected answer');
           // State'den cevabı kaldır
           eventBus.publish('answer:remove', { questionId });
           
@@ -171,7 +184,8 @@ export class UIManager {
         // Tıklanan seçeneğe 'selected' class'ını ekle.
         optionElement.classList.add('selected');
 
-        // Olay akışını basitleştir: doğrudan 'answer:submit' olayını yayınla.
+        console.log('[DEBUG] UIManager: Publishing answer:submit event:', { questionId, answer: optionId });
+        // Frontend-only validation: Cevabı gönder
         eventBus.publish('answer:submit', { questionId, answer: optionId });
       }
     });
@@ -289,8 +303,8 @@ export class UIManager {
 
     options.forEach((option, index) => {
       const optionElement = document.createElement('div');
-      // Tip uyumsuzluğunu çöz: her ikisini de string'e çevir
-      const isSelected = String(selectedAnswer) === String(option.id);
+      // Tip uyumsuzluğunu çöz: her ikisini de integer'a çevir
+      const isSelected = parseInt(selectedAnswer, 10) === parseInt(option.id, 10);
       
       optionElement.className = 'option-item' + (isSelected ? ' selected' : '');
       optionElement.dataset.questionId = questionId;

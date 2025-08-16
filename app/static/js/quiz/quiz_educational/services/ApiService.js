@@ -122,21 +122,36 @@ export class ApiService {
 
   /**
    * Kullanıcının bir soruya verdiği cevabı sunucuya gönderir.
-   * @param {Object} params - Parametreler
-   * @param {string|number} params.sessionId - Oturum ID'si.
-   * @param {string|number} params.questionId - Soru ID'si.
-   * @param {string|number|null} params.answer - Seçilen şık ID'si veya cevabı geri almak için null.
-   * @returns {Promise<any>} İşlem sonucunu içeren yanıt.
+   * NOT: Frontend-only yaklaşımda bu sadece cevabı kaydetmek için kullanılır,
+   * doğruluk kontrolü frontend'de yapılır.
+   * @param {Object} payload - Cevap verisi.
+   * @param {string} payload.sessionId - Quiz oturum ID'si.
+   * @param {number} payload.questionId - Soru ID'si.
+   * @param {string} payload.answer - Kullanıcının cevabı.
+   * @returns {Promise<Object>} Sunucu yanıtı.
    */
-  async submitAnswer({ sessionId, questionId, answer }) {
-    return this._fetch({
-      endpoint: `/quiz/session/${sessionId}/answer`, //
-      method: 'POST', //
-      data: { 
-        question_id: questionId, //
-        user_answer_option_id: answer //
-      }
-    });
+  async submitAnswer(payload) {
+    console.log('[DEBUG] ApiService.submitAnswer called:', payload);
+    
+    const requestBody = {
+      question_id: payload.questionId,
+      user_answer_option_id: payload.answer
+    };
+    
+    console.log('[DEBUG] ApiService request body:', requestBody);
+    
+    try {
+      const response = await this._fetch({
+        endpoint: `/quiz/session/${payload.sessionId}/answer`, //
+        method: 'POST', //
+        data: requestBody //
+      });
+      console.log('[DEBUG] ApiService.submitAnswer response:', response);
+      return response;
+    } catch (error) {
+      console.error('[DEBUG] ApiService.submitAnswer error:', error);
+      throw error;
+    }
   }
 
   /**

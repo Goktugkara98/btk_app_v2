@@ -83,6 +83,17 @@ class GeminiAPIService:
                 "x-goog-api-key": self.api_key
             }
             
+            # Debug: Print full request payload
+            print("\n" + "="*80)
+            print("GEMINI API REQUEST DEBUG")
+            print("="*80)
+            print(f"URL: {self.base_url}")
+            print(f"Headers: {headers}")
+            print("Request Body:")
+            import json
+            print(json.dumps(request_body, indent=2, ensure_ascii=False))
+            print("="*80 + "\n")
+            
             # API call yap
             response = requests.post(
                 self.base_url,

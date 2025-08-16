@@ -48,6 +48,38 @@ class ChatMessageService:
             self.scenario_base_dir = os.path.join(app_dir, 'data', 'ai_scenarios')
         except Exception:
             self.scenario_base_dir = None
+        
+        # Quick action template base directory (file-based per action)
+        self.quick_action_template_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'data', 'ai_scenarios', 'quick_action', 'actions')
+        )
+        
+        # Context templates
+        self.context_templates = {
+            'educational_intro': (
+                "Sen Daima adında yardımcı bir AI öğretmensin. "
+                "Öğrencilere quiz sorularında yardım ediyorsun. "
+                "Açıklamalarını basit, anlaşılır ve eğitici yapmalısın."
+            ),
+            'question_context': (
+                "Öğrenci şu anda {subject} dersinin {topic} konusunda "
+                "{difficulty} seviyesinde bir soru çözüyor."
+            ),
+            'help_context': (
+                "Öğrenci bu soru hakkında yardım istiyor. "
+                "Doğrudan cevap verme, ipucu ve rehberlik et."
+            )
+        }
+        
+        # JSON'dan yüklenen senaryo metinleri
+        self.scenario_texts: Dict[str, Any] = {}
+        
+        # Scenario metinlerini yükle
+        try:
+            self.scenario_texts = self._load_scenarios()
+        except Exception as e:
+            print(f"[WARNING] Failed to load scenarios: {e}")
+            self.scenario_texts = {}
     
     # =============================================================================
     # MESSAGE STORAGE
@@ -82,31 +114,36 @@ class ChatMessageService:
                 print(f"[ERROR] Failed to add message: {e}")
                 return None
         return None
+    
+    # =============================================================================
+    # SCENARIO LOADING
+    # =============================================================================
+    
+    def _load_scenarios(self) -> Dict[str, Any]:
+        """AI scenario metinlerini JSON dosyalarından yükler."""
+        scenarios = {}
         
-        # Quick action template base directory (file-based per action)
-        self.quick_action_template_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..', 'data', 'ai_scenarios', 'quick_action', 'actions')
-        )
+        if not self.scenario_base_dir or not os.path.exists(self.scenario_base_dir):
+            return scenarios
         
-        # Context templates
-        self.context_templates = {
-            'educational_intro': (
-                "Sen Daima adında yardımcı bir AI öğretmensin. "
-                "Öğrencilere quiz sorularında yardım ediyorsun. "
-                "Açıklamalarını basit, anlaşılır ve eğitici yapmalısın."
-            ),
-            'question_context': (
-                "Öğrenci şu anda {subject} dersinin {topic} konusunda "
-                "{difficulty} seviyesinde bir soru çözüyor."
-            ),
-            'help_context': (
-                "Öğrenci bu soru hakkında yardım istiyor. "
-                "Doğrudan cevap verme, ipucu ve rehberlik et."
-            )
-        }
+        try:
+            # shared.json'u yükle
+            shared_path = os.path.join(self.scenario_base_dir, 'shared.json')
+            if os.path.exists(shared_path):
+                with open(shared_path, 'r', encoding='utf-8') as f:
+                    scenarios['shared'] = json.load(f)
+            
+            # Diğer scenario dosyalarını yükle
+            for filename in os.listdir(self.scenario_base_dir):
+                if filename.endswith('.json') and filename != 'shared.json':
+                    scenario_name = filename[:-5]  # .json'u çıkar
+                    file_path = os.path.join(self.scenario_base_dir, filename)
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        scenarios[scenario_name] = json.load(f)
+        except Exception as e:
+            print(f"[ERROR] Scenario loading failed: {e}")
         
-        # JSON'dan yüklenen senaryo metinleri
-        self.scenario_texts: Dict[str, Any] = self._load_scenarios()
+        return scenarios
     
     def process_message_with_full_prompt(self, message_info: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -381,94 +418,30 @@ class ChatMessageService:
             r'\b(başarılı|success|great)\b': '🎉',
         }
         
-        for pattern, emoji in emoji_map.items():
-            if re.search(pattern, text, re.IGNORECASE):
-                # Her cümlenin sonuna değil, sadece ilk bulduğumuz yere ekle
-                if emoji not in text:
-                    text = re.sub(pattern, f'\\g<0> {emoji}', text, count=1, flags=re.IGNORECASE)
-        
-        return text
-    
-    def create_quick_action_prompt(self, action: str, question_data: Dict[str, Any]) -> Optional[str]:
-        """
-        Quick action için prompt oluşturur.
-        
-        Args:
-            action: Action tipi ('explain', 'hint', 'related')
-            question_data: Soru bilgileri
-            
-        Returns:
-            Prompt string veya None
-        """
-        # Load per-action template file: {action}.md
-        template_text = self._load_quick_action_template(action)
-        if not template_text:
-            return None
-        
-        # Build dynamic context
-        question_text = question_data.get('question_text', '') or ''
-        topic = question_data.get('topic_name', '') or ''
-        options = question_data.get('options', []) or []
-        (
-            options_bulleted,
-            options_plain,
-            correct_answer_text,
-            correct_option_letter
-        ) = self._prepare_options_context(options)
-        
-        ctx: Dict[str, Any] = {
-            'question_text': question_text,
-            'topic_name': topic,
-            'options_bulleted': options_bulleted,
-            'options_plain': options_plain,
-            'correct_answer_text': correct_answer_text or '',
-            'correct_option_letter': correct_option_letter or ''
-        }
-        
-        # Safe format with missing keys -> empty string
-        class _SafeDict(dict):
-            def __missing__(self, key):
-                return ''
-        
-        return template_text.format_map(_SafeDict(ctx))
-
-    def _load_quick_action_template(self, action: str) -> Optional[str]:
-        """Reads the per-action markdown template from disk."""
-        # Enforce simple action names to avoid path traversal
-        safe_action = re.sub(r'[^a-zA-Z0-9_\-]', '', action)
-        candidate = os.path.join(self.quick_action_template_dir, f"{safe_action}.md")
+        # HTML etiketlerinin içinde değişiklik yapmamak için metni tag'lere göre böl
         try:
-            if os.path.isfile(candidate):
-                with open(candidate, 'r', encoding='utf-8') as f:
-                    return f.read()
-            return None
+            segments = re.split(r'(<[^>]+>)', text)
         except Exception:
-            return None
-
-    def _prepare_options_context(self, options: List[Dict[str, Any]]) -> Tuple[str, str, Optional[str], Optional[str]]:
-        """Create rendered options and detect correct answer.
-        Returns: (bulleted, plain, correct_answer_text, correct_option_letter)
-        """
-        if not options:
-            return '', '', None, None
-        letters = [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-            'U', 'V', 'W', 'X', 'Y', 'Z'
-        ]
-        bulleted_lines: List[str] = []
-        plain_lines: List[str] = []
-        correct_text: Optional[str] = None
-        correct_letter: Optional[str] = None
-        for idx, opt in enumerate(options):
-            letter = letters[idx] if idx < len(letters) else str(idx + 1)
-            text = str(opt.get('name', '') or '')
-            bulleted_lines.append(f"- {letter}) {text}")
-            plain_lines.append(f"{letter}) {text}")
-            if opt.get('is_correct') in (1, True, '1', 'true', 'True') and correct_text is None:
-                correct_text = text
-                correct_letter = letter
-        return "\n".join(bulleted_lines), "\n".join(plain_lines), correct_text, correct_letter
+            segments = [text]
+        
+        # Metinde halihazırda bulunan emojileri dikkate alarak, her emoji'den en fazla bir tane ekle
+        emoji_inserted = {e: (e in text) for e in emoji_map.values()}
+        
+        # Her pattern için, ilk uygun metin segmentine emojiyi ekle
+        for pattern, emoji in emoji_map.items():
+            if emoji_inserted.get(emoji):
+                continue
+            for i in range(0, len(segments), 2):  # 0,2,4... metin segmentleri (tag olmayanlar)
+                seg = segments[i]
+                if not seg:
+                    continue
+                if re.search(pattern, seg, re.IGNORECASE):
+                    segments[i] = re.sub(pattern, r'\g<0> ' + emoji, seg, count=1, flags=re.IGNORECASE)
+                    emoji_inserted[emoji] = True
+                    break
+        
+        return ''.join(segments)
+    
     
     def create_message_metadata(
         self, 
@@ -607,42 +580,6 @@ class ChatMessageService:
     # PROMPT BUILDING METHODS (Moved from ChatSessionService)
     # =============================================================================
     
-    def _load_scenarios(self) -> Dict[str, Any]:
-        """
-        app/data/ai_scenarios dizininden senaryo metinlerini yükler.
-        Beklenen yapı:
-        - app/data/ai_scenarios/shared.json               -> { "intro": "..." }
-        - app/data/ai_scenarios/<scenario>/config.json    -> { "first": "...", "followup": "..." | "default": "..." }
-        """
-        scenarios: Dict[str, Any] = { 'shared': {} }
-        base = self.scenario_base_dir
-        if not base or not os.path.isdir(base):
-            return scenarios
-        # shared
-        shared_path = os.path.join(base, 'shared.json')
-        try:
-            if os.path.isfile(shared_path):
-                with open(shared_path, 'r', encoding='utf-8') as f:
-                    scenarios['shared'] = json.load(f) or {}
-        except Exception:
-            scenarios['shared'] = {}
-        # scenario folders
-        try:
-            for name in os.listdir(base):
-                scen_dir = os.path.join(base, name)
-                if not os.path.isdir(scen_dir):
-                    continue
-                config_path = os.path.join(scen_dir, 'config.json')
-                if os.path.isfile(config_path):
-                    try:
-                        with open(config_path, 'r', encoding='utf-8') as f:
-                            scenarios[name] = json.load(f) or {}
-                    except Exception:
-                        scenarios[name] = {}
-        except Exception:
-            pass
-        return scenarios
-    
     def reload_scenarios(self) -> bool:
         """JSON senaryo konfigürasyonlarını yeniden yükler."""
         try:
@@ -707,24 +644,6 @@ class ChatMessageService:
             "Kısa ve odaklı bir yanıt ver."
         )
     
-    def _eval_when(self, when: str, env: Dict[str, Any]) -> bool:
-        """Basit koşulları değerlendirir: always, first, followup, has_history, question_allowed"""
-        if not when:
-            return True
-        when = str(when).strip().lower()
-        if when in ('always', 'true'):
-            return True
-        if when == 'first':
-            return bool(env.get('is_first_message'))
-        if when == 'followup':
-            return not bool(env.get('is_first_message'))
-        if when == 'has_history':
-            return bool(env.get('has_history'))
-        if when == 'question_allowed':
-            return bool(env.get('question_allowed'))
-        # bilinmeyen durumda devre dışı
-        return False
-
     def _render_text(self, text: str, variables: Dict[str, Any]) -> str:
         """Placeholder'ları güvenli şekilde doldurur."""
         class _SafeDict(dict):
@@ -735,33 +654,14 @@ class ChatMessageService:
         except Exception:
             return text
 
-    def _read_include(self, include: str, scenario_type: Optional[str] = None) -> str:
+    def _load_file_prompt(
+        self,
+        scenario_type: str,
+        is_first_message: bool,
+        action: Optional[str] = None
+    ) -> str:
         """
-        JSON bloklarında 'include' alanıyla belirtilen dosyayı okur.
-        Arama sırası:
-        - app/data/ai_scenarios/<scenario_type>/<include>
-        - app/data/ai_scenarios/<include>
-        """
-        base = self.scenario_base_dir
-        if not include or not base:
-            return ''
-        candidates: List[str] = []
-        if scenario_type:
-            candidates.append(os.path.join(base, scenario_type, include))
-        candidates.append(os.path.join(base, include.lstrip('/\\')))
-        for path in candidates:
-            try:
-                if os.path.isfile(path):
-                    with open(path, 'r', encoding='utf-8') as f:
-                        return f.read()
-            except Exception:
-                continue
-        return ''
-    
-    def _load_file_prompt(self, scenario_type: str, is_first_message: bool, action: Optional[str] = None) -> str:
-        """
-        Senaryoya göre first/followup markdown dosyasını okur.
-        Yapı:
+        Dosya tabanlı promptu yükler. Aşağıdaki yolları dener:
         - app/data/ai_scenarios/direct/first.md | followup.md
         - app/data/ai_scenarios/wrong_answer/first.md | followup.md
         - app/data/ai_scenarios/quick_action/actions/<action>/first.md | followup.md
@@ -869,14 +769,8 @@ class ChatMessageService:
         hist_conf: Dict[str, Any] = context_conf.get('history') or {}
         q_conf: Dict[str, Any] = context_conf.get('question') or {}
 
-        # Tarihçe (her istekte; sistem mesajlarını hariç tut)
-        history_str = self._get_recent_dialog(
-            chat_session_id,
-            last_n=int(hist_conf.get('last_n', 2) or 2),
-            truncate_chars=int(hist_conf.get('truncate_chars', 200) or 200),
-            label_user=str(hist_conf.get('label_user', 'Kullanıcı')),
-            label_ai=str(hist_conf.get('label_ai', 'AI')),
-        )
+        # Tarihçe artık Gemini contents'e dahil edildiği için burada boş bırak
+        history_str = ""
 
         has_history = bool(history_str)
 

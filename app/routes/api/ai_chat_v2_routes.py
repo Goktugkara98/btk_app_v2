@@ -30,7 +30,7 @@ except ImportError as e:
 db_connection = DatabaseConnection() if DatabaseConnection else None
 gemini_service = GeminiAPIService() if GeminiAPIService else None
 chat_session_service = ChatSessionService(db_connection) if ChatSessionService else None
-chat_message_service = ChatMessageService() if ChatMessageService else None
+chat_message_service = ChatMessageService(db_connection) if ChatMessageService else None
 
 # ===========================================================================
 # SYSTEM ROUTES

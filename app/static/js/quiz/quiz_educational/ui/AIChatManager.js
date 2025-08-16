@@ -174,10 +174,28 @@ class AIChatManager {
             return;
         }
         
-        // Önceki soru için bekleyen request'leri temizle
-        if (this.currentQuestionId && this.pendingRequests.has(this.currentQuestionId)) {
+        // DÜZELTME: Önceki soru için TÜM bekleyen request'leri ve controller'ları temizle
+        if (this.currentQuestionId) {
+            // Pending request'leri temizle
             this.pendingRequests.delete(this.currentQuestionId);
+            
+            // Message controller'ları iptal et ve temizle
+            const messageController = this.aiChatService.messageControllers.get(this.currentQuestionId);
+            if (messageController) {
+                messageController.abort();
+                this.aiChatService.messageControllers.delete(this.currentQuestionId);
+            }
+            
+            // Quick action controller'ları iptal et ve temizle
+            const quickActionController = this.aiChatService.quickActionControllers.get(this.currentQuestionId);
+            if (quickActionController) {
+                quickActionController.abort();
+                this.aiChatService.quickActionControllers.delete(this.currentQuestionId);
+            }
         }
+        
+        // Chat session'ı yeni soru için sıfırla
+        this.aiChatService.endChatSession();
         
         // Yeni soru ID'sini güncelle
         this.currentQuestionId = newQuestionId;
@@ -208,7 +226,7 @@ class AIChatManager {
                 // Sadece kullanıcı/AI mesajlarını UI'da göster (system mesajlarını gizle)
                 const filtered = response.messages.filter(m => m.role === 'user' || m.role === 'ai');
                 filtered.forEach(msg => {
-                    this.addMessage(msg.role, msg.content, msg.label);
+                    this.addMessage(msg.role, msg.content, msg.label, true); // isFromHistory = true
                 });
                 if (filtered.length === 0) {
                     // Yalnızca system mesajları varsa hoş geldin mesajını göster
@@ -267,14 +285,14 @@ class AIChatManager {
             const qData = this.aiChatService?.getCurrentQuestionData?.();
             const options = qData?.options || [];
             const userOpt = options.find(o => String(o.id) === String(data.userAnswer));
-            if (userOpt) userAnswerText = `${userOpt.option_text} (id:${userOpt.id})`;
+            if (userOpt) userAnswerText = userOpt.option_text;
             const correctId = (data.correctAnswer && typeof data.correctAnswer === 'object') ? data.correctAnswer.id : data.correctAnswer;
             const correctOpt = options.find(o => String(o.id) === String(correctId));
-            if (correctOpt) correctAnswerText = `${correctOpt.option_text} (id:${correctOpt.id})`;
+            if (correctOpt) correctAnswerText = correctOpt.option_text;
         } catch (e) {
             console.warn('[AIChatManager] Could not map answer IDs to texts (incorrect):', e);
         }
-        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${userAnswerText}, Doğru cevap: ${correctAnswerText}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
+        const message = `Yanlış cevap verdim. Seçtiğim cevap: ${userAnswerText}. Doğru cevap: ${correctAnswerText}. Lütfen yardım et.`;
         
         try {
             // AI'dan yanıt al (legacy incorrect handler)
@@ -317,14 +335,14 @@ class AIChatManager {
             const qData = this.aiChatService?.getCurrentQuestionData?.();
             const options = qData?.options || [];
             const userOpt = options.find(o => String(o.id) === String(data.userAnswer));
-            if (userOpt) userAnswerText2 = `${userOpt.option_text} (id:${userOpt.id})`;
+            if (userOpt) userAnswerText2 = userOpt.option_text;
             const correctId = (data.correctAnswer && typeof data.correctAnswer === 'object') ? data.correctAnswer.id : data.correctAnswer;
             const correctOpt = options.find(o => String(o.id) === String(correctId));
-            if (correctOpt) correctAnswerText2 = `${correctOpt.option_text} (id:${correctOpt.id})`;
+            if (correctOpt) correctAnswerText2 = correctOpt.option_text;
         } catch (e) {
             console.warn('[AIChatManager] Could not map answer IDs to texts (wrong):', e);
         }
-        const message = `Kullanıcı yanlış cevap verdi. Soru ID: ${data.questionId}, Kullanıcının cevabı: ${userAnswerText2}, Doğru cevap: ${correctAnswerText2}. Lütfen bu yanlış cevabı analiz et ve kullanıcıya yardımcı ol.`;
+        const message = `Yanlış cevap verdim. Seçtiğim cevap: ${userAnswerText2}. Doğru cevap: ${correctAnswerText2}. Lütfen yardım et.`;
 
         // Anti-spam: aynı soru için birden fazla otomatik analiz gönderimini engelle
         const qId = data.questionId || this.currentQuestionId;
@@ -333,10 +351,11 @@ class AIChatManager {
             return;
         }
         // Eğer bu soru için zaten ilk etkileşim gönderildiyse, tekrar otomatik gönderme
-        if (this.firstInteractionSent.has(qId)) {
-            console.warn('[AIChatManager] Skipping auto-analysis: already sent for question', qId);
-            return;
-        }
+        // (Bu kontrol yanlış cevap analizini engelliyor - kaldırıldı)
+        // if (this.firstInteractionSent.has(qId)) {
+        //     console.warn('[AIChatManager] Skipping auto-analysis: already sent for question', qId);
+        //     return;
+        // }
         // Cooldown kontrolü
         const now = Date.now();
         const lastSent = this.cooldowns.get(qId) || 0;
@@ -344,9 +363,9 @@ class AIChatManager {
             console.warn('[AIChatManager] Skipping due to cooldown for question', qId);
             return;
         }
-        // Aynı içeriği üst üste göndermeyi engelle
+        // Aynı içeriği üst üste göndermeyi engelle (sadece direct mesajlar için)
         const lastMsg = this.lastMessageByQuestion.get(qId);
-        if (lastMsg && lastMsg === message) {
+        if (lastMsg && lastMsg === message && !message.includes('yanlış cevap verdi')) {
             console.warn('[AIChatManager] Skipping duplicate message for question', qId);
             return;
         }
@@ -357,6 +376,12 @@ class AIChatManager {
         }
         this.pendingRequests.set(qId, ++this.requestCounter);
         this.lastMessageByQuestion.set(qId, message);
+        
+        // AI status'u "Düşünüyor..." olarak güncelle
+        this.updateAIStatus('thinking', 'Düşünüyor...');
+        
+        // Loading durumu göster
+        this.showTyping();
         
         try {
             // AI'ya mesaj gönder
@@ -393,9 +418,13 @@ class AIChatManager {
                 console.error('[AIChatManager] Failed to send wrong answer message:', response.error);
                 this.addMessage('error', 'Yanlış cevap analizi başlatılamadı.');
             }
+            
+            // Typing durumunu gizle
+            this.hideTyping();
         } catch (error) {
             console.error('[AIChatManager] Error sending wrong answer message:', error);
             this.addMessage('error', 'Yanlış cevap bilgisi gönderilirken bir hata oluştu.');
+            this.hideTyping();
         } finally {
             // Pending state'i temizle
             this.pendingRequests.delete(qId);
@@ -628,10 +657,13 @@ class AIChatManager {
         const requestId = ++this.requestCounter;
         this.pendingRequests.set(this.currentQuestionId, requestId);
         
+        // AI status'u "Düşünüyor..." olarak güncelle
+        this.updateAIStatus('thinking', 'Düşünüyor...');
+        
         // Loading durumu göster
         this.showTyping();
         
-        // İlk etkileşim kontrolü (kullanıcı mesajlarından bağımsız)
+        // Her quick action mesajı gönderilsin (ilk etkileşim kontrolü kaldırıldı)
         const isFirstMessage = !this.firstInteractionSent.has(this.currentQuestionId);
         
         try {
@@ -678,6 +710,9 @@ class AIChatManager {
             } else {
                 this.addMessage('system', `Üzgünüm, ${action} alınamadı: ${response.error || 'Bilinmeyen hata'}`);
             }
+            
+            // Typing durumunu gizle
+            this.hideTyping();
         } catch (error) {
             this.hideTyping();
             
@@ -741,10 +776,13 @@ class AIChatManager {
         // Debug: Pending requests durumunu göster
         // this.debugPendingRequests(); // no-op in production
         
+        // AI status'u "Düşünüyor..." olarak güncelle
+        this.updateAIStatus('thinking', 'Düşünüyor...');
+        
         // Loading durumu göster
         this.showTyping();
         
-        // İlk kullanıcı mesajı kontrolü (hızlı eylemlerden bağımsız)
+        // Her direct mesaj gönderilsin (ilk mesaj kontrolü kaldırıldı)
         const isFirstMessage = !this.firstUserMessageSent.has(this.currentQuestionId);
         
         try {
@@ -791,6 +829,9 @@ class AIChatManager {
             } else {
                 this.addMessage('system', `Üzgünüm, mesaj gönderilemedi: ${response.error || 'Bilinmeyen hata'}`);
             }
+            
+            // Typing durumunu gizle
+            this.hideTyping();
         } catch (error) {
             this.hideTyping();
             
@@ -808,49 +849,55 @@ class AIChatManager {
     /**
      * addMessage - Mesaj ekler
      */
-    addMessage(type, content, label = null) {
+    addMessage(type, content, label = null, isFromHistory = false) {
         
         if (!this.messagesContainer) return;
         
         const messageDiv = document.createElement('div');
-        messageDiv.className = `ai-message ${type}-message`;
-        
-        const time = new Date().toLocaleTimeString('tr-TR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
         
         if (type === 'ai') {
+            messageDiv.className = 'ai-message';
             messageDiv.innerHTML = `
                 <div class="ai-message-content">
+                    <div class="ai-message-text"></div>
                     ${label ? `<div class="ai-message-label">${label}</div>` : ''}
-                    <div class="ai-message-text" id="ai-text-${Date.now()}"></div>
-                    <div class="ai-message-time">${time}</div>
                 </div>
             `;
             
-            this.messagesContainer?.appendChild(messageDiv);
+            this.messagesContainer.appendChild(messageDiv);
             this.scrollToBottom();
             
-            // Typewriter efekti için AI mesajını animasyonlu yaz
+            // Typewriter efekti sadece yeni mesajlar için (geçmiş mesajlar için değil)
             const textElement = messageDiv.querySelector('.ai-message-text');
-            this.typewriterEffect(textElement, this.formatMessage(content));
+            if (isFromHistory) {
+                // Geçmiş mesajları direkt göster
+                textElement.innerHTML = this.formatMessage(content);
+            } else {
+                // Yeni mesajlar için typewriter efekti başlarken status'u "Yazıyor..." yap
+                this.updateAIStatus('typing', 'Yazıyor...');
+                this.typewriterEffect(textElement, this.formatMessage(content));
+            }
             
         } else if (type === 'user') {
+            messageDiv.className = 'user-message';
             messageDiv.innerHTML = `
                 <div class="user-message-content">
                     <div class="user-message-text">${this.formatMessage(content)}</div>
-                    <div class="user-message-time">${time}</div>
                 </div>
             `;
             
             this.messagesContainer?.appendChild(messageDiv);
             this.scrollToBottom();
         } else if (type === 'system') {
+            const currentTime = new Date().toLocaleTimeString('tr-TR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            messageDiv.className = 'system-message';
             messageDiv.innerHTML = `
                 <div class="system-message-content">
                     <div class="system-message-text">${content}</div>
-                    <div class="system-message-time">${time}</div>
+                    <div class="system-message-time">${currentTime}</div>
                 </div>
             `;
             
@@ -863,43 +910,32 @@ class AIChatManager {
      * typewriterEffect - Typewriter efekti ile metni yazar
      */
     typewriterEffect(element, text, speed = 15) {
-        
-        // Metni HTML etiketlerine göre parçalara böl
-        const parts = text.split(/(<br>|<strong>|<\/strong>|<em>|<\/em>)/);
-        let currentIndex = 0;
-        let currentPart = 0;
+        let index = 0;
         
         const typeInterval = setInterval(() => {
-            if (currentPart < parts.length) {
-                const part = parts[currentPart];
-                
-                // HTML etiketi ise direkt ekle
-                if (part === '<br>' || part === '<strong>' || part === '</strong>' || part === '<em>' || part === '</em>') {
-                    element.innerHTML += part;
-                    currentPart++;
-                } else {
-                    // Normal metin ise karakter karakter yaz
-                    if (currentIndex < part.length) {
-                        element.innerHTML += part.charAt(currentIndex);
-                        currentIndex++;
-                    } else {
-                        currentPart++;
-                        currentIndex = 0;
-                    }
-                }
-                
+            if (index < text.length) {
+                element.innerHTML = text.substring(0, index + 1);
+                index++;
+                // Her karakter yazılırken scroll yap
                 this.scrollToBottom();
             } else {
+                // Typewriter efekti tamamlandığında status'u "Çevrimiçi" yap
+                this.updateAIStatus('online', 'Çevrimiçi');
                 clearInterval(typeInterval);
             }
         }, speed);
     }
 
     /**
-     * showTyping - Typing göstergesi ekler
+     * showTyping - Typing göstergesi ekler (sadece dots, status güncelleme yok)
      */
     showTyping() {
-        if (document.querySelector('.typing-indicator')) return;
+        console.log('[AIChatManager] showTyping called');
+        
+        if (document.querySelector('.typing-indicator')) {
+            console.log('[AIChatManager] Typing indicator already exists, skipping');
+            return;
+        }
         
         const typingDiv = document.createElement('div');
         typingDiv.className = 'ai-message typing-indicator';
@@ -915,15 +951,51 @@ class AIChatManager {
         
         this.messagesContainer?.appendChild(typingDiv);
         this.scrollToBottom();
+        console.log('[AIChatManager] Typing indicator added to DOM');
     }
 
     /**
-     * hideTyping - Typing göstergesini kaldırır
+     * hideTyping - Typing göstergesini kaldırır (status güncelleme yok)
      */
     hideTyping() {
+        console.log('[AIChatManager] hideTyping called');
+        
         const typingIndicator = document.querySelector('.typing-indicator');
         if (typingIndicator) {
             typingIndicator.remove();
+            console.log('[AIChatManager] Typing indicator removed from DOM');
+        } else {
+            console.log('[AIChatManager] No typing indicator found to remove');
+        }
+        
+        // Status güncelleme kaldırıldı - typewriter efekti tamamlandığında güncellenir
+    }
+    
+    /**
+     * updateAIStatus - AI status göstergesini günceller
+     */
+    updateAIStatus(status, text) {
+        console.log(`[AIChatManager] Updating AI status: ${status} - ${text}`);
+        
+        const statusIndicator = document.querySelector('.status-indicator');
+        const statusText = document.querySelector('.status-text');
+        
+        if (statusIndicator && statusText) {
+            // Önceki class'ları temizle
+            statusIndicator.className = 'status-indicator';
+            
+            // Yeni status class'ını ekle
+            statusIndicator.classList.add(status);
+            
+            // Status text'ini güncelle
+            statusText.textContent = text;
+            
+            console.log(`[AIChatManager] Status updated successfully to: ${status}`);
+        } else {
+            console.warn('[AIChatManager] Status elements not found!', {
+                statusIndicator: !!statusIndicator,
+                statusText: !!statusText
+            });
         }
     }
 
@@ -967,6 +1039,13 @@ class AIChatManager {
      */
     scrollToBottom() {
         if (this.messagesContainer) {
+            // Force container to maintain minimum height before scrolling
+            const container = this.messagesContainer.parentElement;
+            if (container && container.classList.contains('ai-chat-messages-container')) {
+                container.style.minHeight = '350px';
+                container.style.height = 'auto';
+            }
+            
             this.messagesContainer.scrollTo({
                 top: this.messagesContainer.scrollHeight,
                 behavior: 'smooth'

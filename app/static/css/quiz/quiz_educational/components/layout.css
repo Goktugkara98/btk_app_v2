@@ -66,6 +66,13 @@
     flex: 1;
     min-height: 0;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Container fluid - fill remaining space */
+.quiz-body.educational .quiz-main .container-fluid {
+    flex-grow: 1;
 }
 
 /* Row and columns - full height */
@@ -77,6 +84,7 @@
 .quiz-body.educational .quiz-main .col-md-6 {
     height: 100%;
     padding: 0 8px;
+    position: relative;
 }
 
 /* Quiz Panel */

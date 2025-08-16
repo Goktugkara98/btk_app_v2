@@ -148,18 +148,36 @@
                                 </div>
                             </div>
                             
-                            <div class="ai-chat-messages" id="ai-chat-messages">
-                                <!-- AI messages will be loaded by JavaScript -->
-                                <div class="ai-message">
-                                    <div class="ai-avatar">
-                                        <i class="bi bi-robot"></i>
-                                    </div>
-                                    <div class="ai-message-content">
-                                        <div class="ai-message-text">
-                                            Merhaba! Ben senin AI öğretmenin. Bu soru hakkında yardıma ihtiyacın var mı? Sorularını sorabilir, açıklama isteyebilir veya konu hakkında daha fazla bilgi alabilirsin.
-                                        </div>
-                                        <div class="ai-message-time">Şimdi</div>
-                                    </div>
+                            <div class="ai-chat-messages-container">
+                                <div class="ai-chat-messages" id="ai-chat-messages">
+                                    <!-- AI messages will be loaded by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="quick-actions">
+                                <div class="quick-actions-row">
+                                    <button class="quick-action-btn" data-action="explain">
+                                        <i class="bi bi-lightbulb"></i>
+                                        Soruyu Açıkla
+                                    </button>
+                                    <button class="quick-action-btn" data-action="give_hint">
+                                        <i class="bi bi-question-circle"></i>
+                                        İpucu Ver
+                                    </button>
+                                    <button class="quick-action-btn" data-action="how_to_solve">
+                                        <i class="bi bi-gear"></i>
+                                        Nasıl Çözmeliyim?
+                                    </button>
+                                </div>
+                                <div class="quick-actions-row">
+                                    <button class="quick-action-btn" data-action="eliminate_options">
+                                        <i class="bi bi-funnel"></i>
+                                        Şıkları Eleyelim
+                                    </button>
+                                    <button class="quick-action-btn" data-action="solve_step_by_step">
+                                        <i class="bi bi-list-ol"></i>
+                                        Adım Adım Çözelim
+                                    </button>
                                 </div>
                             </div>
                             
@@ -174,12 +192,6 @@
                                     <button class="ai-send-btn" id="ai-send-button">
                                         <i class="bi bi-robot"></i>
                                         <span class="btn-text">Gönder</span>
-                                    </button>
-                                </div>
-                                <div class="quick-actions">
-                                    <button class="quick-action-btn" data-action="explain">
-                                        <i class="bi bi-info-circle"></i>
-                                        Soruyu Açıkla
                                     </button>
                                 </div>
                             </div>

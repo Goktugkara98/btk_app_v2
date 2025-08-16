@@ -104,7 +104,24 @@ class AIChatService {
       }
 
       try {
+        // Her soru için benzersiz chat session ID oluştur
         const chatSessionId = `chat_${quizSessionId}_${questionId}`;
+        
+        // Önceki soru için bekleyen request'leri temizle
+        this.messageControllers.forEach((controller, key) => {
+          if (key !== questionId) {
+            controller.abort();
+            this.messageControllers.delete(key);
+          }
+        });
+        
+        this.quickActionControllers.forEach((controller, key) => {
+          if (key !== questionId) {
+            controller.abort();
+            this.quickActionControllers.delete(key);
+          }
+        });
+        
         const response = await fetch(`${this.baseUrl}/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

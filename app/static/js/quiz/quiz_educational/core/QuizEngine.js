@@ -317,8 +317,20 @@ export class QuizEngine {
       // UI'ın anında tepki vermesi için cevabı hemen state'e kaydeder.
       stateManager.setAnswer(questionId, answer);
       
-      const response = await this.apiService.submitAnswer({ sessionId, questionId, answer });
-      const isCorrect = response?.data?.is_correct ?? this.checkAnswerLocally(questionId, answer);
+      // Frontend-only validation: Sadece yerel doğrulama kullan
+      const isCorrect = this.checkAnswerLocally(questionId, answer);
+      console.log('[QuizEngine] Frontend validation result:', isCorrect, 'for answer:', answer, 'question:', questionId);
+      
+      // Debug: Doğru cevabı da logla
+      const correctAnswer = this.getCorrectAnswer(questionId);
+      console.log('[QuizEngine] Correct answer for question', questionId, ':', correctAnswer?.id, correctAnswer);
+      
+      // API'ye cevabı gönder (sadece kaydetmek için, doğruluk kontrolü yapmadan)
+      try {
+        await this.apiService.submitAnswer({ sessionId, questionId, answer });
+      } catch (error) {
+        console.warn('[QuizEngine] Answer save failed (non-critical):', error);
+      }
       
       stateManager.setState({ isSubmitting: false }, 'SUBMIT_ANSWER_END');
       
@@ -393,11 +405,41 @@ export class QuizEngine {
    * @returns {boolean} Cevabın doğru olup olmadığını döndürür.
    */
   checkAnswerLocally(questionId, userAnswer) {
+    console.log('[DEBUG] checkAnswerLocally called:', { questionId, userAnswer });
+    
     const st = stateManager.getState();
     const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
+    console.log('[DEBUG] Found question:', q);
+    
     const options = q?.question?.options || [];
-    const correct = options.find(o => (o?.is_correct === true) || (o?.isCorrect === true) || (o?.correct === true) || (o?.is_correct === 1) || (o?.isCorrect === 1));
-    return correct ? String(correct.id) === String(userAnswer) : false;
+    console.log('[DEBUG] Question options:', options);
+    
+    const correct = options.find(o => {
+      if (!o) return false;
+      console.log('[DEBUG] Checking option:', o, {
+        is_correct: o.is_correct,
+        isCorrect: o.isCorrect,
+        correct: o.correct
+      });
+      
+      const result = (o.is_correct === true || o.is_correct === 1 || o.is_correct === '1') ||
+                     (o.isCorrect === true || o.isCorrect === 1 || o.isCorrect === '1') ||
+                     (o.correct === true || o.correct === 1 || o.correct === '1');
+      
+      console.log('[DEBUG] Option check result:', result);
+      return result;
+    });
+    
+    console.log('[DEBUG] Found correct option:', correct);
+    
+    const finalResult = correct ? String(correct.id) === String(userAnswer) : false;
+    console.log('[DEBUG] Final validation result:', finalResult, {
+      correctId: correct?.id,
+      userAnswer,
+      comparison: `${correct?.id} === ${userAnswer}`
+    });
+    
+    return finalResult;
   }
 
   /**
@@ -409,16 +451,68 @@ export class QuizEngine {
     const st = stateManager.getState();
     const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
     const options = q?.question?.options || [];
-    return options.find(o => (o?.is_correct === true) || (o?.isCorrect === true) || (o?.correct === true) || (o?.is_correct === 1) || (o?.isCorrect === 1)) || null;
+    return options.find(o => {
+      if (!o) return false;
+      // Tüm olası doğru cevap formatlarını kontrol et
+      return (o.is_correct === true || o.is_correct === 1 || o.is_correct === '1') ||
+             (o.isCorrect === true || o.isCorrect === 1 || o.isCorrect === '1') ||
+             (o.correct === true || o.correct === 1 || o.correct === '1');
+    }) || null;
   }
 
   /* =========================================================================
-   * 6) Quiz Tamamlama | Quiz Completion
+   * 6) Frontend Scoring | Frontend Puanlama
    * ========================================================================= */
 
   /**
-   * completeQuiz - Quiz'i sonlandırır, sonuçları sunucuya gönderir ve kullanıcıyı
-   * sonuç sayfasına yönlendirir.
+   * calculateFrontendScore - Frontend'de quiz sonuçlarını hesaplar
+   * @returns {Object} Quiz sonuçları
+   */
+  calculateFrontendScore() {
+    const { questions, answers } = stateManager.getState();
+    let correctCount = 0;
+    let totalScore = 0;
+    const questionResults = [];
+
+    questions.forEach(questionItem => {
+      const questionId = questionItem.question.id;
+      const userAnswer = answers.get(questionId);
+      const isCorrect = userAnswer ? this.checkAnswerLocally(questionId, userAnswer) : false;
+      const points = questionItem.question.points || 1;
+
+      if (isCorrect) {
+        correctCount++;
+        totalScore += points;
+      }
+
+      questionResults.push({
+        questionId,
+        userAnswer,
+        correctAnswer: this.getCorrectAnswer(questionId),
+        isCorrect,
+        points: isCorrect ? points : 0
+      });
+    });
+
+    const totalQuestions = questions.length;
+    const percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+    return {
+      correctCount,
+      totalQuestions,
+      totalScore,
+      percentage,
+      questionResults,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /* =========================================================================
+   * 7) Quiz Tamamlama | Quiz Completion
+   * ========================================================================= */
+
+  /**
+   * completeQuiz - Quiz'i sonlandırır, frontend'de hesaplanan sonuçları kullanır
    */
   async completeQuiz() {
     if (stateManager.getState('isSubmitting')) return;
@@ -429,10 +523,19 @@ export class QuizEngine {
       const sessionId = stateManager.getState('sessionId');
       const answers = stateManager.getState('answers');
       
-      const results = await this.apiService.completeQuiz({ sessionId, answers });
+      // Frontend'de sonuçları hesapla
+      const frontendResults = this.calculateFrontendScore();
+      console.log('[QuizEngine] Frontend calculated results:', frontendResults);
       
-      stateManager.setState({ quizCompleted: true, results }, 'QUIZ_COMPLETED');
-      eventBus.publish('quiz:completed', { results });
+      // API'ye sadece cevapları gönder (sonuç hesaplama için değil)
+      try {
+        await this.apiService.completeQuiz({ sessionId, answers });
+      } catch (error) {
+        console.warn('[QuizEngine] API completion failed (non-critical):', error);
+      }
+      
+      stateManager.setState({ quizCompleted: true, results: frontendResults }, 'QUIZ_COMPLETED');
+      eventBus.publish('quiz:completed', { results: frontendResults });
       
       // Kullanıcıyı sonuç sayfasına yönlendir.
       window.location.href = `/quiz/results?session_id=${sessionId}`;

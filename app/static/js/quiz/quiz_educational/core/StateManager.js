@@ -152,8 +152,19 @@ class StateManager {
    * @param {*} answer - Kullanıcının verdiği cevap.
    */
   setAnswer(questionId, answer) {
+    console.log('[DEBUG] StateManager.setAnswer called:', { questionId, answer, types: { questionId: typeof questionId, answer: typeof answer } });
+    
     const newAnswers = new Map(this.state.answers);
-    newAnswers.set(parseInt(questionId, 10), answer);
+    const parsedQuestionId = parseInt(questionId, 10);
+    const parsedAnswer = parseInt(answer, 10);
+    
+    console.log('[DEBUG] Parsed values:', { parsedQuestionId, parsedAnswer });
+    console.log('[DEBUG] Current answers before set:', Array.from(this.state.answers.entries()));
+    
+    newAnswers.set(parsedQuestionId, parsedAnswer);
+    
+    console.log('[DEBUG] New answers after set:', Array.from(newAnswers.entries()));
+    
     this.setState({ answers: newAnswers }, 'SET_ANSWER');
   }
 

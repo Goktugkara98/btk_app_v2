@@ -76,20 +76,22 @@ class EventBus {
    * @param {*} [data] - Abonelere gönderilecek isteğe bağlı veri.
    */
   publish(eventName, data) {
+    console.log(`[DEBUG] EventBus.publish called:`, { eventName, data, hasSubscribers: this.events.has(eventName) });
+    
     if (!this.events.has(eventName)) {
-      // Olayın abonesi yoksa, gereksiz işlem yapma.
+      console.log(`[DEBUG] EventBus: No subscribers for event '${eventName}'`);
       return;
     }
     
     const subscribers = this.events.get(eventName);
-    subscribers.forEach(callback => {
+    console.log(`[DEBUG] EventBus: Found ${subscribers.size} subscribers for '${eventName}'`);
+    
+    subscribers.forEach((callback, index) => {
       try {
-        // Her bir abonenin callback fonksiyonu, diğerlerini etkilememesi için
-        // güvenli bir `try-catch` bloğu içinde çağrılır.
+        console.log(`[DEBUG] EventBus: Calling subscriber ${index + 1} for '${eventName}'`);
         callback(data);
+        console.log(`[DEBUG] EventBus: Subscriber ${index + 1} completed successfully`);
       } catch (error) {
-        // Bir abonede hata oluşursa, bu hata konsola yazdırılır ancak
-        // diğer abonelerin çalışmasını engellemez. Bu, uygulamanın kararlılığını artırır.
         console.error(`[EventBus] '${eventName}' olayı için bir abonede hata oluştu:`, error);
       }
     });
