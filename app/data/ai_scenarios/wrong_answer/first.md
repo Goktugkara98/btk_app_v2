@@ -15,4 +15,4 @@ Soru:
 Şıklar:
 {options_bulleted}
 
-Öğrencinin seçtiği yanlış cevap ve bağlam: {USER_MESSAGE}
+Öğrencinin yanlış cevabı: {USER_MESSAGE}

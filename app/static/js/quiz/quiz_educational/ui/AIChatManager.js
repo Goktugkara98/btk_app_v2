@@ -292,7 +292,7 @@ class AIChatManager {
         } catch (e) {
             console.warn('[AIChatManager] Could not map answer IDs to texts (incorrect):', e);
         }
-        const message = `Yanlış cevap verdim. Seçtiğim cevap: ${userAnswerText}. Doğru cevap: ${correctAnswerText}. Lütfen yardım et.`;
+        const message = `Tekrar yanlış cevap verdim. Bu sefer "${userAnswerText}" seçtim ama doğru cevap "${correctAnswerText}" imiş. Hala anlamadım, farklı bir şekilde açıklar mısın?`;
         
         try {
             // AI'dan yanıt al (legacy incorrect handler)
@@ -342,7 +342,7 @@ class AIChatManager {
         } catch (e) {
             console.warn('[AIChatManager] Could not map answer IDs to texts (wrong):', e);
         }
-        const message = `Yanlış cevap verdim. Seçtiğim cevap: ${userAnswerText2}. Doğru cevap: ${correctAnswerText2}. Lütfen yardım et.`;
+        const message = `Tekrar yanlış cevap verdim. Bu sefer "${userAnswerText2}" seçtim ama doğru cevap "${correctAnswerText2}" imiş. Hala anlamadım, farklı bir şekilde açıklar mısın?`;
 
         // Anti-spam: aynı soru için birden fazla otomatik analiz gönderimini engelle
         const qId = data.questionId || this.currentQuestionId;
