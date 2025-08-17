@@ -84,15 +84,9 @@ class GeminiAPIService:
             }
             
             # Debug: Print full request payload
-            print("\n" + "="*80)
-            print("GEMINI API REQUEST DEBUG")
-            print("="*80)
-            print(f"URL: {self.base_url}")
-            print(f"Headers: {headers}")
-            print("Request Body:")
             import json
-            print(json.dumps(request_body, indent=2, ensure_ascii=False))
-            print("="*80 + "\n")
+            debug_msg = f"\n{'='*80}\nGEMINI API REQUEST DEBUG\n{'='*80}\nURL: {self.base_url}\nHeaders: {headers}\nRequest Body:\n{json.dumps(request_body, indent=2, ensure_ascii=False)}\n{'='*80}\n"
+            print(debug_msg, flush=True)
             
             # API call yap
             response = requests.post(

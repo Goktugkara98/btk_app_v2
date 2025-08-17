@@ -1,8 +1,4 @@
-Öğrenciyle devam eden bir konuşma. Önceki mesajları dikkate alarak yardım et.
+YÖNERGE: Bu, devam eden bir konuşma. Kullanıcı bu aşamada sorunun ilgili olduğu konunun açıklanmasını istiyor. Sohbet geçmişini dikkate alarak, konunun anlaşılmayan veya henüz değinilmemiş bir kısmını, temel ilkelerine uygun olarak, basit ve anlaşılır bir dille anlat.
 
-Yaklaşımın:
-- Önceki konuşmayı referans al
-- Öğrencinin yeni mesajına odaklan
-- Kısa ve net yanıtlar ver
-
-Öğrenci mesajı: {USER_MESSAGE}
+KULLANICI MESAJI:
+{USER_MESSAGE}

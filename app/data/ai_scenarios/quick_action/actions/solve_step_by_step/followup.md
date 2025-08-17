@@ -1,8 +1,6 @@
-Öğrenciyle devam eden bir konuşma. Önceki mesajları dikkate alarak yardım et.
+YÖNERGE: Bu, devam eden bir konuşma. Kullanıcı adım adım çözüm sürecini talep ediyor veya bu süreci devam ettiriyor. Tüm sohbet geçmişini dikkatlice analiz et:
+-   Eğer bu talep yeni başlıyorsa, çözümün SADECE İLK ADIMINI göster ve kullanıcıdan devam etmesini iste.
+-   Eğer bu süreç zaten başlamış bir etkileşimin devamıysa, kullanıcının son cevabını değerlendir ve bir sonraki adıma geçmesi için onu yönlendir.
 
-Yaklaşımın:
-- Önceki konuşmayı referans al
-- Öğrencinin yeni mesajına odaklan
-- Kısa ve net yanıtlar ver
-
-Öğrenci mesajı: {USER_MESSAGE}
+KULLANICI MESAJI:
+{USER_MESSAGE}

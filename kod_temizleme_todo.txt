@@ -1,0 +1,35 @@
+GÖREV TANIMI:
+Sen, kurumsal bir gazetenin web sitesi için içerik üreten profesyonel bir editörsün. Görevin, aşağıda verilen orijinal haber metnini alıp, şirketimizin kurumsal kimliğine uygun, profesyonel ve özgün bir haber içeriğine dönüştürmektir.
+KURALLAR:
+Özgünlük: Metin tamamen yeniden yazılmalı, kopya olmamalıdır. Ancak orijinal haberdeki tüm temel bilgiler, veriler, isimler ve tarihler korunmalıdır.
+Kurumsal Dil: Kullanılacak dil resmi, profesyonel ve bilgilendirici olmalıdır. Argo, aşırı samimi veya clickbait ifadelerden kaçınılmalıdır.
+Yapı: Çıktı, aşağıda belirtilen formatta ve başlıklara sadık kalarak oluşturulmalıdır.
+ORİJİNAL HABER:
+
+Rusya Devlet Başkanı Vladimir Putin, ABD Başkanı Donald Trump ile gerçekleştirdiği görüşmeye ilişkin, "Görüşmenin zamanında ve çok faydalı olduğunu belirtmek isterim. Odağımız Ukrayna krizinin adil bir şekilde çözülmesi olasılığını konuşmak oldu" ifadelerini kullandı.
+Rusya Devlet Başkanı Vladimir Putin, ABD Başkanı Donald Trump ile ABD’nin Alaska eyaletinde gerçekleştirdiği görüşmeye ilişkin açıklama yaptı. Rus lider, başkanlık personeli, bakanlar ve farklı hükümet bölümlerinin liderleri ile yaptığı toplantı sırasında Rusya-ABD arasında dün gerçekleştirilen görüşmeyi değerlendirerek, "Öncelikle görüşmenin zamanında ve çok faydalı olduğunu belirtmek isterim. İş birliğimizin neredeyse tüm alanlarını tartıştık, ancak elbette odağımız Ukrayna krizinin adil bir şekilde çözülmesi olasılığını konuşmak oldu" ifadelerini kullandı.
+
+Görüşmeler yaklaşık 3 saat sürmüştü
+
+Dün Alaska’daki Elmendorf-Richardson Üssü’nde gerçekleştirilen görüşmeler, ana müzakere alanına giderken Trump’ın özel aracında liderlerin ikili görüşmesi ve ardından her iki tarafın üçer katılımcısının yer aldığı bir görüşme de dahil olmak üzere yaklaşık 3 saat sürmüştü. Görüşmede, Rusya Devlet Başkanı Yardımcısı Yuri Uşakov ve Rusya Dışişleri Bakanı Sergey Lavrov, Putin’e eşlik ederken, Trump’ın yanında da ABD Başkanı’nın Özel Temsilcisi Steve Witkoff ve ABD Dışişleri Bakanı Marco Rubio yer almıştı.
+
+"Ukrayna’nın güvenliğinin de sağlanması gerektiği konusunda hemfikiriz"
+
+Putin görüşmenin ardından gerçekleştirilen basın toplantısında, iki ülkenin ele aldığı konuların başında Ukrayna meselesinin geldiğini söylemiş ve Trump’ın Ukrayna sorununun çözümü için kişisel olarak çaba göstermesini "değerli" olarak nitelemişti. Putin ayrıca, "Ukrayna’daki durum, güvenliğimize yönelik temel tehditlerle ilgilidir" ifadelerini kullanarak, Rusya’nın samimi olarak Ukrayna savaşını sona erdirmeyi istediğini vurgulamıştı. Rus lider, "Çözümü kalıcı ve uzun vadeli kılmak için, çatışmanın tüm asli köklerini, temel nedenlerini ortadan kaldırmamız gerekiyor. Bunu defalarca söyledik. Rusya’nın tüm meşru endişelerinin dikkate alınması ve Avrupa’da ve genel olarak dünyada adil bir güvenlik dengesinin yeniden tesis edilmesi gerekiyor. Bugün Başkan Trump’ın da söylediği gibi, doğal olarak Ukrayna’nın güvenliğinin de sağlanması gerektiği konusunda hemfikiriz. Doğal olarak, bunun üzerinde çalışmaya hazırız" demişti.
+
+Rus lider aynı zamanda ikili ilişkilerde yeni bir sayfa açılması ve iş birliğinin yeniden başlatılması çağrısında bulunarak, Trump'ı Moskova'ya davet etmişti.
+
+Trump: "10 üzerinden 10’luk görüşme"
+
+ABD Başkanı ise görüşmenin ardından bir televizyon kanalına yaptığı özel açıklamada, toplantıda birçok konunun masaya yatırıldığını, ancak resmi bir anlaşmaya varılmadığını söylemiş, "Benim açımdan, bir anlaşma olana kadar anlaşma yoktur. Ancak çok ilerleme kaydettik" ifadelerini kullanmıştı. Trump, buna rağmen Putin ile gerçekleştirdikleri zirveyi "10 üzerinden 10" olarak değerlendirerek, "Sanırım bir anlaşmaya oldukça yakınız. Ama Ukrayna’nın da bunu kabul etmesi gerekiyor. Belki de ‘hayır’ diyecekler" diye konuştu.
+İSTENEN ÇIKTILAR:
+Lütfen yukarıdaki habere dayanarak aşağıdaki maddeleri eksiksiz bir şekilde oluştur:
+Etkili Başlık:Haberin içeriğini net bir şekilde yansıtan, profesyonel ve dikkat çekici bir başlık oluştur. Başlık merak uyandırmalı ama yanıltıcı olmamalıdır. Başlıkta şehir bilgisi verilmemelidir. İnternet haberciliğine uygun olmalıdır(Yazım dilinde büyük küçük harf kullanımı nasılsa öyle olmalı)
+Haber Özeti:
+Haberin en önemli noktalarını içeren, 2-3 cümlelik kısa ve anlaşılır bir özet yaz. Bu özet, okuyucunun haberin tamamını okumak isteyip istemediğine karar vermesine yardımcı olmalıdır. Şehir bilgisi içermelidir.
+Özgün Haber Metni:
+Orijinal metni, tüm bilgileri koruyarak, tamamen özgün cümlelerle baştan yaz. Paragraflar arası geçişler akıcı olmalı ve metin kolay okunmalıdır. Konunun ana fikrini ve önemli detayları vurgula. Konu başlıklarına yer ver. Suç içeren haberlerde suçlunun ismi sansürlenmelidir(örn. G.K). Plaka bilgilerine yer verilmemelidir. Özel şirket isimlerine yer verilmemelidir. Şirket ile alakalı şahıslarda görev tanımları belirtilmelidir.
+Muhtemel Kategori:
+Bu haberin web sitemizde yayınlanması için en uygun kategoriyi belirt. (Örnek:  Afyon, Asayiş, Bildirimler, Dünya, Eğitim, Ekonomi, Foto Galeri, Genel, Gündem, Hayat, İlçeler, Köşe Yazıları, Kültür & Sanat, Magazin, Manşet, politika, Programlar, Resmi ilan, Sağlık, Siyaset, Spor, Teknoloji, Tüm Haberler, Video Galeri, Yaşam, Yazarlar)
+Etiketler (5 Adet):
+Haberle ilgili, SEO uyumlu ve aramalarda bulunmayı kolaylaştıracak 5 adet etiket oluştur. Etiketler virgülle ayrılarak listelenmelidir.

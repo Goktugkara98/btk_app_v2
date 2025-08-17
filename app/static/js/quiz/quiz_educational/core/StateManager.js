@@ -152,18 +152,11 @@ class StateManager {
    * @param {*} answer - Kullanıcının verdiği cevap.
    */
   setAnswer(questionId, answer) {
-    console.log('[DEBUG] StateManager.setAnswer called:', { questionId, answer, types: { questionId: typeof questionId, answer: typeof answer } });
-    
     const newAnswers = new Map(this.state.answers);
     const parsedQuestionId = parseInt(questionId, 10);
     const parsedAnswer = parseInt(answer, 10);
     
-    console.log('[DEBUG] Parsed values:', { parsedQuestionId, parsedAnswer });
-    console.log('[DEBUG] Current answers before set:', Array.from(this.state.answers.entries()));
-    
     newAnswers.set(parsedQuestionId, parsedAnswer);
-    
-    console.log('[DEBUG] New answers after set:', Array.from(newAnswers.entries()));
     
     this.setState({ answers: newAnswers }, 'SET_ANSWER');
   }
@@ -231,18 +224,6 @@ class StateManager {
     this.setState({ grade, subject, unit, topic, difficulty }, 'SET_METADATA');
   }
 
-  /* =========================================================================
-   * 8) Türetilmiş Veri Yönetimi | Derived Data Management
-   * ========================================================================= */
-
-  /**
-   * Soru listesinden, verilere hızlı erişim sağlamak için yardımcı Map'ler oluşturur.
-   * Bu işlem, soru ID'sine göre soru, seçenek ve doğru cevap bulmayı optimize eder.
-   */
-  buildDerivedMaps() {
-    // Artık türetilmiş map'ler tutulmuyor; gerektiğinde selector/hesaplama ile elde edilir.
-    return; // no-op
-  }
 }
 
 /**

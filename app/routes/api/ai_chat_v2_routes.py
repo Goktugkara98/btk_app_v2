@@ -402,17 +402,23 @@ def send_chat_message():
         return jsonify(response_payload), 200
         
     except Exception as e:
+        import traceback
+        print(f"[ERROR] Quick action failed: {str(e)}")
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
         error_msg = chat_message_service.get_error_message('general_error') if chat_message_service else 'System error'
         return jsonify({
             'status': 'error',
             'message': error_msg,
-            'error': str(e)
+            'error': str(e),
+            'traceback': traceback.format_exc()
         }), 500
 
 @ai_chat_v2_bp.route('/ai/chat/quick-action', methods=['POST'])
 def quick_action():
-    """Hızlı eylemler (dosya bazlı şablonlarla)"""
+    """Hızlı aksiyon işleme endpoint'i"""
     try:
+        print(f"[DEBUG] Quick action endpoint called")
+        print(f"[DEBUG] Request data: {request.get_json()}", flush=True)
         if not all([gemini_service, chat_session_service, chat_message_service]):
             return jsonify({
                 'status': 'error',
@@ -465,20 +471,30 @@ def quick_action():
         
         debug = bool(data.get('debug'))
         
-        # Chat session kontrol
+        # Chat session kontrol - eğer session yoksa oluştur
         session_info = chat_session_service.get_session(chat_session_id)
         if not session_info:
-            return jsonify({
-                'status': 'error',
-                'message': 'Chat session not found'
-            }), 404
+            print(f"[DEBUG] Chat session not found, using fallback session info")
+            # Fallback: Basic session info for quick actions
+            from datetime import datetime
+            session_info = {
+                'chat_session_id': chat_session_id,
+                'quiz_session_id': 'unknown',
+                'user_context': {
+                    'topic': 'General',
+                    'difficulty': 'medium',
+                    'quiz_mode': 'educational'
+                },
+                'status': 'active',
+                'created_at': datetime.now()
+            }
         
         # Soru bilgilerini al - önce question_context'ten, yoksa veritabanından
         if question_context:
             # Frontend'den gelen soru bilgilerini kullan
             question_data = {
                 'question_text': question_context.get('question_text', ''),
-                'topic_name': session_info['user_context'].get('topic', ''),
+                'topic_name': session_info.get('user_context', {}).get('topic', ''),
                 'options': question_context.get('options', [])
             }
         elif QuizSessionService:
@@ -504,23 +520,28 @@ def quick_action():
                 'message': 'Quiz service not available'
             }), 503
         
-        # Senaryoya göre structured contents oluştur (yalnız dosya bazlı şablon zorunlu)
-        built = chat_message_service.build_gemini_contents_for_scenario(
-            chat_session_id=chat_session_id,
-            user_message='',
-            scenario_type='quick_action',
-            is_first_message=is_first_message,
-            question_context=(question_context or question_data),
-            action=action,
-            files_only=True,
-        )
-        contents = built.get('contents', [])
-        final_user_text = built.get('final_user_text', '')
-        if not contents or not final_user_text.strip():
+        # Message servisinden tam promptu ve Gemini contents'ini al
+        message_info = {
+            'user_message': f'Quick action: {action}',
+            'scenario_type': 'quick_action',
+            'is_first_message': is_first_message,
+            'question_context': (question_context or question_data),
+            'action': action,
+            'user_action': {'type': 'quick_action', 'action': action},
+            'question_id': question_id,
+            'chat_session_id': chat_session_id
+        }
+        
+        processed_message = chat_message_service.process_message_with_full_prompt(message_info)
+        
+        if not processed_message['success']:
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid action or template not found'
-            }), 400
+                'message': processed_message['error']
+            }), 500
+            
+        contents = processed_message['contents']
+        final_user_text = processed_message['final_user_text']
         
         # Enhanced metadata for quick action
         action_metadata = {
@@ -532,31 +553,56 @@ def quick_action():
         }
         
         # AI'dan yanıt al (structured contents)
+        print(f"[DEBUG] Calling Gemini API with contents length: {len(contents)}")
         ai_response = gemini_service.generate_content(contents=contents)
+        print(f"[DEBUG] AI response received: {bool(ai_response)}")
         
         if not ai_response:
             error_msg = chat_message_service.get_error_message('api_error')
+            print(f"[DEBUG] AI response is None, returning error: {error_msg}")
             return jsonify({
                 'status': 'error',
                 'message': error_msg
             }), 500
         
         # AI yanıtını format et
-        formatted_response = chat_message_service.format_ai_response(ai_response)
+        print(f"[DEBUG] Formatting AI response...")
+        try:
+            formatted_response = chat_message_service.format_ai_response(ai_response)
+            print(f"[DEBUG] Formatted response length: {len(formatted_response) if formatted_response else 0}")
+        except Exception as format_error:
+            print(f"[DEBUG] Error formatting AI response: {format_error}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Response formatting failed: {str(format_error)}'
+            }), 500
         
         # AI mesajını session'a ekle
-        ai_metadata = chat_message_service.create_message_metadata('ai', action=action, question_id=question_id)
+        print(f"[DEBUG] Creating AI metadata...")
         try:
+            ai_metadata = chat_message_service.create_message_metadata('ai', action=action, question_id=question_id)
             ai_metadata['prompt_contents'] = contents
-        except Exception:
-            pass
-        chat_message_service.add_message(
-            chat_session_id, 'ai', formatted_response,
-            action_type='general',
-            ai_model='gemini-2.5-flash',
-            prompt_used=final_user_text,
-            metadata=ai_metadata
-        )
+            print(f"[DEBUG] AI metadata created successfully")
+        except Exception as metadata_error:
+            print(f"[DEBUG] Error creating AI metadata: {metadata_error}")
+            ai_metadata = {}
+        
+        print(f"[DEBUG] Adding AI message to session...")
+        try:
+            chat_message_service.add_message(
+                chat_session_id, 'ai', formatted_response,
+                action_type='general',
+                ai_model='gemini-2.5-flash',
+                prompt_used=final_user_text,
+                metadata=ai_metadata
+            )
+            print(f"[DEBUG] AI message added successfully")
+        except Exception as add_error:
+            print(f"[DEBUG] Error adding AI message: {add_error}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to save AI response: {str(add_error)}'
+            }), 500
         
         quick_response = {
             'status': 'success',
@@ -576,11 +622,15 @@ def quick_action():
         return jsonify(quick_response), 200
         
     except Exception as e:
+        import traceback
+        print(f"[ERROR] Quick action failed: {str(e)}")
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
         error_msg = chat_message_service.get_error_message('general_error') if chat_message_service else 'System error'
         return jsonify({
             'status': 'error',
             'message': error_msg,
-            'error': str(e)
+            'error': str(e),
+            'traceback': traceback.format_exc()
         }), 500
 
 # ===========================================================================

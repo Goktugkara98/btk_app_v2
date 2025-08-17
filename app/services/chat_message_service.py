@@ -77,6 +77,7 @@ class ChatMessageService:
         # Scenario metinlerini yükle
         try:
             self.scenario_texts = self._load_scenarios()
+            print(f"[DEBUG] Loaded scenarios: {list(self.scenario_texts.keys())}")
         except Exception as e:
             print(f"[WARNING] Failed to load scenarios: {e}")
             self.scenario_texts = {}
@@ -174,19 +175,29 @@ class ChatMessageService:
             print(f"[DEBUG] Scenario type: {message_info['scenario_type']}")
             
             # Kendi prompt building metodumuzu kullan
+            print(f"[DEBUG] Calling build_gemini_contents_for_scenario with:")
+            print(f"  - chat_session_id: {message_info['chat_session_id']}")
+            print(f"  - user_message: {message_info['user_message']}")
+            print(f"  - scenario_type: {message_info['scenario_type']}")
+            print(f"  - is_first_message: {message_info['is_first_message']}")
+            print(f"  - question_context: {message_info.get('question_context')}")
+            
             built = self.build_gemini_contents_for_scenario(
                 chat_session_id=message_info['chat_session_id'],
                 user_message=message_info['user_message'],
                 scenario_type=message_info['scenario_type'],
                 is_first_message=message_info['is_first_message'],
                 question_context=message_info['question_context'],
+                action=message_info.get('action'),
                 files_only=True,
             )
+            print(f"[DEBUG] build_gemini_contents_for_scenario returned: {built}")
             
             contents = built.get('contents', [])
             final_user_text = built.get('final_user_text', '')
             
             if not contents or not str(final_user_text).strip():
+                print(f"[DEBUG] Template empty - contents: {len(contents) if contents else 0}, final_user_text: '{final_user_text}'")
                 return {
                     'success': False,
                     'error': 'Scenario template not found or empty'
@@ -220,7 +231,7 @@ class ChatMessageService:
             self.save_message_with_full_prompt(
                 chat_session_id=message_info['chat_session_id'],
                 role='user',
-                content=message_info['user_message'],
+                content=full_prompt,  # Tam prompt'u content olarak kaydet
                 action_type=action_type,
                 metadata=user_metadata,
                 full_prompt=full_prompt
@@ -235,6 +246,9 @@ class ChatMessageService:
             }
             
         except Exception as e:
+            import traceback
+            print(f"[ERROR] Message processing failed: {str(e)}")
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
             return {
                 'success': False,
                 'error': f'Message processing failed: {str(e)}'
@@ -336,13 +350,13 @@ class ChatMessageService:
         Returns:
             Temizlenmiş mesaj
         """
-        # HTML escape
-        sanitized = html.escape(message.strip())
+        # Sadece strip işlemi yap, HTML escape yapma
+        # Çünkü veritabanında &quot; gibi entity'ler istemiyoruz
+        sanitized = message.strip()
         
-        # İzin verilen HTML tag'leri geri al (basic formatting için)
-        for tag in self.format_rules['allowed_html_tags']:
-            sanitized = sanitized.replace(f'&lt;{tag}&gt;', f'<{tag}>')
-            sanitized = sanitized.replace(f'&lt;/{tag}&gt;', f'</{tag}>')
+        # Sadece tehlikeli script tag'lerini kaldır
+        sanitized = re.sub(r'<script[^>]*>.*?</script>', '', sanitized, flags=re.IGNORECASE | re.DOTALL)
+        sanitized = re.sub(r'<iframe[^>]*>.*?</iframe>', '', sanitized, flags=re.IGNORECASE | re.DOTALL)
         
         return sanitized
     
@@ -760,89 +774,102 @@ class ChatMessageService:
         Returns:
             Senaryoya göre hazırlanmış prompt metni
         """
-        # Session bilgilerini al
-        session_info = self.chat_session_service.get_session(chat_session_id) if self.chat_session_service else {}
+        print(f"[DEBUG] build_prompt_for_scenario called with scenario_type={scenario_type}, is_first_message={is_first_message}, action={action}")
         
-        # Ortak değişkenleri hazırla
-        shared_conf: Dict[str, Any] = self.scenario_texts.get('shared') or {}
-        context_conf: Dict[str, Any] = (shared_conf.get('context') or {}) if isinstance(shared_conf, dict) else {}
-        hist_conf: Dict[str, Any] = context_conf.get('history') or {}
-        q_conf: Dict[str, Any] = context_conf.get('question') or {}
-
-        # Tarihçe artık Gemini contents'e dahil edildiği için burada boş bırak
-        history_str = ""
-
-        has_history = bool(history_str)
-
-        # Soru bağlamını derle (konfigüre edilebilir)
-        include_q = False
-        if question_context:
-            include_q = bool(q_conf.get('include_on_first', True)) if is_first_message else bool(q_conf.get('include_on_followup', False))
-        q_block = ''
-        if question_context and include_q:
-            q_text = str(question_context.get('question_text', '')).strip()
-            options = question_context.get('options', []) or []
-            label_question = (q_conf.get('labels', {}) or {}).get('question', 'Soru')
-            label_options = (q_conf.get('labels', {}) or {}).get('options', 'Şıklar')
-            opt_fmt = q_conf.get('option_format', '{index}) {text}')
-            lines: List[str] = []
-            if q_text:
-                lines.append(f"{label_question}: {q_text}")
-            if options:
-                lines.append(f"{label_options}:")
-                for idx, opt in enumerate(options, 1):
-                    otext = str(opt.get('option_text', '')).strip() or 'Şık metni bulunamadı'
-                    lines.append(self._render_text(opt_fmt, {'index': idx, 'text': otext}))
-            q_block = "\n".join(lines)
-
-        # Senaryo yönergesi
-        directive = self._get_scenario_directive(scenario_type, is_first_message)
-
-        # Değişkenler
-        variables = {
-            'SYSTEM': self._get_intro_text(),
-            'DIRECTIVE': directive,
-            'USER_MESSAGE': user_message,
-            'HISTORY': history_str,
-            'QUESTION_BLOCK': q_block,
-            'SUBJECT': session_info.get('subject_name', 'Bu ders'),
-            'TOPIC': session_info.get('topic_name', 'bu konu'),
-            'DIFFICULTY': session_info.get('difficulty_level', 'orta'),
-        }
-
-        # Soru/şık değişkenleri ve ek değişkenler
-        variables.update(self._prepare_question_vars(question_context))
-        scen_conf: Dict[str, Any] = self.scenario_texts.get(scenario_type) or {}
         try:
-            extra_vars: Dict[str, Any] = {}
-            if isinstance(shared_conf, dict) and isinstance(shared_conf.get('vars'), dict):
-                extra_vars.update(shared_conf.get('vars'))
-            if isinstance(scen_conf, dict) and isinstance(scen_conf.get('vars'), dict):
-                extra_vars.update(scen_conf.get('vars'))
-            variables.update(extra_vars)
-        except Exception:
-            pass
+            # Session bilgilerini al
+            session_info = self.chat_session_service.get_session(chat_session_id) if self.chat_session_service else {}
+            print(f"[DEBUG] build_prompt_for_scenario - session_info from service: {session_info}")
+            if session_info is None:
+                session_info = {}
+                print(f"[DEBUG] build_prompt_for_scenario - session_info was None, using empty dict")
+            
+            # Ortak değişkenleri hazırla
+            shared_conf: Dict[str, Any] = self.scenario_texts.get('shared') or {}
+            context_conf: Dict[str, Any] = (shared_conf.get('context') or {}) if isinstance(shared_conf, dict) else {}
+            hist_conf: Dict[str, Any] = context_conf.get('history') or {}
+            q_conf: Dict[str, Any] = context_conf.get('question') or {}
 
-        # 1) DOSYA BAZLI PROMPT: Varsa sadece bunu kullan
-        file_prompt = self._load_file_prompt(scenario_type, is_first_message, action=action)
-        if file_prompt:
-            return self._render_text(file_prompt, variables)
-        if files_only:
-            # Dosya yoksa ve sadece dosyalar etkinse boş dön
+            # Tarihçe artık Gemini contents'e dahil edildiği için burada boş bırak
+            history_str = ""
+
+            has_history = bool(history_str)
+
+            # Soru bağlamını derle (konfigüre edilebilir)
+            include_q = False
+            if question_context:
+                include_q = bool(q_conf.get('include_on_first', True)) if is_first_message else bool(q_conf.get('include_on_followup', False))
+            q_block = ''
+            if question_context and include_q:
+                q_text = str(question_context.get('question_text', '')).strip()
+                options = question_context.get('options', []) or []
+                label_question = (q_conf.get('labels', {}) or {}).get('question', 'Soru')
+                label_options = (q_conf.get('labels', {}) or {}).get('options', 'Şıklar')
+                opt_fmt = q_conf.get('option_format', '{index}) {text}')
+                lines: List[str] = []
+                if q_text:
+                    lines.append(f"{label_question}: {q_text}")
+                if options:
+                    lines.append(f"{label_options}:")
+                    for idx, opt in enumerate(options, 1):
+                        otext = str(opt.get('option_text', '')).strip() or 'Şık metni bulunamadı'
+                        lines.append(self._render_text(opt_fmt, {'index': idx, 'text': otext}))
+                q_block = "\n".join(lines)
+
+            # Senaryo yönergesi
+            directive = self._get_scenario_directive(scenario_type, is_first_message)
+
+            # Değişkenler
+            variables = {
+                'SYSTEM': self._get_intro_text(),
+                'DIRECTIVE': directive,
+                'USER_MESSAGE': user_message,
+                'HISTORY': history_str,
+                'QUESTION_BLOCK': q_block,
+                'SUBJECT': session_info.get('subject_name', 'Bu ders'),
+                'TOPIC': session_info.get('topic_name', 'bu konu'),
+                'DIFFICULTY': session_info.get('difficulty_level', 'orta'),
+            }
+
+            # Soru/şık değişkenleri ve ek değişkenler
+            variables.update(self._prepare_question_vars(question_context))
+            scen_conf: Dict[str, Any] = self.scenario_texts.get(scenario_type) or {}
+            try:
+                extra_vars: Dict[str, Any] = {}
+                if isinstance(shared_conf, dict) and isinstance(shared_conf.get('vars'), dict):
+                    extra_vars.update(shared_conf.get('vars'))
+                if isinstance(scen_conf, dict) and isinstance(scen_conf.get('vars'), dict):
+                    extra_vars.update(scen_conf.get('vars'))
+                variables.update(extra_vars)
+            except Exception:
+                pass
+
+            # 1) DOSYA BAZLI PROMPT: Varsa sadece bunu kullan
+            file_prompt = self._load_file_prompt(scenario_type, is_first_message, action=action)
+            if file_prompt:
+                return self._render_text(file_prompt, variables)
+            if files_only:
+                # Dosya yoksa ve sadece dosyalar etkinse boş dön
+                return ''
+
+            # 2) Fallback: Basit prompt oluştur
+            prompt_parts = []
+            if is_first_message:
+                prompt_parts.append(self._get_intro_text())
+            if history_str:
+                prompt_parts.append("Son sohbet:\n" + history_str)
+            if q_block:
+                prompt_parts.append(q_block)
+            prompt_parts.append(directive)
+            prompt_parts.append(f"Öğrenci mesajı: {user_message}")
+
+            return "\n\n".join(prompt_parts)
+        
+        except Exception as e:
+            print(f"[ERROR] build_prompt_for_scenario failed: {e}")
+            import traceback
+            traceback.print_exc()
             return ''
-
-        # 2) Fallback: Basit prompt oluştur
-        prompt_parts = []
-        if is_first_message:
-            prompt_parts.append(self._get_intro_text())
-        if history_str:
-            prompt_parts.append("Son sohbet:\n" + history_str)
-        if q_block:
-            prompt_parts.append(q_block)
-        prompt_parts.append(directive)
-        prompt_parts.append(f"Öğrenci mesajı: {user_message}")
-
-        return "\n\n".join(prompt_parts)
     
     def _get_recent_dialog(
         self,
@@ -889,9 +916,9 @@ class ChatMessageService:
     ) -> Dict[str, Any]:
         """
         Gemini REST API'ye uygun 'contents' yapısını döndürür.
-        - Geçmiş: veritabanından user/model mesajları (system hariç)
-        - Şablon: senaryoya göre markdown dosyasını değişkenlerle doldurur
-        - Son içerik: render edilen şablonu 'user' mesajı olarak ekler
+        - İlk mesaj: Tam prompt (system + soru + yönerge + kullanıcı mesajı)
+        - Sonraki mesajlar: Sadece yönerge + kullanıcı mesajı
+        - Geçmiş: Veritabanından user/model mesajları
 
         Returns:
             {
@@ -899,37 +926,51 @@ class ChatMessageService:
               'final_user_text': str
             }
         """
-        # Prompt'u oluştur
-        prompt_text = self.build_prompt_for_scenario(
-            chat_session_id=chat_session_id,
-            user_message=user_message,
-            scenario_type=scenario_type,
-            is_first_message=is_first_message,
-            question_context=question_context,
-            action=action,
-            files_only=files_only
-        )
+        print(f"[DEBUG] build_gemini_contents_for_scenario METHOD ENTRY")
+        print(f"[DEBUG] Calling build_gemini_contents_for_scenario with:")
+        print(f"  - chat_session_id: {chat_session_id}")
+        print(f"  - user_message: {user_message}")
+        print(f"  - scenario_type: {scenario_type}")
+        print(f"  - is_first_message: {is_first_message}")
+        print(f"  - question_context: {question_context}")
         
-        if not prompt_text.strip():
-            return {'contents': [], 'final_user_text': ''}
+        contents = []
         
         # Geçmiş mesajları al (sadece user/model)
-        contents = []
-        if self.chat_repo:
+        if self.chat_repo and not is_first_message:
             try:
                 history = self.chat_repo.get_conversation_history(chat_session_id, limit=history_limit)
                 for msg in history:
                     role = msg.get('role')
                     if role in ('user', 'ai'):
+                        # Standardize role mapping for Gemini API
                         gemini_role = 'user' if role == 'user' else 'model'
-                        content = msg.get('content', '')
-                        if content.strip():
-                            contents.append({
-                                'role': gemini_role,
-                                'parts': [{'text': content}]
-                            })
-            except Exception:
-                pass
+                        contents.append({
+                            'role': gemini_role,
+                            'parts': [{'text': msg.get('content', '')}]
+                        })
+            except Exception as e:
+                print(f"[DEBUG] Error loading history: {e}")
+        
+        if is_first_message:
+            print(f"[DEBUG] About to call build_prompt_for_scenario...")
+            prompt_text = self.build_prompt_for_scenario(
+                chat_session_id=chat_session_id,
+                user_message=user_message,
+                scenario_type=scenario_type,
+                is_first_message=True,
+                question_context=question_context,
+                action=action,
+                files_only=files_only
+            )
+            print(f"[DEBUG] build_prompt_for_scenario returned: '{prompt_text}'")
+        else:
+            # Devam mesajları için sadece kullanıcı mesajını ekle (history zaten yukarıda eklendi)
+            prompt_text = user_message
+        
+        if not prompt_text.strip():
+            print(f"[DEBUG] build_prompt_for_scenario returned empty prompt_text")
+            return {'contents': [], 'final_user_text': ''}
         
         # Son kullanıcı mesajını ekle
         contents.append({
@@ -941,3 +982,35 @@ class ChatMessageService:
             'contents': contents,
             'final_user_text': prompt_text
         }
+
+    def _get_recent_dialog(
+        self,
+        chat_session_id: str,
+        last_n: int = 2,
+        truncate_chars: int = 200,
+        label_user: str = 'Kullanıcı',
+        label_ai: str = 'AI',
+    ) -> str:
+        """
+        Sistem mesajlarını hariç tutarak son user/ai mesajlarını formatlar.
+        """
+        if not self.chat_repo:
+            return ''
+        try:
+            recent_messages = self.chat_repo.get_conversation_history(chat_session_id, limit=max(2*last_n, 6))
+        except Exception:
+            return ''
+        if not recent_messages:
+            return ''
+        non_system = [m for m in recent_messages if m.get('role') in ('user', 'ai')]
+        if not non_system:
+            return ''
+        last_dialog = non_system[-last_n:]
+        lines: List[str] = []
+        for msg in last_dialog:
+            content = msg.get('content', '')
+            if truncate_chars and len(content) > truncate_chars:
+                content = content[:truncate_chars] + '...'
+            role_label = label_user if msg.get('role') == 'user' else label_ai
+            lines.append(f"{role_label}: {content}")
+        return "\n".join(lines)

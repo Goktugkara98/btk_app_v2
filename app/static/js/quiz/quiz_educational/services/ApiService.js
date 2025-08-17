@@ -191,8 +191,3 @@ export class ApiService {
  * ========================================================================= */
 // ES6 modül sistemi için adlandırılmış dışa aktarım (named export)
 // `export class ApiService` ifadesi ile sağlanır.
-
-// Node.js gibi CommonJS ortamlarıyla uyumluluk için ek dışa aktarım.
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { ApiService }; //
-}

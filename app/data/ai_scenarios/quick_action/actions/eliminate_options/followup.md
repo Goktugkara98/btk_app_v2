@@ -1,8 +1,4 @@
-Öğrenciyle devam eden bir konuşma. Önceki mesajları dikkate alarak yardım et.
+YÖNERGE: Bu, devam eden bir konuşma. Kullanıcı şimdi bir şıkkı elemek için yardım istiyor. Sohbetin genel gidişatını ve şimdiye kadar konuşulanları dikkate alarak, bir şıkkın neden yanlış olduğunu anlamasına yardımcı olacak yönlendirici bir soru sor.
 
-Yaklaşımın:
-- Önceki konuşmayı referans al
-- Öğrencinin yeni mesajına odaklan
-- Kısa ve net yanıtlar ver
-
-Öğrenci mesajı: {USER_MESSAGE}
+KULLANICI MESAJI:
+{USER_MESSAGE}

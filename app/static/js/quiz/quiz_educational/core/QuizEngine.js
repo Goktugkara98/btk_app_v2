@@ -1,6 +1,7 @@
-import { stateManager } from './StateManager.js';
 import { eventBus } from './EventBus.js';
+import { stateManager } from './StateManager.js';
 import { ApiService } from '../services/ApiService.js';
+import { ValidationHelpers } from '../utils/ValidationHelpers.js';
 
 /**
  * =============================================================================
@@ -318,11 +319,12 @@ export class QuizEngine {
       stateManager.setAnswer(questionId, answer);
       
       // Frontend-only validation: Sadece yerel doğrulama kullan
-      const isCorrect = this.checkAnswerLocally(questionId, answer);
+      const questions = stateManager.getState('questions');
+      const isCorrect = ValidationHelpers.checkAnswerLocally(questionId, answer, questions);
       console.log('[QuizEngine] Frontend validation result:', isCorrect, 'for answer:', answer, 'question:', questionId);
       
       // Debug: Doğru cevabı da logla
-      const correctAnswer = this.getCorrectAnswer(questionId);
+      const correctAnswer = ValidationHelpers.getCorrectAnswer(questionId, questions);
       console.log('[QuizEngine] Correct answer for question', questionId, ':', correctAnswer?.id, correctAnswer);
       
       // API'ye cevabı gönder (sadece kaydetmek için, doğruluk kontrolü yapmadan)
@@ -339,7 +341,7 @@ export class QuizEngine {
         eventBus.publish('answer:wrong', {
           questionId: questionId,
           userAnswer: answer,
-          correctAnswer: this.getCorrectAnswer(questionId)
+          correctAnswer: ValidationHelpers.getCorrectAnswer(questionId, questions)
         });
         return;
       }
@@ -397,68 +399,6 @@ export class QuizEngine {
     console.log('Yanlış cevap işleniyor:', data);
   }
 
-  /**
-   * checkAnswerLocally - Sunucu yanıtı olmadığında bir cevabın doğruluğunu
-   * yerel veriye göre kontrol eder.
-   * @param {number|string} questionId - Soru ID'si.
-   * @param {string} userAnswer - Kullanıcının verdiği cevap ID'si.
-   * @returns {boolean} Cevabın doğru olup olmadığını döndürür.
-   */
-  checkAnswerLocally(questionId, userAnswer) {
-    console.log('[DEBUG] checkAnswerLocally called:', { questionId, userAnswer });
-    
-    const st = stateManager.getState();
-    const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
-    console.log('[DEBUG] Found question:', q);
-    
-    const options = q?.question?.options || [];
-    console.log('[DEBUG] Question options:', options);
-    
-    const correct = options.find(o => {
-      if (!o) return false;
-      console.log('[DEBUG] Checking option:', o, {
-        is_correct: o.is_correct,
-        isCorrect: o.isCorrect,
-        correct: o.correct
-      });
-      
-      const result = (o.is_correct === true || o.is_correct === 1 || o.is_correct === '1') ||
-                     (o.isCorrect === true || o.isCorrect === 1 || o.isCorrect === '1') ||
-                     (o.correct === true || o.correct === 1 || o.correct === '1');
-      
-      console.log('[DEBUG] Option check result:', result);
-      return result;
-    });
-    
-    console.log('[DEBUG] Found correct option:', correct);
-    
-    const finalResult = correct ? String(correct.id) === String(userAnswer) : false;
-    console.log('[DEBUG] Final validation result:', finalResult, {
-      correctId: correct?.id,
-      userAnswer,
-      comparison: `${correct?.id} === ${userAnswer}`
-    });
-    
-    return finalResult;
-  }
-
-  /**
-   * getCorrectAnswer - Belirtilen sorunun doğru cevap seçeneği nesnesini döndürür.
-   * @param {number|string} questionId - Soru ID'si.
-   * @returns {object|null} Doğru cevap seçeneği veya bulunamazsa null.
-   */
-  getCorrectAnswer(questionId) {
-    const st = stateManager.getState();
-    const q = (st.questions || []).find(item => String(item?.question?.id) === String(questionId));
-    const options = q?.question?.options || [];
-    return options.find(o => {
-      if (!o) return false;
-      // Tüm olası doğru cevap formatlarını kontrol et
-      return (o.is_correct === true || o.is_correct === 1 || o.is_correct === '1') ||
-             (o.isCorrect === true || o.isCorrect === 1 || o.isCorrect === '1') ||
-             (o.correct === true || o.correct === 1 || o.correct === '1');
-    }) || null;
-  }
 
   /* =========================================================================
    * 6) Frontend Scoring | Frontend Puanlama
@@ -477,7 +417,7 @@ export class QuizEngine {
     questions.forEach(questionItem => {
       const questionId = questionItem.question.id;
       const userAnswer = answers.get(questionId);
-      const isCorrect = userAnswer ? this.checkAnswerLocally(questionId, userAnswer) : false;
+      const isCorrect = userAnswer ? ValidationHelpers.checkAnswerLocally(questionId, userAnswer, questions) : false;
       const points = questionItem.question.points || 1;
 
       if (isCorrect) {
@@ -488,7 +428,7 @@ export class QuizEngine {
       questionResults.push({
         questionId,
         userAnswer,
-        correctAnswer: this.getCorrectAnswer(questionId),
+        correctAnswer: ValidationHelpers.getCorrectAnswer(questionId, questions),
         isCorrect,
         points: isCorrect ? points : 0
       });

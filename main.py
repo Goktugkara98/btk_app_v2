@@ -4,6 +4,13 @@ from app.database.db_connection import DatabaseConnection
 from app.database.db_migrations_v2 import DatabaseMigrations
 import os
 import secrets
+import sys
+
+# Set UTF-8 encoding for Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
 def create_app(config_class=Config):
     """Create and configure the Flask application."""

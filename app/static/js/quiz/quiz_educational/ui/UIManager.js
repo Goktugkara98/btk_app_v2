@@ -1,5 +1,5 @@
-import { stateManager } from '../core/StateManager.js';
 import { eventBus } from '../core/EventBus.js';
+import { stateManager } from '../core/StateManager.js';
 
 /**
  * =============================================================================

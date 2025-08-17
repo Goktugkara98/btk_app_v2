@@ -1,0 +1,103 @@
+AI SCENARIOS DOSYA YAPISI
+============================
+
+Bu dizin, AI sohbet sistemi için prompt şablonlarını içerir. Sistem basit, dosya tabanlı bir yapı kullanır.
+
+GENEL YAPILANMA
+===============
+
+ai_scenarios/
+├── README.md                 # Sistem dokümantasyonu ve kullanım kılavuzu
+├── shared.json              # Ortak ayarlar ve yapılandırma
+├── direct/                  # Doğrudan yardım senaryoları
+│   ├── first.md            # İlk etkileşim şablonu
+│   └── followup.md         # Takip eden etkileşim şablonu
+├── wrong_answer/           # Yanlış cevap senaryoları
+│   ├── first.md           # İlk etkileşim şablonu
+│   └── followup.md        # Takip eden etkileşim şablonu
+└── quick_action/          # Hızlı eylem senaryoları
+    └── actions/           # Eylem kategorileri
+        ├── eliminate_options/     # Şık eleme yardımı
+        │   ├── first.md          # İlk etkileşim şablonu
+        │   └── followup.md       # Takip eden etkileşim şablonu
+        ├── explain/              # Açıklama yardımı
+        │   ├── first.md
+        │   └── followup.md
+        ├── give_hint/            # İpucu verme
+        │   ├── first.md
+        │   └── followup.md
+        ├── how_to_solve/         # Çözüm yöntemi gösterme
+        │   ├── first.md
+        │   └── followup.md
+        └── solve_step_by_step/   # Adım adım çözüm
+            ├── first.md
+            └── followup.md
+
+DOSYA TİPLERİ VE İŞLEVLERİ
+==========================
+
+1. README.md
+   - Sistem dokümantasyonu
+   - Kullanım kılavuzu ve yönergeler
+   - Mevcut placeholder'ların listesi
+   - Yazım kuralları
+
+2. shared.json
+   - Ortak sistem ayarları
+   - AI karakter tanımı (Daima)
+   - Soru formatı yapılandırması
+
+3. Senaryo Dizinleri
+   - direct/: Doğrudan yardım talepleri için
+   - wrong_answer/: Yanlış cevap verildiğinde kullanılır
+   - quick_action/actions/: Özel hızlı eylemler için
+
+4. Markdown Şablonları
+   - first.md: İlk etkileşim için prompt şablonu
+   - followup.md: Devam eden konuşmalar için prompt şablonu
+
+MEVCUT HIZLI EYLEMLER
+====================
+
+1. eliminate_options - Şık eleme yardımı
+2. explain - Konu açıklaması
+3. give_hint - İpucu verme
+4. how_to_solve - Çözüm yöntemi gösterme
+5. solve_step_by_step - Adım adım çözüm
+
+PLACEHOLDER'LAR
+===============
+
+Temel placeholder'lar:
+- {SYSTEM} - Sistem mesajı
+- {DIRECTIVE} - Yönerge
+- {USER_MESSAGE} - Kullanıcı mesajı
+- {QUESTION_BLOCK} - Soru bloğu
+
+
+Soru/oturum placeholder'ları:
+- {question_text} - Soru metni
+- {options_bulleted} / {options_plain} - Şıklar (madde işaretli/düz)
+- {correct_answer_text} / {correct_option_letter} - Doğru cevap
+- {SUBJECT}, {TOPIC}, {DIFFICULTY} - Ders, konu, zorluk seviyesi
+
+KULLANIM PRENSİPLERİ
+===================
+
+1. Her senaryo veya hızlı eylem tam olarak iki Markdown dosyası içerir
+2. JSON blokları veya modüler include'lar gerekli değildir
+3. Prompt'lar doğrudan first.md ve followup.md dosyalarında yazılır
+4. Hızlı eylemler quick_action/actions/<eylem_adı>/ altında bulunmalıdır
+5. Bilinmeyen/eksik eylemler 400 hata döndürür
+
+SİSTEM AKIŞI
+============
+
+1. Kullanıcı etkileşimi başlatır
+2. Sistem uygun senaryoyu (direct/wrong_answer/quick_action) seçer
+3. İlk etkileşim ise first.md şablonu kullanılır
+4. Devam eden konuşmalarda followup.md şablonu kullanılır
+5. Placeholder'lar gerçek değerlerle değiştirilir
+6. AI yanıtı oluşturulur
+
+Bu yapı, esnek ve genişletilebilir bir AI öğretmen sistemi sağlar.

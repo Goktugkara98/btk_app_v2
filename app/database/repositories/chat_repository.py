@@ -259,15 +259,15 @@ class ChatRepository:
                 SELECT id, message_type as role, content, action_type, created_at
                 FROM chat_messages
                 WHERE chat_session_id = %s
-                ORDER BY created_at DESC
+                ORDER BY created_at ASC
                 LIMIT %s
                 """
                 
                 conn.cursor.execute(query, (chat_session_id, limit))
                 results = conn.cursor.fetchall()
                 
-                # With dictionary=True cursor, results are already list[dict]
-                return results[::-1]  # Chronological order
+                # Return in chronological order directly
+                return results
                 
         except Exception as e:
             return []

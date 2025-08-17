@@ -1,0 +1,27 @@
+{
+  "first": "Merhaba! {action_name} konusunda sana yardımcı olmaktan mutluluk duyarım. 😊\n\n{question_context}\n\n{action_directive}",
+  "followup": "{action_directive}",
+  "default": "Bu konuda sana yardımcı olmaya çalışacağım. {action_directive}",
+  "actions": {
+    "give_hint": {
+      "directive": "Soru hakkında ipucu vereceğim. Doğrudan cevabı söylemeyeceğim, sadece doğru yöne yönlendireceğim.",
+      "name": "ipucu verme"
+    },
+    "explain": {
+      "directive": "Bu sorunun konusunu ve çözüm yaklaşımını açıklayacağım.",
+      "name": "konu açıklama"
+    },
+    "how_to_solve": {
+      "directive": "Bu tür soruları nasıl çözeceğini adım adım açıklayacağım.",
+      "name": "çözüm yöntemi"
+    },
+    "eliminate_options": {
+      "directive": "Hangi şıkların neden yanlış olduğunu açıklayarak eleme yapmanı sağlayacağım.",
+      "name": "şık eleme"
+    },
+    "solve_step_by_step": {
+      "directive": "Bu soruyu adım adım çözeceğim ve her adımı açıklayacağım.",
+      "name": "adım adım çözüm"
+    }
+  }
+}

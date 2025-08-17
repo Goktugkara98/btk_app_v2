@@ -1,11 +1,11 @@
 // Quiz uygulamasının ana giriş noktası (entry point)
 
-import { QuizEngine } from './core/QuizEngine.js';
-import { UIManager } from './ui/UIManager.js';
-import { stateManager } from './core/StateManager.js';
 import { eventBus } from './core/EventBus.js';
+import { QuizEngine } from './core/QuizEngine.js';
+import { stateManager } from './core/StateManager.js';
 import AIChatService from './services/AIChatService.js';
 import AIChatManager from './ui/AIChatManager.js';
+import { UIManager } from './ui/UIManager.js';
 
 // Global hata yakalayıcı
 window.onerror = function(message, source, lineno, colno, error) {

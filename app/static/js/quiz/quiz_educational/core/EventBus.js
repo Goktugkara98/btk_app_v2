@@ -76,21 +76,15 @@ class EventBus {
    * @param {*} [data] - Abonelere gönderilecek isteğe bağlı veri.
    */
   publish(eventName, data) {
-    console.log(`[DEBUG] EventBus.publish called:`, { eventName, data, hasSubscribers: this.events.has(eventName) });
-    
     if (!this.events.has(eventName)) {
-      console.log(`[DEBUG] EventBus: No subscribers for event '${eventName}'`);
       return;
     }
     
     const subscribers = this.events.get(eventName);
-    console.log(`[DEBUG] EventBus: Found ${subscribers.size} subscribers for '${eventName}'`);
     
-    subscribers.forEach((callback, index) => {
+    subscribers.forEach((callback) => {
       try {
-        console.log(`[DEBUG] EventBus: Calling subscriber ${index + 1} for '${eventName}'`);
         callback(data);
-        console.log(`[DEBUG] EventBus: Subscriber ${index + 1} completed successfully`);
       } catch (error) {
         console.error(`[EventBus] '${eventName}' olayı için bir abonede hata oluştu:`, error);
       }

@@ -1,8 +1,4 @@
-Öğrenciyle devam eden bir konuşma. Önceki mesajları dikkate alarak yardım et.
+YÖNERGE: Bu, devam eden bir konuşma. Kullanıcı şimdi sorunun çözüm yöntemini öğrenmek istiyor. Sohbet geçmişini dikkate alarak, bu TÜRDEKİ problemlerin genel çözüm stratejisini, sorudaki spesifik değerleri kullanmadan anlat. Daha önce bu yöntemden bahsedildiyse, farklı bir şekilde açıkla.
 
-Yaklaşımın:
-- Önceki konuşmayı referans al
-- Öğrencinin yeni mesajına odaklan
-- Kısa ve net yanıtlar ver
-
-Öğrenci mesajı: {USER_MESSAGE}
+KULLANICI MESAJI:
+{USER_MESSAGE}
