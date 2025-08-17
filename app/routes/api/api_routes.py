@@ -54,6 +54,13 @@ try:
 except ImportError as e:
     pass
 
+# Import admin routes
+try:
+    from .admin_routes import admin_bp
+    api_bp.register_blueprint(admin_bp)
+except ImportError as e:
+    pass
+
 # =============================================================================
 # 5.0. ANA API ROTALARI (MAIN API ROUTES)
 # =============================================================================

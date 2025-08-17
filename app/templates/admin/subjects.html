@@ -1,0 +1,226 @@
+{% extends "admin/base_admin.html" %}
+
+{% block page_title %}Ders Yönetimi{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ url_for('pages.admin_pages.curriculum_management') }}">Müfredat</a></li>
+    <li class="breadcrumb-item active">Dersler</li>
+{% endblock %}
+
+{% block page_actions %}
+<button class="btn btn-primary" onclick="showAddModal()">
+    <i class="fas fa-plus"></i> Yeni Ders
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-book"></i> Ders Listesi
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="subjectsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ders Adı</th>
+                        <th>Sınıf</th>
+                        <th>Açıklama</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="subjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Yeni Ders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subjectForm">
+                    <input type="hidden" id="subjectId">
+                    <div class="mb-3">
+                        <label for="subjectName" class="form-label">Ders Adı</label>
+                        <input type="text" class="form-control" id="subjectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gradeSelect" class="form-label">Sınıf</label>
+                        <select class="form-select" id="gradeSelect" required>
+                            <option value="">Sınıf seçiniz</option>
+                            <!-- Grades will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">Aktif</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="saveButton" onclick="saveSubject()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Initialize the page when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    const subjectsTable = $('#subjectsTable').DataTable({
+        ajax: {
+            url: '/api/admin/subjects',
+            dataSrc: 'data'
+        },
+        columns: [
+            { data: 'id' },
+            { data: 'name' },
+            { data: 'grade_name' },
+            { data: 'description' },
+            { 
+                data: 'is_active',
+                render: function(data, type, row) {
+                    return data ? 
+                        '<span class="badge bg-success">Aktif</span>' : 
+                        '<span class="badge bg-danger">Pasif</span>';
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-outline-primary" onclick="editSubject(${row.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubject(${row.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+        ]
+    });
+
+    // Load grades for the dropdown
+    loadGrades();
+});
+
+function showAddModal() {
+    $('#subjectForm')[0].reset();
+    $('#subjectId').val('');
+    $('#modalTitle').text('Yeni Ders');
+    $('#subjectModal').modal('show');
+}
+
+function loadGrades() {
+    // Load grades for the dropdown
+    fetch('/api/admin/grades/active')
+        .then(response => response.json())
+        .then(data => {
+            const select = $('#gradeSelect');
+            select.empty().append('<option value="">Sınıf seçiniz</option>');
+            data.data.forEach(grade => {
+                select.append(`<option value="${grade.id}">${grade.name}</option>`);
+            });
+        });
+}
+
+function saveSubject() {
+    const subjectData = {
+        id: $('#subjectId').val() || null,
+        name: $('#subjectName').val(),
+        grade_id: $('#gradeSelect').val(),
+        description: $('#description').val(),
+        is_active: $('#isActive').is(':checked')
+    };
+
+    const method = subjectData.id ? 'PUT' : 'POST';
+    const url = subjectData.id ? 
+        `/api/admin/subjects/${subjectData.id}` : 
+        '/api/admin/subjects';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(subjectData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $('#subjectModal').modal('hide');
+            $('#subjectsTable').DataTable().ajax.reload();
+            showToast('Başarılı', 'Ders başarıyla kaydedildi.', 'success');
+        } else {
+            showToast('Hata', data.message || 'Bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Hata', 'Bir hata oluştu.', 'error');
+    });
+}
+
+function editSubject(id) {
+    fetch(`/api/admin/subjects/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const subject = data.data;
+                $('#subjectId').val(subject.id);
+                $('#subjectName').val(subject.name);
+                $('#gradeSelect').val(subject.grade_id);
+                $('#description').val(subject.description);
+                $('#isActive').prop('checked', subject.is_active);
+                
+                $('#modalTitle').text('Düzenle: ' + subject.name);
+                $('#subjectModal').modal('show');
+            }
+        });
+}
+
+function deleteSubject(id) {
+    if (confirm('Bu dersi silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
+        fetch(`/api/admin/subjects/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#subjectsTable').DataTable().ajax.reload();
+                showToast('Başarılı', 'Ders başarıyla silindi.', 'success');
+            } else {
+                showToast('Hata', data.message || 'Bir hata oluştu.', 'error');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

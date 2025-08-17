@@ -54,7 +54,7 @@ def profile():
         if not user_profile:
             # Kullanıcı bulunamadıysa session'ı temizle ve login'e yönlendir
             session.clear()
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('pages.auth.login'))
         
         return render_template('profile.html', title='Profile', user=user_profile)
         

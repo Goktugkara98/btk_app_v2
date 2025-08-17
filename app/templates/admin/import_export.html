@@ -1,0 +1,177 @@
+{% extends "admin/base_admin.html" %}
+
+{% block page_title %}Veri Aktarımı{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Veri Aktarımı</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- JSON Files Management -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-code"></i> JSON Dosyaları
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="loadJsonFiles()">
+                        <i class="fas fa-refresh"></i> Dosyaları Yenile
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="jsonFilesTable">
+                        <thead>
+                            <tr>
+                                <th>Dosya Adı</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import/Export Operations -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt"></i> İçe/Dışa Aktarım
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Import Section -->
+                <div class="mb-4">
+                    <h6 class="text-primary">
+                        <i class="fas fa-file-import"></i> JSON'dan Veritabanına Aktarım
+                    </h6>
+                    <p class="text-muted small">JSON dosyasındaki müfredat verilerini veritabanına aktarır.</p>
+                    
+                    <div class="mb-3">
+                        <label for="importFileSelect" class="form-label">JSON Dosyası Seç</label>
+                        <select class="form-select" id="importFileSelect">
+                            <option value="">Dosya seçiniz...</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="importFromJson()">
+                        <i class="fas fa-upload"></i> Veritabanına Aktar
+                    </button>
+                </div>
+
+                <hr>
+
+                <!-- Export Section -->
+                <div class="mb-4">
+                    <h6 class="text-warning">
+                        <i class="fas fa-file-export"></i> Veritabanından JSON'a Aktarım
+                    </h6>
+                    <p class="text-muted small">Belirli bir sınıfın müfredat verilerini JSON formatında export eder.</p>
+                    
+                    <div class="mb-3">
+                        <label for="exportGradeSelect" class="form-label">Sınıf Seç</label>
+                        <select class="form-select" id="exportGradeSelect">
+                            <option value="">Sınıf seçiniz...</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-warning" onclick="exportToJson()">
+                        <i class="fas fa-download"></i> JSON Olarak Export Et
+                    </button>
+                </div>
+
+                <hr>
+
+                <!-- File Upload Section -->
+                <div>
+                    <h6 class="text-info">
+                        <i class="fas fa-cloud-upload-alt"></i> Yeni JSON Dosyası Yükle
+                    </h6>
+                    <p class="text-muted small">Bilgisayarınızdan yeni bir JSON dosyası yükleyin.</p>
+                    
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="fileUpload" accept=".json">
+                    </div>
+                    
+                    <button class="btn btn-info" onclick="uploadJsonFile()">
+                        <i class="fas fa-upload"></i> Dosya Yükle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JSON Content Viewer Modal -->
+<div class="modal fade" id="jsonViewerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">JSON İçeriği</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre><code id="jsonContent" class="language-json"></code></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="downloadCurrentJson()">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Progress Modal -->
+<div class="modal fade" id="importProgressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aktarım İşlemi</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                </div>
+                <p>JSON dosyası veritabanına aktarılıyor...</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Results Modal -->
+<div class="modal fade" id="importResultsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aktarım Sonuçları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="importResultsContent">
+                <!-- Results will be shown here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tamam</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin/import-export.js') }}"></script>
+{% endblock %}

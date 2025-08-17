@@ -54,6 +54,13 @@ try:
 except ImportError as e:
     pass
 
+# Import admin routes
+try:
+    from .admin_routes import admin_pages_bp
+    pages_bp.register_blueprint(admin_pages_bp)
+except ImportError as e:
+    pass
+
 # =============================================================================
 # 5.0. ANA SAYFA ROTALARI (MAIN PAGE ROUTES)
 # =============================================================================

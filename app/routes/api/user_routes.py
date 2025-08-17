@@ -166,6 +166,7 @@ def login():
         session['user_id'] = result['id']
         session['username'] = result['username']
         session['email'] = result['email']
+        session['is_admin'] = result.get('is_admin', False)
         
         return jsonify({
             'status': 'success',
