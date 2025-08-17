@@ -324,6 +324,7 @@ class AIChatService {
      * @param {boolean} actionData.isFirstMessage - Bu eylemin o soru için ilk etkileşim olup olmadığı
      * @param {Object} actionData.questionContext - Soru bilgileri
      * @param {Object} actionData.userAction - Kullanıcı aksiyonu detayları
+     * @param {string} actionData.user_message - Kullanıcının gönderdiği metin mesajı
      * @returns {Promise<Object>} Başarılı ise AI yanıtını içeren nesne.
      */
     async sendQuickAction(actionData) {
@@ -333,7 +334,8 @@ class AIChatService {
         questionId = null,
         isFirstMessage = false,
         questionContext = null,
-        userAction = {}
+        userAction = {},
+        user_message = null
       } = actionData;
 
       if (!this.isEnabled || !this.chatSessionId) {
@@ -364,6 +366,11 @@ class AIChatService {
           },
           debug: window.QUIZ_CONFIG?.aiDebug ?? true
         };
+
+        // Custom user message ekle
+        if (user_message) {
+          requestBody.user_message = user_message;
+        }
 
         // Soru bağlamını ekle (her zaman)
         if (questionContext || (questionId && this.getCurrentQuestionData())) {

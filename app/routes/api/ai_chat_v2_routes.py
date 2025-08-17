@@ -520,9 +520,13 @@ def quick_action():
                 'message': 'Quiz service not available'
             }), 503
         
+        # Custom user message desteği - frontend'den gelen mesajı kullan
+        custom_user_message = data.get('user_message') or data.get('message')
+        user_message = custom_user_message if custom_user_message else f'Quick action: {action}'
+        
         # Message servisinden tam promptu ve Gemini contents'ini al
         message_info = {
-            'user_message': f'Quick action: {action}',
+            'user_message': user_message,
             'scenario_type': 'quick_action',
             'is_first_message': is_first_message,
             'question_context': (question_context or question_data),

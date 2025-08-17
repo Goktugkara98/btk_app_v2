@@ -1,6 +1,7 @@
 import AnswerMapper from '../utils/AnswerMapper.js';
 import ValidationHelpers from '../utils/ValidationHelpers.js';
 import ChatUIRenderer from './components/ChatUIRenderer.js';
+import QuickActionMessages from '../utils/QuickActionMessages.js';
 
 /**
  * =============================================================================
@@ -448,6 +449,9 @@ class AIChatManager {
         const isFirstMessage = !this.firstInteractionSent.has(this.currentQuestionId);
         
         try {
+            // Custom user mesajını hazırla
+            const userMessage = QuickActionMessages.getUserMessage(action);
+            
             const actionData = {
                 action: action,
                 questionId: this.currentQuestionId,
@@ -461,7 +465,8 @@ class AIChatManager {
                         buttonId: `quick-action-${action}`,
                         timestamp: Date.now()
                     }
-                }
+                },
+                user_message: userMessage  // Custom mesajı backend'e gönder
             };
             
             const response = await this.aiChatService.sendQuickAction(actionData);
@@ -480,8 +485,9 @@ class AIChatManager {
             }
             
             if (response.success && response.message) {
-                const actionText = 'Açıklama';
-                this.uiRenderer.addMessage('ai', response.message, actionText);
+                // Kullanıcı mesajı zaten sendChatMessage ile gönderildi, sadece AI yanıtını göster
+                const actionLabel = QuickActionMessages.getActionLabel(action);
+                this.uiRenderer.addMessage('ai', response.message, actionLabel);
             } else {
                 this.uiRenderer.addMessage('system', `Üzgünüm, ${action} alınamadı: ${response.error || 'Bilinmeyen hata'}`);
             }
