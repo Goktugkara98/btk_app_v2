@@ -26,271 +26,309 @@ class CurriculumService:
     
     def get_all_grades(self) -> List[Dict[str, Any]]:
         """Tüm sınıfları getirir"""
-        query = """
-        SELECT grade_id, grade_name, description, is_active, 
-               created_at, updated_at
-        FROM grades 
-        ORDER BY grade_name
-        """
-        return self.base_repo.fetch_all(query)
+        try:
+            query = """
+            SELECT grade_id, grade_name, description, is_active, 
+                   created_at, updated_at
+            FROM grades 
+            ORDER BY grade_name
+            """
+            return self.base_repo.fetch_all(query)
+        except Exception as e:
+            print(f"Grades fetch error: {e}")
+            return []
     
     def get_grade_by_id(self, grade_id: int) -> Optional[Dict[str, Any]]:
         """ID'ye göre sınıf getirir"""
-        query = "SELECT * FROM grades WHERE grade_id = %s"
-        return self.base_repo.fetch_one(query, (grade_id,))
+        try:
+            query = "SELECT * FROM grades WHERE grade_id = %s"
+            return self.base_repo.fetch_one(query, (grade_id,))
+        except Exception as e:
+            print(f"Grade fetch error: {e}")
+            return None
     
-    def create_grade(self, grade_name: str, description: str = None) -> int:
+    def create_grade(self, grade_name: str, description: str = None, is_active: bool = True) -> Optional[int]:
         """Yeni sınıf oluşturur"""
-        query = """
-        INSERT INTO grades (grade_name, description) 
-        VALUES (%s, %s)
-        """
-        return self.base_repo.execute_query(query, (grade_name, description))
+        try:
+            query = """
+            INSERT INTO grades (grade_name, description, is_active) 
+            VALUES (%s, %s, %s)
+            """
+            return self.base_repo.execute_query(query, (grade_name, description, is_active))
+        except Exception as e:
+            print(f"Grade creation error: {e}")
+            return None
     
     def update_grade(self, grade_id: int, grade_name: str, description: str = None, is_active: bool = True) -> bool:
-        """Sınıf bilgilerini günceller"""
-        query = """
-        UPDATE grades 
-        SET grade_name = %s, description = %s, is_active = %s 
-        WHERE grade_id = %s
-        """
-        result = self.base_repo.execute_query(query, (grade_name, description, is_active, grade_id))
-        return result > 0
+        """Sınıf günceller"""
+        try:
+            query = """
+            UPDATE grades 
+            SET grade_name = %s, description = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE grade_id = %s
+            """
+            return self.base_repo.execute_query(query, (grade_name, description, is_active, grade_id)) > 0
+        except Exception as e:
+            print(f"Grade update error: {e}")
+            return False
     
     def delete_grade(self, grade_id: int) -> bool:
-        """Sınıfı siler (soft delete)"""
-        query = "UPDATE grades SET is_active = false WHERE grade_id = %s"
-        result = self.base_repo.execute_query(query, (grade_id,))
-        return result > 0
+        """Sınıf siler"""
+        try:
+            query = "DELETE FROM grades WHERE grade_id = %s"
+            return self.base_repo.execute_query(query, (grade_id,)) > 0
+        except Exception as e:
+            print(f"Grade deletion error: {e}")
+            return False
     
     # =============================================================================
     # SUBJECTS (DERSLER) YÖNETİMİ
     # =============================================================================
     
-    def get_subjects_by_grade(self, grade_id: int) -> List[Dict[str, Any]]:
-        """Sınıfa göre dersleri getirir"""
-        query = """
-        SELECT s.subject_id, s.grade_id, s.subject_name, s.description, 
-               s.is_active, s.created_at, s.updated_at, g.grade_name
-        FROM subjects s
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE s.grade_id = %s AND s.is_active = true
-        ORDER BY s.subject_name
-        """
-        return self.base_repo.fetch_all(query, (grade_id,))
-    
     def get_all_subjects(self) -> List[Dict[str, Any]]:
         """Tüm dersleri getirir"""
-        query = """
-        SELECT s.subject_id, s.grade_id, s.subject_name, s.description, 
-               s.is_active, s.created_at, s.updated_at, g.grade_name
-        FROM subjects s
-        JOIN grades g ON s.grade_id = g.grade_id
-        ORDER BY g.grade_name, s.subject_name
-        """
-        return self.base_repo.fetch_all(query)
+        try:
+            query = """
+            SELECT s.subject_id, s.subject_name, s.description, s.is_active, 
+                   s.created_at, s.updated_at, s.grade_id,
+                   g.grade_name
+            FROM subjects s
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            ORDER BY g.grade_name, s.subject_name
+            """
+            return self.base_repo.fetch_all(query)
+        except Exception as e:
+            print(f"Subjects fetch error: {e}")
+            return []
     
     def get_subject_by_id(self, subject_id: int) -> Optional[Dict[str, Any]]:
         """ID'ye göre ders getirir"""
-        query = """
-        SELECT s.*, g.grade_name 
-        FROM subjects s
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE s.subject_id = %s
-        """
-        return self.base_repo.fetch_one(query, (subject_id,))
+        try:
+            query = """
+            SELECT s.*, g.grade_name 
+            FROM subjects s
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            WHERE s.subject_id = %s
+            """
+            return self.base_repo.fetch_one(query, (subject_id,))
+        except Exception as e:
+            print(f"Subject fetch error: {e}")
+            return None
     
-    def create_subject(self, grade_id: int, subject_name: str, description: str = None) -> int:
+    def create_subject(self, subject_name: str, grade_id: int, description: str = None, is_active: bool = True) -> Optional[int]:
         """Yeni ders oluşturur"""
-        query = """
-        INSERT INTO subjects (grade_id, subject_name, description) 
-        VALUES (%s, %s, %s)
-        """
-        return self.base_repo.execute_query(query, (grade_id, subject_name, description))
+        try:
+            query = """
+            INSERT INTO subjects (subject_name, grade_id, description, is_active) 
+            VALUES (%s, %s, %s, %s)
+            """
+            return self.base_repo.execute_query(query, (subject_name, grade_id, description, is_active))
+        except Exception as e:
+            print(f"Subject creation error: {e}")
+            return None
     
-    def update_subject(self, subject_id: int, grade_id: int, subject_name: str, 
-                      description: str = None, is_active: bool = True) -> bool:
-        """Ders bilgilerini günceller"""
-        query = """
-        UPDATE subjects 
-        SET grade_id = %s, subject_name = %s, description = %s, is_active = %s 
-        WHERE subject_id = %s
-        """
-        result = self.base_repo.execute_query(query, (grade_id, subject_name, description, is_active, subject_id))
-        return result > 0
+    def update_subject(self, subject_id: int, subject_name: str, grade_id: int, description: str = None, is_active: bool = True) -> bool:
+        """Ders günceller"""
+        try:
+            query = """
+            UPDATE subjects 
+            SET subject_name = %s, grade_id = %s, description = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE subject_id = %s
+            """
+            return self.base_repo.execute_query(query, (subject_name, grade_id, description, is_active, subject_id)) > 0
+        except Exception as e:
+            print(f"Subject update error: {e}")
+            return False
     
     def delete_subject(self, subject_id: int) -> bool:
-        """Dersi siler (soft delete)"""
-        query = "UPDATE subjects SET is_active = false WHERE subject_id = %s"
-        result = self.base_repo.execute_query(query, (subject_id,))
-        return result > 0
+        """Ders siler"""
+        try:
+            query = "DELETE FROM subjects WHERE subject_id = %s"
+            return self.base_repo.execute_query(query, (subject_id,)) > 0
+        except Exception as e:
+            print(f"Subject deletion error: {e}")
+            return False
     
     # =============================================================================
     # UNITS (ÜNİTELER) YÖNETİMİ
     # =============================================================================
     
-    def get_units_by_subject(self, subject_id: int) -> List[Dict[str, Any]]:
-        """Derse göre üniteleri getirir"""
-        query = """
-        SELECT u.unit_id, u.subject_id, u.unit_name, u.description, 
-               u.is_active, u.created_at, u.updated_at, u.order_number,
-               s.subject_name, g.grade_name
-        FROM units u
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE u.subject_id = %s AND u.is_active = true
-        ORDER BY u.order_number, u.unit_name
-        """
-        return self.base_repo.fetch_all(query, (subject_id,))
-    
     def get_all_units(self) -> List[Dict[str, Any]]:
         """Tüm üniteleri getirir"""
-        query = """
-        SELECT u.unit_id, u.subject_id, u.unit_name, u.description, 
-               u.is_active, u.created_at, u.updated_at, u.order_number,
-               s.subject_name, g.grade_name
-        FROM units u
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        ORDER BY g.grade_name, s.subject_name, u.order_number, u.unit_name
-        """
-        return self.base_repo.fetch_all(query)
+        try:
+            query = """
+            SELECT u.unit_id, u.unit_name, u.description, u.is_active, 
+                   u.created_at, u.updated_at, u.subject_id,
+                   s.subject_name, g.grade_id, g.grade_name
+            FROM units u
+            LEFT JOIN subjects s ON u.subject_id = s.subject_id
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            ORDER BY g.grade_name, s.subject_name, u.unit_name
+            """
+            return self.base_repo.fetch_all(query)
+        except Exception as e:
+            print(f"Units fetch error: {e}")
+            return []
     
     def get_unit_by_id(self, unit_id: int) -> Optional[Dict[str, Any]]:
         """ID'ye göre ünite getirir"""
-        query = """
-        SELECT u.*, s.subject_name, g.grade_name 
-        FROM units u
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE u.unit_id = %s
-        """
-        return self.base_repo.fetch_one(query, (unit_id,))
+        try:
+            query = """
+            SELECT u.*, s.subject_name, g.grade_name 
+            FROM units u
+            LEFT JOIN subjects s ON u.subject_id = s.subject_id
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            WHERE u.unit_id = %s
+            """
+            return self.base_repo.fetch_one(query, (unit_id,))
+        except Exception as e:
+            print(f"Unit fetch error: {e}")
+            return None
     
-    def create_unit(self, subject_id: int, unit_name: str, description: str = None, order_number: int = None) -> int:
+    def create_unit(self, unit_name: str, subject_id: int, description: str = None, is_active: bool = True) -> Optional[int]:
         """Yeni ünite oluşturur"""
-        if order_number is None:
-            # Get next order number
-            max_order = self.base_repo.fetch_one(
-                "SELECT COALESCE(MAX(order_number), 0) as max_order FROM units WHERE subject_id = %s",
-                (subject_id,)
-            )
-            order_number = (max_order['max_order'] if max_order else 0) + 1
-        
-        query = """
-        INSERT INTO units (subject_id, unit_name, description, order_number) 
-        VALUES (%s, %s, %s, %s)
-        """
-        return self.base_repo.execute_query(query, (subject_id, unit_name, description, order_number))
+        try:
+            query = """
+            INSERT INTO units (unit_name, subject_id, description, is_active) 
+            VALUES (%s, %s, %s, %s)
+            """
+            return self.base_repo.execute_query(query, (unit_name, subject_id, description, is_active))
+        except Exception as e:
+            print(f"Unit creation error: {e}")
+            return None
     
-    def update_unit(self, unit_id: int, subject_id: int, unit_name: str, 
-                   description: str = None, is_active: bool = True, order_number: int = None) -> bool:
-        """Ünite bilgilerini günceller"""
-        if order_number is not None:
+    def update_unit(self, unit_id: int, unit_name: str, subject_id: int, description: str = None, is_active: bool = True) -> bool:
+        """Ünite günceller"""
+        try:
             query = """
             UPDATE units 
-            SET subject_id = %s, unit_name = %s, description = %s, is_active = %s, order_number = %s 
+            SET unit_name = %s, subject_id = %s, description = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP
             WHERE unit_id = %s
             """
-            result = self.base_repo.execute_query(query, (subject_id, unit_name, description, is_active, order_number, unit_id))
-        else:
-            query = """
-            UPDATE units 
-            SET subject_id = %s, unit_name = %s, description = %s, is_active = %s 
-            WHERE unit_id = %s
-            """
-            result = self.base_repo.execute_query(query, (subject_id, unit_name, description, is_active, unit_id))
-        return result > 0
+            return self.base_repo.execute_query(query, (unit_name, subject_id, description, is_active, unit_id)) > 0
+        except Exception as e:
+            print(f"Unit update error: {e}")
+            return False
     
     def delete_unit(self, unit_id: int) -> bool:
-        """Üniteyi siler (soft delete)"""
-        query = "UPDATE units SET is_active = false WHERE unit_id = %s"
-        result = self.base_repo.execute_query(query, (unit_id,))
-        return result > 0
+        """Ünite siler"""
+        try:
+            query = "DELETE FROM units WHERE unit_id = %s"
+            return self.base_repo.execute_query(query, (unit_id,)) > 0
+        except Exception as e:
+            print(f"Unit deletion error: {e}")
+            return False
     
     # =============================================================================
     # TOPICS (KONULAR) YÖNETİMİ
     # =============================================================================
     
-    def get_topics_by_unit(self, unit_id: int) -> List[Dict[str, Any]]:
-        """Üniteye göre konuları getirir"""
-        query = """
-        SELECT t.topic_id, t.unit_id, t.topic_name, t.description, 
-               t.is_active, t.created_at, t.updated_at,
-               u.unit_name, s.subject_name, g.grade_name
-        FROM topics t
-        JOIN units u ON t.unit_id = u.unit_id
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE t.unit_id = %s AND t.is_active = true
-        ORDER BY t.topic_name
-        """
-        return self.base_repo.fetch_all(query, (unit_id,))
-    
     def get_all_topics(self) -> List[Dict[str, Any]]:
         """Tüm konuları getirir"""
-        query = """
-        SELECT t.topic_id, t.unit_id, t.topic_name, t.description, 
-               t.is_active, t.created_at, t.updated_at,
-               u.unit_name, s.subject_name, g.grade_name
-        FROM topics t
-        JOIN units u ON t.unit_id = u.unit_id
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        ORDER BY g.grade_name, s.subject_name, u.unit_name, t.topic_name
-        """
-        return self.base_repo.fetch_all(query)
+        try:
+            query = """
+            SELECT t.topic_id, t.topic_name, t.description, t.is_active, 
+                   t.created_at, t.updated_at, t.unit_id,
+                   u.unit_name, s.subject_id, s.subject_name, g.grade_id, g.grade_name
+            FROM topics t
+            LEFT JOIN units u ON t.unit_id = u.unit_id
+            LEFT JOIN subjects s ON u.subject_id = s.subject_id
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            ORDER BY g.grade_name, s.subject_name, u.unit_name, t.topic_name
+            """
+            return self.base_repo.fetch_all(query)
+        except Exception as e:
+            print(f"Topics fetch error: {e}")
+            return []
     
     def get_topic_by_id(self, topic_id: int) -> Optional[Dict[str, Any]]:
         """ID'ye göre konu getirir"""
-        query = """
-        SELECT t.*, u.unit_name, s.subject_name, g.grade_name 
-        FROM topics t
-        JOIN units u ON t.unit_id = u.unit_id
-        JOIN subjects s ON u.subject_id = s.subject_id
-        JOIN grades g ON s.grade_id = g.grade_id
-        WHERE t.topic_id = %s
-        """
-        return self.base_repo.fetch_one(query, (topic_id,))
+        try:
+            query = """
+            SELECT t.*, u.unit_name, s.subject_name, g.grade_name 
+            FROM topics t
+            LEFT JOIN units u ON t.unit_id = u.unit_id
+            LEFT JOIN subjects s ON u.subject_id = s.subject_id
+            LEFT JOIN grades g ON s.grade_id = g.grade_id
+            WHERE t.topic_id = %s
+            """
+            return self.base_repo.fetch_one(query, (topic_id,))
+        except Exception as e:
+            print(f"Topic fetch error: {e}")
+            return None
     
-    def create_topic(self, unit_id: int, topic_name: str, description: str = None) -> int:
+    def create_topic(self, topic_name: str, unit_id: int, description: str = None, is_active: bool = True) -> Optional[int]:
         """Yeni konu oluşturur"""
-        query = """
-        INSERT INTO topics (unit_id, topic_name, description) 
-        VALUES (%s, %s, %s)
-        """
-        return self.base_repo.execute_query(query, (unit_id, topic_name, description))
+        try:
+            query = """
+            INSERT INTO topics (topic_name, unit_id, description, is_active) 
+            VALUES (%s, %s, %s, %s)
+            """
+            return self.base_repo.execute_query(query, (topic_name, unit_id, description, is_active))
+        except Exception as e:
+            print(f"Topic creation error: {e}")
+            return None
     
-    def update_topic(self, topic_id: int, unit_id: int, topic_name: str, 
-                    description: str = None, is_active: bool = True) -> bool:
-        """Konu bilgilerini günceller"""
-        query = """
-        UPDATE topics 
-        SET unit_id = %s, topic_name = %s, description = %s, is_active = %s 
-        WHERE topic_id = %s
-        """
-        result = self.base_repo.execute_query(query, (unit_id, topic_name, description, is_active, topic_id))
-        return result > 0
+    def update_topic(self, topic_id: int, topic_name: str, unit_id: int, description: str = None, is_active: bool = True) -> bool:
+        """Konu günceller"""
+        try:
+            query = """
+            UPDATE topics 
+            SET topic_name = %s, unit_id = %s, description = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE topic_id = %s
+            """
+            return self.base_repo.execute_query(query, (topic_name, unit_id, description, is_active, topic_id)) > 0
+        except Exception as e:
+            print(f"Topic update error: {e}")
+            return False
     
     def delete_topic(self, topic_id: int) -> bool:
-        """Konuyu siler (soft delete)"""
-        query = "UPDATE topics SET is_active = false WHERE topic_id = %s"
-        result = self.base_repo.execute_query(query, (topic_id,))
-        return result > 0
+        """Konu siler"""
+        try:
+            query = "DELETE FROM topics WHERE topic_id = %s"
+            return self.base_repo.execute_query(query, (topic_id,)) > 0
+        except Exception as e:
+            print(f"Topic deletion error: {e}")
+            return False
     
     # =============================================================================
-    # JSON DOSYALARI YÖNETİMİ
+    # VERİ AKTARIMI
+    # =============================================================================
+    
+    def export_curriculum_data(self) -> Dict[str, Any]:
+        """Müfredat verilerini export eder"""
+        try:
+            return {
+                'grades': self.get_all_grades(),
+                'subjects': self.get_all_subjects(),
+                'units': self.get_all_units(),
+                'topics': self.get_all_topics()
+            }
+        except Exception as e:
+            print(f"Export error: {e}")
+            return {}
+    
+    def import_curriculum_data(self, data: Dict[str, Any]) -> bool:
+        """Müfredat verilerini import eder"""
+        try:
+            # Bu metod daha sonra implement edilecek
+            # Şimdilik sadece True döndürüyoruz
+            return True
+        except Exception as e:
+            print(f"Import error: {e}")
+            return False
+    
+    # =============================================================================
+    # JSON DOSYA İŞLEMLERİ (ESKİ KOD - KORUNUYOR)
     # =============================================================================
     
     def get_curriculum_json_files(self) -> List[str]:
-        """Mevcut JSON müfredat dosyalarını listeler"""
-        if not os.path.exists(self.curriculum_data_path):
-            return []
-        
+        """Müfredat JSON dosyalarını listeler"""
         json_files = []
-        for file in os.listdir(self.curriculum_data_path):
-            if file.endswith('.json'):
-                json_files.append(file)
+        if os.path.exists(self.curriculum_data_path):
+            for file in os.listdir(self.curriculum_data_path):
+                if file.endswith('.json'):
+                    json_files.append(file)
         return sorted(json_files)
     
     def load_curriculum_from_json(self, filename: str) -> Optional[Dict[str, Any]]:

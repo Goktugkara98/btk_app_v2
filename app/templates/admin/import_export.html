@@ -1,171 +1,135 @@
 {% extends "admin/base_admin.html" %}
 
-{% block page_title %}Veri Aktarımı{% endblock %}
+{% block title %}Veri Aktarımı{% endblock %}
 
-{% block breadcrumb %}
-    <li class="breadcrumb-item active">Veri Aktarımı</li>
+{% block page_title %}Veri Aktarımı{% endblock %}
+{% block page_subtitle %}Müfredat verilerini dışa aktarın ve içe aktarın{% endblock %}
+
+{% block page_actions %}
+<button class="btn btn-success" onclick="exportData()">
+    <i class="fas fa-download me-2"></i>Veri Dışa Aktar
+</button>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <!-- JSON Files Management -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-code"></i> JSON Dosyaları
-                </h5>
+    <!-- Export Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-download me-2"></i>Veri Dışa Aktarma
+                </h6>
             </div>
             <div class="card-body">
+                <p class="text-muted">
+                    Mevcut müfredat verilerinizi JSON formatında dışa aktarın.
+                </p>
+                
                 <div class="mb-3">
-                    <button class="btn btn-primary" onclick="loadJsonFiles()">
-                        <i class="fas fa-refresh"></i> Dosyaları Yenile
-                    </button>
+                    <label class="form-label">Dışa Aktarılacak Veriler:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="export-grades" checked>
+                        <label class="form-check-label" for="export-grades">
+                            Sınıflar
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="export-subjects" checked>
+                        <label class="form-check-label" for="export-subjects">
+                            Dersler
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="export-units" checked>
+                        <label class="form-check-label" for="export-units">
+                            Üniteler
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="export-topics" checked>
+                        <label class="form-check-label" for="export-topics">
+                            Konular
+                        </label>
+                    </div>
                 </div>
                 
-                <div class="table-responsive">
-                    <table class="table table-hover" id="jsonFilesTable">
-                        <thead>
-                            <tr>
-                                <th>Dosya Adı</th>
-                                <th>İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Data will be loaded via JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+                <button class="btn btn-success w-100" onclick="exportData()">
+                    <i class="fas fa-download me-2"></i>JSON Olarak Dışa Aktar
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Import/Export Operations -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-exchange-alt"></i> İçe/Dışa Aktarım
-                </h5>
+    <!-- Import Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-upload me-2"></i>Veri İçe Aktarma
+                </h6>
             </div>
             <div class="card-body">
-                <!-- Import Section -->
-                <div class="mb-4">
-                    <h6 class="text-primary">
-                        <i class="fas fa-file-import"></i> JSON'dan Veritabanına Aktarım
-                    </h6>
-                    <p class="text-muted small">JSON dosyasındaki müfredat verilerini veritabanına aktarır.</p>
-                    
-                    <div class="mb-3">
-                        <label for="importFileSelect" class="form-label">JSON Dosyası Seç</label>
-                        <select class="form-select" id="importFileSelect">
-                            <option value="">Dosya seçiniz...</option>
-                        </select>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="importFromJson()">
-                        <i class="fas fa-upload"></i> Veritabanına Aktar
-                    </button>
+                <p class="text-muted">
+                    JSON formatındaki müfredat verilerini sisteme yükleyin.
+                </p>
+                
+                <div class="mb-3">
+                    <label for="import-file" class="form-label">JSON Dosyası Seçin:</label>
+                    <input type="file" class="form-control" id="import-file" accept=".json">
                 </div>
-
-                <hr>
-
-                <!-- Export Section -->
-                <div class="mb-4">
-                    <h6 class="text-warning">
-                        <i class="fas fa-file-export"></i> Veritabanından JSON'a Aktarım
-                    </h6>
-                    <p class="text-muted small">Belirli bir sınıfın müfredat verilerini JSON formatında export eder.</p>
-                    
-                    <div class="mb-3">
-                        <label for="exportGradeSelect" class="form-label">Sınıf Seç</label>
-                        <select class="form-select" id="exportGradeSelect">
-                            <option value="">Sınıf seçiniz...</option>
-                        </select>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="import-overwrite">
+                        <label class="form-check-label" for="import-overwrite">
+                            Mevcut verileri üzerine yaz
+                        </label>
                     </div>
-                    
-                    <button class="btn btn-warning" onclick="exportToJson()">
-                        <i class="fas fa-download"></i> JSON Olarak Export Et
-                    </button>
                 </div>
-
-                <hr>
-
-                <!-- File Upload Section -->
-                <div>
-                    <h6 class="text-info">
-                        <i class="fas fa-cloud-upload-alt"></i> Yeni JSON Dosyası Yükle
-                    </h6>
-                    <p class="text-muted small">Bilgisayarınızdan yeni bir JSON dosyası yükleyin.</p>
-                    
-                    <div class="mb-3">
-                        <input type="file" class="form-control" id="fileUpload" accept=".json">
-                    </div>
-                    
-                    <button class="btn btn-info" onclick="uploadJsonFile()">
-                        <i class="fas fa-upload"></i> Dosya Yükle
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- JSON Content Viewer Modal -->
-<div class="modal fade" id="jsonViewerModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">JSON İçeriği</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <pre><code id="jsonContent" class="language-json"></code></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                <button type="button" class="btn btn-primary" onclick="downloadCurrentJson()">
-                    <i class="fas fa-download"></i> İndir
+                
+                <button class="btn btn-primary w-100" onclick="importData()">
+                    <i class="fas fa-upload me-2"></i>Veri Yükle
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Import Progress Modal -->
-<div class="modal fade" id="importProgressModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Aktarım İşlemi</h5>
+<!-- Data Preview -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-eye me-2"></i>Veri Önizleme
+                </h6>
             </div>
-            <div class="modal-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
-                </div>
-                <p>JSON dosyası veritabanına aktarılıyor...</p>
-                <div class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" style="width: 100%"></div>
+            <div class="card-body">
+                <div id="data-preview">
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle fa-2x text-muted"></i>
+                        <p class="text-muted mt-2">Veri önizlemesi için bir dosya seçin veya dışa aktarım yapın</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Import Results Modal -->
-<div class="modal fade" id="importResultsModal" tabindex="-1">
+<!-- Import Progress Modal -->
+<div class="modal fade" id="importProgressModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Aktarım Sonuçları</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title">Veri Yükleniyor</h5>
             </div>
-            <div class="modal-body" id="importResultsContent">
-                <!-- Results will be shown here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tamam</button>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" id="import-progress" style="width: 0%"></div>
+                </div>
+                <p id="import-status">Veri yükleniyor...</p>
             </div>
         </div>
     </div>
@@ -173,5 +137,290 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/admin/import-export.js') }}"></script>
+<script>
+// Import/Export Management
+class ImportExportManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        // File input change event
+        const fileInput = document.getElementById('import-file');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                this.handleFileSelect(e.target.files[0]);
+            });
+        }
+    }
+
+    async exportData() {
+        try {
+            showLoading('Veriler dışa aktarılıyor...');
+            
+            // Get selected export options
+            const exportOptions = {
+                grades: document.getElementById('export-grades').checked,
+                subjects: document.getElementById('export-subjects').checked,
+                units: document.getElementById('export-units').checked,
+                topics: document.getElementById('export-topics').checked
+            };
+            
+            const response = await fetch('/admin/api/import-export/export', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Filter data based on export options
+                const filteredData = {};
+                if (exportOptions.grades) filteredData.grades = data.data.grades;
+                if (exportOptions.subjects) filteredData.subjects = data.data.subjects;
+                if (exportOptions.units) filteredData.units = data.data.units;
+                if (exportOptions.topics) filteredData.topics = data.data.topics;
+                
+                this.downloadJSON(filteredData, 'mufredat_verileri.json');
+                this.showDataPreview(filteredData);
+                showToast('Veriler başarıyla dışa aktarıldı', 'success');
+            } else {
+                showToast('Veri dışa aktarımı başarısız', 'error');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            showToast('Veri dışa aktarımı sırasında hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async importData() {
+        const fileInput = document.getElementById('import-file');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showToast('Lütfen bir JSON dosyası seçin', 'warning');
+            return;
+        }
+
+        try {
+            const fileContent = await this.readFileContent(file);
+            const jsonData = JSON.parse(fileContent);
+            
+            // Validate JSON structure
+            if (!this.validateImportData(jsonData)) {
+                showToast('Geçersiz JSON formatı', 'error');
+                return;
+            }
+
+            // Show import progress modal
+            const modal = new bootstrap.Modal(document.getElementById('importProgressModal'));
+            modal.show();
+
+            // Start import process
+            await this.performImport(jsonData);
+            
+            modal.hide();
+            showToast('Veriler başarıyla yüklendi', 'success');
+            
+            // Refresh the page to show new data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Import error:', error);
+            showToast('Veri yükleme sırasında hata oluştu', 'error');
+        }
+    }
+
+    async readFileContent(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(file);
+        });
+    }
+
+    validateImportData(data) {
+        // Basic validation
+        if (typeof data !== 'object' || data === null) return false;
+        
+        const requiredKeys = ['grades', 'subjects', 'units', 'topics'];
+        for (const key of requiredKeys) {
+            if (!(key in data) || !Array.isArray(data[key])) return false;
+        }
+        
+        return true;
+    }
+
+    async performImport(data) {
+        const overwrite = document.getElementById('import-overwrite').checked;
+        
+        // Simulate import progress
+        const progressBar = document.getElementById('import-progress');
+        const statusText = document.getElementById('import-status');
+        
+        const steps = ['grades', 'subjects', 'units', 'topics'];
+        const stepProgress = 100 / steps.length;
+        
+        for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            const progress = (i + 1) * stepProgress;
+            
+            progressBar.style.width = `${progress}%`;
+            statusText.textContent = `${step.charAt(0).toUpperCase() + step.slice(1)} yükleniyor...`;
+            
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Final API call
+        const response = await fetch('/admin/api/import-export/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data: data,
+                overwrite: overwrite
+            })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Import failed');
+        }
+    }
+
+    handleFileSelect(file) {
+        if (!file) return;
+        
+        if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+            showToast('Lütfen geçerli bir JSON dosyası seçin', 'warning');
+            return;
+        }
+
+        // Read and preview file content
+        this.readFileContent(file).then(content => {
+            try {
+                const jsonData = JSON.parse(content);
+                this.showDataPreview(jsonData);
+            } catch (error) {
+                showToast('Geçersiz JSON dosyası', 'error');
+            }
+        }).catch(error => {
+            console.error('File read error:', error);
+            showToast('Dosya okunamadı', 'error');
+        });
+    }
+
+    showDataPreview(data) {
+        const previewDiv = document.getElementById('data-preview');
+        
+        let html = '<div class="row">';
+        
+        // Grades preview
+        if (data.grades && data.grades.length > 0) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-primary">Sınıflar (${data.grades.length})</h6>
+                    <ul class="list-group list-group-flush">
+                        ${data.grades.slice(0, 5).map(grade => 
+                            `<li class="list-group-item">${grade.grade_name || grade.name}</li>`
+                        ).join('')}
+                        ${data.grades.length > 5 ? `<li class="list-group-item text-muted">... ve ${data.grades.length - 5} tane daha</li>` : ''}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Subjects preview
+        if (data.subjects && data.subjects.length > 0) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-success">Dersler (${data.subjects.length})</h6>
+                    <ul class="list-group list-group-flush">
+                        ${data.subjects.slice(0, 5).map(subject => 
+                            `<li class="list-group-item">${subject.subject_name || subject.name}</li>`
+                        ).join('')}
+                        ${data.subjects.length > 5 ? `<li class="list-group-item text-muted">... ve ${data.subjects.length - 5} tane daha</li>` : ''}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Units preview
+        if (data.units && data.units.length > 0) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-warning">Üniteler (${data.units.length})</h6>
+                    <ul class="list-group list-group-flush">
+                        ${data.units.slice(0, 5).map(unit => 
+                            `<li class="list-group-item">${unit.unit_name || unit.name}</li>`
+                        ).join('')}
+                        ${data.units.length > 5 ? `<li class="list-group-item text-muted">... ve ${data.units.length - 5} tane daha</li>` : ''}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Topics preview
+        if (data.topics && data.topics.length > 0) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-info">Konular (${data.topics.length})</h6>
+                    <ul class="list-group list-group-flush">
+                        ${data.topics.slice(0, 5).map(topic => 
+                            `<li class="list-group-item">${topic.topic_name || topic.name}</li>`
+                        ).join('')}
+                        ${data.topics.length > 5 ? `<li class="list-group-item text-muted">... ve ${data.topics.length - 5} tane daha</li>` : ''}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        previewDiv.innerHTML = html;
+    }
+
+    downloadJSON(data, filename) {
+        const jsonContent = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+}
+
+// Global functions
+function exportData() {
+    if (window.importExportManager) {
+        window.importExportManager.exportData();
+    }
+}
+
+function importData() {
+    if (window.importExportManager) {
+        window.importExportManager.importData();
+    }
+}
+
+// Import/Export manager'ı başlat
+document.addEventListener('DOMContentLoaded', () => {
+    window.importExportManager = new ImportExportManager();
+});
+</script>
 {% endblock %}

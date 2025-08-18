@@ -1,83 +1,508 @@
 {% extends "admin/base_admin.html" %}
 
-{% block page_title %}Sınıf Yönetimi{% endblock %}
+{% block title %}Sınıf Yönetimi{% endblock %}
 
-{% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{{ url_for('pages.admin_pages.curriculum_management') }}">Müfredat</a></li>
-    <li class="breadcrumb-item active">Sınıflar</li>
-{% endblock %}
+{% block page_title %}Sınıf Yönetimi{% endblock %}
+{% block page_subtitle %}Sınıfları ekleyin, düzenleyin ve yönetin{% endblock %}
 
 {% block page_actions %}
-<button class="btn btn-primary" onclick="showAddModal()">
-    <i class="fas fa-plus"></i> Yeni Sınıf
+<button class="btn btn-primary" onclick="showCreateModal()">
+    <i class="fas fa-plus me-2"></i>Yeni Sınıf
+</button>
+<button class="btn btn-outline-primary" onclick="exportData()">
+    <i class="fas fa-download me-2"></i>Export
 </button>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-layer-group"></i> Sınıf Listesi
-        </h5>
+<!-- Search and Filters -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" id="search-input" placeholder="Sınıf ara..." onkeyup="filterData()">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <select class="form-select" id="status-filter" onchange="filterData()">
+            <option value="">Tüm Durumlar</option>
+            <option value="1">Aktif</option>
+            <option value="0">Pasif</option>
+        </select>
+    </div>
+</div>
+
+<!-- Grades Table -->
+<div class="card shadow">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list me-2"></i>Sınıf Listesi
+        </h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover" id="gradesTable">
+            <table class="table table-hover" id="grades-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Sınıf Adı</th>
                         <th>Açıklama</th>
+                        <th>Ders Sayısı</th>
                         <th>Durum</th>
-                        <th>Oluşturma Tarihi</th>
+                        <th>Oluşturulma</th>
                         <th>İşlemler</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Data will be loaded via JavaScript -->
+                <tbody id="grades-tbody">
+                    <!-- Veriler JavaScript ile doldurulacak -->
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Sınıf sayfaları" class="mt-4">
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- Sayfalama JavaScript ile doldurulacak -->
+            </ul>
+        </nav>
     </div>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Create/Edit Modal -->
 <div class="modal fade" id="gradeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Yeni Sınıf</h5>
+                <h5 class="modal-title" id="modalTitle">Yeni Sınıf Ekle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="gradeForm">
-                    <input type="hidden" id="gradeId" name="gradeId">
+            <form id="gradeForm">
+                <div class="modal-body">
+                    <input type="hidden" id="grade-id" name="id">
                     
                     <div class="mb-3">
-                        <label for="gradeName" class="form-label">Sınıf Adı *</label>
-                        <input type="text" class="form-control" id="gradeName" name="gradeName" required>
+                        <label for="grade-name" class="form-label">Sınıf Adı *</label>
+                        <input type="text" class="form-control" id="grade-name" name="grade_name" required>
                     </div>
-
+                    
                     <div class="mb-3">
-                        <label for="gradeDescription" class="form-label">Açıklama</label>
-                        <textarea class="form-control" id="gradeDescription" name="gradeDescription" rows="3"></textarea>
+                        <label for="grade-description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="grade-description" name="description" rows="3"></textarea>
                     </div>
-
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="isActive" name="isActive" checked>
-                        <label class="form-check-label" for="isActive">Aktif</label>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="grade-active" name="is_active" checked>
+                            <label class="form-check-label" for="grade-active">
+                                Aktif
+                            </label>
+                        </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" onclick="saveGrade()">Kaydet</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/admin/grades.js') }}"></script>
+<script>
+// Grades Management
+class GradesManager {
+    constructor() {
+        this.grades = [];
+        this.filteredGrades = [];
+        this.currentPage = 1;
+        this.perPage = 10;
+        this.init();
+    }
+
+    init() {
+        this.loadGrades();
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        const form = document.getElementById('gradeForm');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveGrade();
+            });
+        }
+    }
+
+    async loadGrades() {
+        try {
+            showLoading('Sınıflar yükleniyor...');
+            
+            const response = await fetch('/admin/api/grades');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.grades = data.data || [];
+                this.filteredGrades = [...this.grades];
+                this.renderGrades();
+            } else {
+                showToast('Sınıflar yüklenemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Sınıf yükleme hatası:', error);
+            showToast('Sınıflar yüklenirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    filterData() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const statusFilter = document.getElementById('status-filter').value;
+        
+        this.filteredGrades = this.grades.filter(grade => {
+            const matchesSearch = grade.grade_name.toLowerCase().includes(searchTerm) ||
+                                (grade.description && grade.description.toLowerCase().includes(searchTerm));
+            
+            const matchesStatus = !statusFilter || grade.is_active.toString() === statusFilter;
+            
+            return matchesSearch && matchesStatus;
+        });
+        
+        this.currentPage = 1;
+        this.renderGrades();
+    }
+
+    renderGrades() {
+        const tbody = document.getElementById('grades-tbody');
+        if (!tbody) return;
+
+        const startIndex = (this.currentPage - 1) * this.perPage;
+        const endIndex = startIndex + this.perPage;
+        const pageGrades = this.filteredGrades.slice(startIndex, endIndex);
+
+        tbody.innerHTML = '';
+
+        if (pageGrades.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-3"></i>
+                        <p>Sınıf bulunamadı</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        pageGrades.forEach(grade => {
+            const row = this.createGradeRow(grade);
+            tbody.appendChild(row);
+        });
+
+        this.renderPagination();
+    }
+
+    createGradeRow(grade) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${grade.grade_id}</td>
+            <td><strong>${grade.grade_name}</strong></td>
+            <td>${grade.description || '-'}</td>
+            <td>
+                <span class="badge bg-info">${grade.subject_count || 0}</span>
+            </td>
+            <td>
+                <span class="badge bg-${grade.is_active ? 'success' : 'secondary'}">
+                    ${grade.is_active ? 'Aktif' : 'Pasif'}
+                </span>
+            </td>
+            <td>${this.formatDate(grade.created_at)}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="gradesManager.editGrade(${grade.grade_id})" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-${grade.is_active ? 'warning' : 'success'}" 
+                            onclick="gradesManager.toggleStatus(${grade.grade_id})" 
+                            title="${grade.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
+                        <i class="fas fa-${grade.is_active ? 'toggle-off' : 'toggle-on'}"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="gradesManager.deleteGrade(${grade.grade_id})" title="Sil">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        return row;
+    }
+
+    renderPagination() {
+        const pagination = document.getElementById('pagination');
+        if (!pagination) return;
+
+        const totalPages = Math.ceil(this.filteredGrades.length / this.perPage);
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        // Previous button
+        html += `
+            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="gradesManager.goToPage(${this.currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+                html += `
+                    <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="gradesManager.goToPage(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // Next button
+        html += `
+            <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="gradesManager.goToPage(${this.currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+        pagination.innerHTML = html;
+    }
+
+    goToPage(page) {
+        const totalPages = Math.ceil(this.filteredGrades.length / this.perPage);
+        if (page < 1 || page > totalPages) return;
+        
+        this.currentPage = page;
+        this.renderGrades();
+    }
+
+    showCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Yeni Sınıf Ekle';
+        document.getElementById('gradeForm').reset();
+        document.getElementById('grade-id').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('gradeModal'));
+        modal.show();
+    }
+
+    editGrade(gradeId) {
+        const grade = this.grades.find(g => g.grade_id === gradeId);
+        if (!grade) return;
+
+        document.getElementById('modalTitle').textContent = 'Sınıf Düzenle';
+        document.getElementById('grade-id').value = grade.grade_id;
+        document.getElementById('grade-name').value = grade.grade_name;
+        document.getElementById('grade-description').value = grade.description || '';
+        document.getElementById('grade-active').checked = grade.is_active;
+
+        const modal = new bootstrap.Modal(document.getElementById('gradeModal'));
+        modal.show();
+    }
+
+    async saveGrade() {
+        try {
+            const formData = new FormData(document.getElementById('gradeForm'));
+            const gradeData = {
+                grade_name: formData.get('grade_name'),
+                description: formData.get('description'),
+                is_active: formData.get('is_active') === 'on'
+            };
+
+            const gradeId = formData.get('id');
+            const url = gradeId ? `/admin/api/grades/${gradeId}` : '/admin/api/grades';
+            const method = gradeId ? 'PUT' : 'POST';
+
+            showLoading('Sınıf kaydediliyor...');
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(gradeData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(gradeId ? 'Sınıf güncellendi' : 'Sınıf eklendi', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('gradeModal')).hide();
+                this.loadGrades();
+            } else {
+                showToast(data.message || 'Sınıf kaydedilemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Sınıf kaydetme hatası:', error);
+            showToast('Sınıf kaydedilirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async toggleStatus(gradeId) {
+        try {
+            const grade = this.grades.find(g => g.grade_id === gradeId);
+            if (!grade) return;
+
+            const newStatus = !grade.is_active;
+            const action = newStatus ? 'aktif' : 'pasif';
+
+            if (!confirm(`Bu sınıfı ${action} yapmak istediğinizden emin misiniz?`)) {
+                return;
+            }
+
+            showLoading('Durum güncelleniyor...');
+
+            const response = await fetch(`/admin/api/grades/${gradeId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_active: newStatus
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(`Sınıf ${action} yapıldı`, 'success');
+                this.loadGrades();
+            } else {
+                showToast('Durum güncellenemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Durum güncelleme hatası:', error);
+            showToast('Durum güncellenirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async deleteGrade(gradeId) {
+        try {
+            if (!confirm('Bu sınıfı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+                return;
+            }
+
+            showLoading('Sınıf siliniyor...');
+
+            const response = await fetch(`/admin/api/grades/${gradeId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Sınıf silindi', 'success');
+                this.loadGrades();
+            } else {
+                showToast('Sınıf silinemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Sınıf silme hatası:', error);
+            showToast('Sınıf silinirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    exportData() {
+        const csvData = this.filteredGrades.map(grade => ({
+            'ID': grade.grade_id,
+            'Sınıf Adı': grade.grade_name,
+            'Açıklama': grade.description || '',
+            'Durum': grade.is_active ? 'Aktif' : 'Pasif',
+            'Oluşturulma': this.formatDate(grade.created_at)
+        }));
+
+        this.downloadCSV(csvData, 'siniflar.csv');
+    }
+
+    downloadCSV(data, filename) {
+        const csvContent = this.convertToCSV(data);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    convertToCSV(data) {
+        if (data.length === 0) return '';
+        
+        const headers = Object.keys(data[0]);
+        const csvRows = [headers.join(',')];
+        
+        for (const row of data) {
+            const values = headers.map(header => {
+                const value = row[header];
+                return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+            });
+            csvRows.push(values.join(','));
+        }
+        
+        return csvRows.join('\n');
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('tr-TR');
+    }
+}
+
+// Global functions
+function showCreateModal() {
+    if (window.gradesManager) {
+        window.gradesManager.showCreateModal();
+    }
+}
+
+function filterData() {
+    if (window.gradesManager) {
+        window.gradesManager.filterData();
+    }
+}
+
+function exportData() {
+    if (window.gradesManager) {
+        window.gradesManager.exportData();
+    }
+}
+
+// Grades manager'ı başlat
+document.addEventListener('DOMContentLoaded', () => {
+    window.gradesManager = new GradesManager();
+});
+</script>
 {% endblock %}

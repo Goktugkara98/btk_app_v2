@@ -3,138 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!--Title-->
-    <title>{% block title %}Admin Panel - Daima{% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-
-    <!--CSS-->
-    <!---Plugins-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins/bootstrap-grid.css') }}">
-    <!---Base-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <!---Admin Styles-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
-    <!---Extra Styles-->
-    {% block extra_css %}{% endblock %}
-
-    <!-- Google Fonts: Bruno Ace SC & Inter - Optimized -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>{% block title %}Müfredat Yönetimi{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { background: #343a40; min-height: 100vh; }
+        .sidebar .nav-link { color: #adb5bd; }
+        .sidebar .nav-link:hover { color: #fff; background: #495057; }
+        .sidebar .nav-link.active { color: #fff; background: #007bff; }
+        .main-content { padding: 20px; }
+        .card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+        .btn-group-sm .btn { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .table th { background-color: #f8f9fa; border-top: none; }
+        .modal-header { background-color: #007bff; color: white; }
+        .alert { border-radius: 0.375rem; }
+    </style>
 </head>
-<body class="admin-body">
-    <!-- Admin Navigation -->
-    <nav class="admin-navbar">
-        <div class="admin-nav-container">
-            <div class="admin-nav-brand">
-                <i class="fas fa-cogs"></i>
-                <span>Admin Panel</span>
-            </div>
-            <div class="admin-nav-menu">
-                <a href="{{ url_for('pages.admin_pages.dashboard') }}" class="admin-nav-link">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-                <a href="{{ url_for('pages.admin_pages.curriculum_management') }}" class="admin-nav-link">
-                    <i class="fas fa-book"></i> Müfredat
-                </a>
-                <a href="{{ url_for('pages.admin_pages.import_export') }}" class="admin-nav-link">
-                    <i class="fas fa-exchange-alt"></i> Veri Aktarımı
-                </a>
-                <a href="{{ url_for('pages.main.index') }}" class="admin-nav-link">
-                    <i class="fas fa-home"></i> Ana Sayfa
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Admin Sidebar -->
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar-content">
-            <div class="admin-sidebar-section">
-                <h6 class="admin-sidebar-title">Müfredat Yönetimi</h6>
-                <ul class="admin-sidebar-menu">
-                    <li><a href="{{ url_for('pages.admin_pages.grades_management') }}"><i class="fas fa-layer-group"></i> Sınıflar</a></li>
-                    <li><a href="{{ url_for('pages.admin_pages.subjects_management') }}"><i class="fas fa-book-open"></i> Dersler</a></li>
-                    <li><a href="{{ url_for('pages.admin_pages.units_management') }}"><i class="fas fa-folder"></i> Üniteler</a></li>
-                    <li><a href="{{ url_for('pages.admin_pages.topics_management') }}"><i class="fas fa-list"></i> Konular</a></li>
-                </ul>
-            </div>
-            <div class="admin-sidebar-section">
-                <h6 class="admin-sidebar-title">Veri İşlemleri</h6>
-                <ul class="admin-sidebar-menu">
-                    <li><a href="{{ url_for('pages.admin_pages.import_export') }}"><i class="fas fa-file-import"></i> İçe/Dışa Aktar</a></li>
-                </ul>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="admin-main">
-        <div class="admin-content">
-            <!-- Breadcrumb -->
-            <nav class="admin-breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('pages.admin_pages.dashboard') }}">Dashboard</a></li>
-                    {% block breadcrumb %}{% endblock %}
-                </ol>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">📚 Müfredat</h4>
+                        <p class="text-muted">Yönetim Paneli</p>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.grades_management') }}">
+                                <i class="fas fa-layer-group me-2"></i>Sınıflar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.subjects_management') }}">
+                                <i class="fas fa-book me-2"></i>Dersler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.units_management') }}">
+                                <i class="fas fa-cube me-2"></i>Üniteler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.topics_management') }}">
+                                <i class="fas fa-tags me-2"></i>Konular
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('pages.admin_pages.import_export') }}">
+                                <i class="fas fa-exchange-alt me-2"></i>Veri Aktarımı
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white">
+                    <div class="text-center">
+                        <a href="{{ url_for('pages.main.index') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-home me-2"></i>Ana Sayfa
+                        </a>
+                    </div>
+                </div>
             </nav>
 
-            <!-- Page Header -->
-            <div class="admin-page-header">
-                <h1 class="admin-page-title">{% block page_title %}Admin Panel{% endblock %}</h1>
-                {% block page_actions %}{% endblock %}
-            </div>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="admin-alerts">
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
                         {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mt-3" role="alert">
                                 {{ message }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">{% block page_title %}Sayfa Başlığı{% endblock %}</h1>
+                        {% block page_subtitle %}{% endblock %}
                     </div>
-                {% endif %}
-            {% endwith %}
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                </div>
 
-            <!-- Page Content -->
-            <div class="admin-page-content">
+                <!-- Page Content -->
                 {% block content %}{% endblock %}
-            </div>
-        </div>
-    </main>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="admin-loading-overlay" style="display: none;">
-        <div class="admin-loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Yükleniyor...</p>
+            </main>
         </div>
     </div>
 
-    <!-- JavaScript -->
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Admin Base JS -->
     <script src="{{ url_for('static', filename='js/admin/admin-base.js') }}"></script>
     
-    <!-- Page Specific JS -->
+    <!-- Custom JS -->
+    <script>
+        // Active navigation highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Loading overlay
+        function showLoading(message = 'Yükleniyor...') {
+            const overlay = document.createElement('div');
+            overlay.id = 'loading-overlay';
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 9999; display: flex;
+                align-items: center; justify-content: center; color: white;
+            `;
+            overlay.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status"></div>
+                    <p class="mt-2">${message}</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Confirmation dialog
+        function confirmAction(message, callback) {
+            if (confirm(message)) {
+                callback();
+            }
+        }
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

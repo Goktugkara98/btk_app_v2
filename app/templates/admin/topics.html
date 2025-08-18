@@ -1,250 +1,787 @@
 {% extends "admin/base_admin.html" %}
 
-{% block page_title %}Konu Yönetimi{% endblock %}
+{% block title %}Konu Yönetimi{% endblock %}
 
 {% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{{ url_for('pages.admin_pages.curriculum_management') }}">Müfredat</a></li>
-    <li class="breadcrumb-item active">Konular</li>
+<li class="breadcrumb-item active">Konu Yönetimi</li>
 {% endblock %}
 
+{% block page_title %}Konu Yönetimi{% endblock %}
+{% block page_subtitle %}Konuları ekleyin, düzenleyin ve yönetin{% endblock %}
+
 {% block page_actions %}
-<button class="btn btn-primary" onclick="showAddModal()">
-    <i class="fas fa-plus"></i> Yeni Konu
+<button class="btn btn-primary" onclick="showCreateTopicModal()">
+    <i class="fas fa-plus me-2"></i>Yeni Konu
+</button>
+<button class="btn btn-outline-primary" onclick="exportTopics()">
+    <i class="fas fa-download me-2"></i>Export
 </button>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-list"></i> Konu Listesi
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label for="unitFilter" class="form-label">Ünite Seçiniz</label>
-                <select class="form-select" id="unitFilter" onchange="loadTopics()">
-                    <option value="">Tüm Üniteler</option>
-                    <!-- Units will be populated by JavaScript -->
-                </select>
+<!-- Search and Filters -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="search-box">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="search-topics" placeholder="Konu ara..." data-target="topics-table">
             </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover" id="topicsTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Konu Adı</th>
-                        <th>Ünite</th>
-                        <th>Ders</th>
-                        <th>Durum</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be loaded via JavaScript -->
-                </tbody>
-            </table>
+    </div>
+    <div class="col-md-2">
+        <div class="filter-box">
+            <select class="form-select" id="grade-filter">
+                <option value="">Tüm Sınıflar</option>
+                <!-- Sınıflar JavaScript ile doldurulacak -->
+            </select>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="filter-box">
+            <select class="form-select" id="subject-filter">
+                <option value="">Tüm Dersler</option>
+                <!-- Dersler JavaScript ile doldurulacak -->
+            </select>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="filter-box">
+            <select class="form-select" id="unit-filter">
+                <option value="">Tüm Üniteler</option>
+                <!-- Üniteler JavaScript ile doldurulacak -->
+            </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="filter-box">
+            <select class="form-select" id="status-filter">
+                <option value="">Tüm Durumlar</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Pasif</option>
+            </select>
         </div>
     </div>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Topics Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>Konu Listesi
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="topics-table">
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>Konu Adı</th>
+                        <th>Sınıf</th>
+                        <th>Ders</th>
+                        <th>Ünite</th>
+                        <th>Açıklama</th>
+                        <th>Durum</th>
+                        <th>Oluşturulma</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="topics-tbody">
+                    <!-- Konular JavaScript ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Konu sayfaları" class="mt-4">
+            <ul class="pagination justify-content-center" id="topics-pagination">
+                <!-- Sayfalama JavaScript ile doldurulacak -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Create/Edit Topic Modal -->
 <div class="modal fade" id="topicModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Yeni Konu</h5>
+                <h5 class="modal-title" id="topicModalTitle">Yeni Konu Ekle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="topicForm">
-                    <input type="hidden" id="topicId">
+            <form id="topicForm">
+                <div class="modal-body">
+                    <input type="hidden" id="topic-id" name="id">
+                    
                     <div class="mb-3">
-                        <label for="topicName" class="form-label">Konu Adı</label>
-                        <input type="text" class="form-control" id="topicName" required>
+                        <label for="topic-name" class="form-label">Konu Adı *</label>
+                        <input type="text" class="form-control" id="topic-name" name="name" required>
                     </div>
+                    
                     <div class="mb-3">
-                        <label for="unitSelect" class="form-label">Ünite</label>
-                        <select class="form-select" id="unitSelect" required>
-                            <option value="">Ünite seçiniz</option>
-                            <!-- Units will be populated by JavaScript -->
+                        <label for="topic-grade" class="form-label">Sınıf *</label>
+                        <select class="form-select" id="topic-grade" name="grade_id" required>
+                            <option value="">Sınıf seçin</option>
+                            <!-- Sınıflar JavaScript ile doldurulacak -->
                         </select>
                     </div>
+                    
                     <div class="mb-3">
-                        <label for="description" class="form-label">Açıklama</label>
-                        <textarea class="form-control" id="description" rows="3"></textarea>
+                        <label for="topic-subject" class="form-label">Ders *</label>
+                        <select class="form-select" id="topic-subject" name="subject_id" required>
+                            <option value="">Önce sınıf seçin</option>
+                        </select>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="isActive" checked>
-                        <label class="form-check-label" for="isActive">Aktif</label>
+                    
+                    <div class="mb-3">
+                        <label for="topic-unit" class="form-label">Ünite *</label>
+                        <select class="form-select" id="topic-unit" name="unit_id" required>
+                            <option value="">Önce ders seçin</option>
+                        </select>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" id="saveButton" onclick="saveTopic()">Kaydet</button>
-            </div>
+                    
+                    <div class="mb-3">
+                        <label for="topic-description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="topic-description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="topic-order" class="form-label">Sıra Numarası</label>
+                        <input type="number" class="form-control" id="topic-order" name="order_number" min="1">
+                        <div class="form-text">Konunun görüntülenme sırası</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="topic-active" name="is_active" checked>
+                            <label class="form-check-label" for="topic-active">
+                                Aktif
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
+{% block extra_js %}
 <script>
-// Initialize the page when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize DataTable
-    const topicsTable = $('#topicsTable').DataTable({
-        ajax: {
-            url: '/api/admin/topics',
-            dataSrc: 'data'
-        },
-        columns: [
-            { data: 'topic_id' },
-            { data: 'topic_name' },
-            { data: 'unit_name' },
-            { data: 'subject_name' },
-            { 
-                data: 'is_active',
-                render: function(data, type, row) {
-                    return data ? 
-                        '<span class="badge bg-success">Aktif</span>' : 
-                        '<span class="badge bg-danger">Pasif</span>';
-                }
-            },
-            {
-                data: null,
-                orderable: false,
-                render: function(data, type, row) {
-                    return `
-                        <button class="btn btn-sm btn-outline-primary" onclick="editTopic(${row.topic_id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTopic(${row.topic_id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    `;
-                }
-            }
-        ]
-    });
+// Topics Management JavaScript
+class TopicsManager {
+    constructor() {
+        this.currentPage = 1;
+        this.perPage = 10;
+        this.topics = [];
+        this.grades = [];
+        this.subjects = [];
+        this.units = [];
+        this.filteredTopics = [];
+        this.init();
+    }
 
-    // Load units for the dropdowns
-    loadUnits();
-});
+    init() {
+        this.loadGrades();
+        this.loadTopics();
+        this.setupEventListeners();
+    }
 
-function showAddModal() {
-    $('#topicForm')[0].reset();
-    $('#topicId').val('');
-    $('#modalTitle').text('Yeni Konu');
-    $('#topicModal').modal('show');
-}
-
-function loadUnits() {
-    // Load all units for the dropdowns
-    fetch('/api/admin/units')
-        .then(response => response.json())
-        .then(data => {
-            const filterSelect = $('#unitFilter');
-            const formSelect = $('#unitSelect');
-            
-            // Clear and add default options
-            filterSelect.empty().append('<option value="">Tüm Üniteler</option>');
-            formSelect.empty().append('<option value="">Ünite seçiniz</option>');
-            
-            // Populate both selects
-            data.data.forEach(unit => {
-                const option = `<option value="${unit.unit_id}">${unit.unit_name} (${unit.subject_name})</option>`;
-                filterSelect.append(option);
-                formSelect.append(option);
-            });
-        });
-}
-
-function loadTopics() {
-    const unitId = $('#unitFilter').val();
-    const url = unitId ? `/api/admin/topics?unit_id=${unitId}` : '/api/admin/topics';
-    
-    $('#topicsTable').DataTable().ajax.url(url).load();
-}
-
-function saveTopic() {
-    const topicData = {
-        id: $('#topicId').val() || null,
-        topic_name: $('#topicName').val(),
-        unit_id: $('#unitSelect').val(),
-        description: $('#description').val(),
-        is_active: $('#isActive').is(':checked')
-    };
-
-    const method = topicData.id ? 'PUT' : 'POST';
-    const url = topicData.id ? 
-        `/api/admin/topics/${topicData.id}` : 
-        '/api/admin/topics';
-
-    fetch(url, {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify(topicData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            $('#topicModal').modal('hide');
-            $('#topicsTable').DataTable().ajax.reload();
-            showToast('Başarılı', 'Konu başarıyla kaydedildi.', 'success');
-        } else {
-            showToast('Hata', data.message || 'Bir hata oluştu.', 'error');
+    setupEventListeners() {
+        // Search
+        const searchInput = document.getElementById('search-topics');
+        if (searchInput) {
+            searchInput.addEventListener('input', this.debounce((e) => {
+                this.filterTopics();
+            }, 300));
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Hata', 'Bir hata oluştu.', 'error');
-    });
-}
 
-function editTopic(id) {
-    fetch(`/api/admin/topics/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const topic = data.data;
-                $('#topicId').val(topic.topic_id);
-                $('#topicName').val(topic.topic_name);
-                $('#unitSelect').val(topic.unit_id);
-                $('#description').val(topic.description);
-                $('#isActive').prop('checked', topic.is_active);
-                
-                $('#modalTitle').text('Düzenle: ' + topic.topic_name);
-                $('#topicModal').modal('show');
-            }
-        });
-}
+        // Grade filter
+        const gradeFilter = document.getElementById('grade-filter');
+        if (gradeFilter) {
+            gradeFilter.addEventListener('change', () => {
+                this.updateSubjectFilter();
+                this.updateUnitFilter();
+                this.filterTopics();
+            });
+        }
 
-function deleteTopic(id) {
-    if (confirm('Bu konuyu silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
-        fetch(`/api/admin/topics/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
+        // Subject filter
+        const subjectFilter = document.getElementById('subject-filter');
+        if (subjectFilter) {
+            subjectFilter.addEventListener('change', () => {
+                this.updateUnitFilter();
+                this.filterTopics();
+            });
+        }
+
+        // Unit filter
+        const unitFilter = document.getElementById('unit-filter');
+        if (unitFilter) {
+            unitFilter.addEventListener('change', () => {
+                this.filterTopics();
+            });
+        }
+
+        // Status filter
+        const statusFilter = document.getElementById('status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                this.filterTopics();
+            });
+        }
+
+        // Form submit
+        const topicForm = document.getElementById('topicForm');
+        if (topicForm) {
+            topicForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveTopic();
+            });
+        }
+
+        // Grade change in modal
+        const topicGrade = document.getElementById('topic-grade');
+        if (topicGrade) {
+            topicGrade.addEventListener('change', () => {
+                this.updateModalSubjectFilter();
+            });
+        }
+
+        // Subject change in modal
+        const topicSubject = document.getElementById('topic-subject');
+        if (topicSubject) {
+            topicSubject.addEventListener('change', () => {
+                this.updateModalUnitFilter();
+            });
+        }
+    }
+
+    async loadGrades() {
+        try {
+            const response = await fetch('/admin/api/grades');
+            const data = await response.json();
+            
             if (data.success) {
-                $('#topicsTable').DataTable().ajax.reload();
-                showToast('Başarılı', 'Konu başarıyla silindi.', 'success');
+                this.grades = data.data || [];
+                this.populateGradeFilters();
+            }
+        } catch (error) {
+            console.error('Sınıf yükleme hatası:', error);
+        }
+    }
+
+    async loadSubjects() {
+        try {
+            const response = await fetch('/admin/api/subjects');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.subjects = data.data || [];
+            }
+        } catch (error) {
+            console.error('Ders yükleme hatası:', error);
+        }
+    }
+
+    async loadUnits() {
+        try {
+            const response = await fetch('/admin/api/units');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.units = data.data || [];
+            }
+        } catch (error) {
+            console.error('Ünite yükleme hatası:', error);
+        }
+    }
+
+    populateGradeFilters() {
+        const gradeFilter = document.getElementById('grade-filter');
+        const topicGrade = document.getElementById('topic-grade');
+        
+        if (gradeFilter) {
+            gradeFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
+            this.grades.forEach(grade => {
+                gradeFilter.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
+            });
+        }
+        
+        if (topicGrade) {
+            topicGrade.innerHTML = '<option value="">Sınıf seçin</option>';
+            this.grades.forEach(grade => {
+                topicGrade.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
+            });
+        }
+    }
+
+    updateSubjectFilter() {
+        const gradeFilter = document.getElementById('grade-filter');
+        const subjectFilter = document.getElementById('subject-filter');
+        
+        if (!gradeFilter || !subjectFilter) return;
+        
+        const selectedGradeId = gradeFilter.value;
+        subjectFilter.innerHTML = '<option value="">Tüm Dersler</option>';
+        
+        if (selectedGradeId) {
+            const gradeSubjects = this.subjects.filter(subject => subject.grade_id == selectedGradeId);
+            gradeSubjects.forEach(subject => {
+                subjectFilter.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
+            });
+        }
+    }
+
+    updateUnitFilter() {
+        const gradeFilter = document.getElementById('grade-filter');
+        const subjectFilter = document.getElementById('subject-filter');
+        const unitFilter = document.getElementById('unit-filter');
+        
+        if (!gradeFilter || !subjectFilter || !unitFilter) return;
+        
+        const selectedGradeId = gradeFilter.value;
+        const selectedSubjectId = subjectFilter.value;
+        unitFilter.innerHTML = '<option value="">Tüm Üniteler</option>';
+        
+        if (selectedGradeId && selectedSubjectId) {
+            const gradeSubjectUnits = this.units.filter(unit => 
+                unit.grade_id == selectedGradeId && unit.subject_id == selectedSubjectId
+            );
+            gradeSubjectUnits.forEach(unit => {
+                unitFilter.innerHTML += `<option value="${unit.id}">${unit.name}</option>`;
+            });
+        }
+    }
+
+    updateModalSubjectFilter() {
+        const topicGrade = document.getElementById('topic-grade');
+        const topicSubject = document.getElementById('topic-subject');
+        
+        if (!topicGrade || !topicSubject) return;
+        
+        const selectedGradeId = topicGrade.value;
+        topicSubject.innerHTML = '<option value="">Ders seçin</option>';
+        
+        if (selectedGradeId) {
+            const gradeSubjects = this.subjects.filter(subject => subject.grade_id == selectedGradeId);
+            gradeSubjects.forEach(subject => {
+                topicSubject.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
+            });
+        }
+        
+        // Reset unit filter
+        document.getElementById('topic-unit').innerHTML = '<option value="">Önce ders seçin</option>';
+    }
+
+    updateModalUnitFilter() {
+        const topicGrade = document.getElementById('topic-grade');
+        const topicSubject = document.getElementById('topic-subject');
+        const topicUnit = document.getElementById('topic-unit');
+        
+        if (!topicGrade || !topicSubject || !topicUnit) return;
+        
+        const selectedGradeId = topicGrade.value;
+        const selectedSubjectId = topicSubject.value;
+        topicUnit.innerHTML = '<option value="">Ünite seçin</option>';
+        
+        if (selectedGradeId && selectedSubjectId) {
+            const gradeSubjectUnits = this.units.filter(unit => 
+                unit.grade_id == selectedGradeId && unit.subject_id == selectedSubjectId
+            );
+            gradeSubjectUnits.forEach(unit => {
+                topicUnit.innerHTML += `<option value="${unit.id}">${unit.name}</option>`;
+            });
+        }
+    }
+
+    async loadTopics() {
+        try {
+            showLoading('Konular yükleniyor...');
+            
+            const response = await fetch('/admin/api/topics');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.topics = data.data || [];
+                this.filteredTopics = [...this.topics];
+                this.renderTopics();
             } else {
-                showToast('Hata', data.message || 'Bir hata oluştu.', 'error');
+                showToast('Konular yüklenemedi', 'error');
             }
+        } catch (error) {
+            console.error('Konu yükleme hatası:', error);
+            showToast('Konular yüklenirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    filterTopics() {
+        const searchTerm = document.getElementById('search-topics').value.toLowerCase();
+        const gradeFilter = document.getElementById('grade-filter').value;
+        const subjectFilter = document.getElementById('subject-filter').value;
+        const unitFilter = document.getElementById('unit-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        
+        this.filteredTopics = this.topics.filter(topic => {
+            const matchesSearch = topic.name.toLowerCase().includes(searchTerm) ||
+                                topic.description.toLowerCase().includes(searchTerm);
+            
+            const matchesGrade = !gradeFilter || topic.grade_id == gradeFilter;
+            const matchesSubject = !subjectFilter || topic.subject_id == subjectFilter;
+            const matchesUnit = !unitFilter || topic.unit_id == unitFilter;
+            
+            const matchesStatus = !statusFilter || 
+                                (statusFilter === 'active' && topic.is_active) ||
+                                (statusFilter === 'inactive' && !topic.is_active);
+            
+            return matchesSearch && matchesGrade && matchesSubject && matchesUnit && matchesStatus;
         });
+        
+        this.currentPage = 1;
+        this.renderTopics();
+    }
+
+    renderTopics() {
+        const tbody = document.getElementById('topics-tbody');
+        if (!tbody) return;
+
+        const startIndex = (this.currentPage - 1) * this.perPage;
+        const endIndex = startIndex + this.perPage;
+        const pageTopics = this.filteredTopics.slice(startIndex, endIndex);
+
+        tbody.innerHTML = '';
+
+        if (pageTopics.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-3"></i>
+                        <p>Konu bulunamadı</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        pageTopics.forEach(topic => {
+            const row = this.createTopicRow(topic);
+            tbody.appendChild(row);
+        });
+
+        this.renderPagination();
+    }
+
+    createTopicRow(topic) {
+        const grade = this.grades.find(g => g.id === topic.grade_id);
+        const subject = this.subjects.find(s => s.id === topic.subject_id);
+        const unit = this.units.find(u => u.id === topic.unit_id);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${topic.order_number || '-'}</td>
+            <td>
+                <strong>${topic.name}</strong>
+            </td>
+            <td>
+                <span class="badge bg-primary">${grade ? grade.name : 'Bilinmiyor'}</span>
+            </td>
+            <td>
+                <span class="badge bg-success">${subject ? subject.name : 'Bilinmiyor'}</span>
+            </td>
+            <td>
+                <span class="badge bg-warning">${unit ? unit.name : 'Bilinmiyor'}</span>
+            </td>
+            <td>${topic.description || '-'}</td>
+            <td>
+                <span class="badge bg-${topic.is_active ? 'success' : 'secondary'}">
+                    ${topic.is_active ? 'Aktif' : 'Pasif'}
+                </span>
+            </td>
+            <td>${this.formatDate(topic.created_at)}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="topicsManager.editTopic(${topic.id})" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-${topic.is_active ? 'warning' : 'success'}" 
+                            onclick="topicsManager.toggleTopicStatus(${topic.id})" 
+                            title="${topic.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
+                        <i class="fas fa-${topic.is_active ? 'toggle-off' : 'toggle-on'}"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="topicsManager.deleteTopic(${topic.id})" title="Sil">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        return row;
+    }
+
+    renderPagination() {
+        const pagination = document.getElementById('topics-pagination');
+        if (!pagination) return;
+
+        const totalPages = Math.ceil(this.filteredTopics.length / this.perPage);
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let paginationHTML = '';
+
+        // Previous button
+        paginationHTML += `
+            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="topicsManager.goToPage(${this.currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+                paginationHTML += `
+                    <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="topicsManager.goToPage(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
+                paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // Next button
+        paginationHTML += `
+            <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="topicsManager.goToPage(${this.currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+        pagination.innerHTML = paginationHTML;
+    }
+
+    goToPage(page) {
+        const totalPages = Math.ceil(this.filteredTopics.length / this.perPage);
+        if (page < 1 || page > totalPages) return;
+        
+        this.currentPage = page;
+        this.renderTopics();
+    }
+
+    showCreateModal() {
+        document.getElementById('topicModalTitle').textContent = 'Yeni Konu Ekle';
+        document.getElementById('topicForm').reset();
+        document.getElementById('topic-id').value = '';
+        document.getElementById('topic-subject').innerHTML = '<option value="">Önce sınıf seçin</option>';
+        document.getElementById('topic-unit').innerHTML = '<option value="">Önce ders seçin</option>';
+        
+        const modal = new bootstrap.Modal(document.getElementById('topicModal'));
+        modal.show();
+    }
+
+    editTopic(topicId) {
+        const topic = this.topics.find(t => t.id === topicId);
+        if (!topic) return;
+
+        document.getElementById('topicModalTitle').textContent = 'Konu Düzenle';
+        document.getElementById('topic-id').value = topic.id;
+        document.getElementById('topic-name').value = topic.name;
+        document.getElementById('topic-grade').value = topic.grade_id;
+        document.getElementById('topic-description').value = topic.description || '';
+        document.getElementById('topic-order').value = topic.order_number || '';
+        document.getElementById('topic-active').checked = topic.is_active;
+
+        // Update filters for selected grade and subject
+        this.updateModalSubjectFilter();
+        this.updateModalUnitFilter();
+        document.getElementById('topic-subject').value = topic.subject_id;
+        document.getElementById('topic-unit').value = topic.unit_id;
+
+        const modal = new bootstrap.Modal(document.getElementById('topicModal'));
+        modal.show();
+    }
+
+    async saveTopic() {
+        try {
+            const formData = new FormData(document.getElementById('topicForm'));
+            const topicData = {
+                name: formData.get('name'),
+                grade_id: parseInt(formData.get('grade_id')),
+                subject_id: parseInt(formData.get('subject_id')),
+                unit_id: parseInt(formData.get('unit_id')),
+                description: formData.get('description'),
+                order_number: parseInt(formData.get('order_number')) || null,
+                is_active: formData.get('is_active') === 'on'
+            };
+
+            const topicId = formData.get('id');
+            const url = topicId ? `/admin/api/topics/${topicId}` : '/admin/api/topics';
+            const method = topicId ? 'PUT' : 'POST';
+
+            showLoading('Konu kaydediliyor...');
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(topicData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(topicId ? 'Konu güncellendi' : 'Konu eklendi', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('topicModal')).hide();
+                this.loadTopics();
+            } else {
+                showToast(data.message || 'Konu kaydedilemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Konu kaydetme hatası:', error);
+            showToast('Konu kaydedilirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async toggleTopicStatus(topicId) {
+        try {
+            const topic = this.topics.find(t => t.id === topicId);
+            if (!topic) return;
+
+            const newStatus = !topic.is_active;
+            const action = newStatus ? 'aktif' : 'pasif';
+
+            if (!confirm(`Bu konuyu ${action} yapmak istediğinizden emin misiniz?`)) {
+                return;
+            }
+
+            showLoading('Durum güncelleniyor...');
+
+            const response = await fetch(`/admin/api/topics/${topicId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_active: newStatus
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(`Konu ${action} yapıldı`, 'success');
+                this.loadTopics();
+            } else {
+                showToast('Durum güncellenemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Durum güncelleme hatası:', error);
+            showToast('Durum güncellenirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async deleteTopic(topicId) {
+        try {
+            if (!confirm('Bu konuyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+                return;
+            }
+
+            showLoading('Konu siliniyor...');
+
+            const response = await fetch(`/admin/api/topics/${topicId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Konu silindi', 'success');
+                this.loadTopics();
+            } else {
+                showToast('Konu silinemedi', 'error');
+            }
+        } catch (error) {
+            console.error('Konu silme hatası:', error);
+            showToast('Konu silinirken hata oluştu', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    exportTopics() {
+        const csvData = this.filteredTopics.map(topic => {
+            const grade = this.grades.find(g => g.id === topic.grade_id);
+            const subject = this.subjects.find(s => s.id === topic.subject_id);
+            const unit = this.units.find(u => u.id === topic.unit_id);
+            return {
+                'Sıra': topic.order_number || '',
+                'Konu Adı': topic.name,
+                'Sınıf': grade ? grade.name : 'Bilinmiyor',
+                'Ders': subject ? subject.name : 'Bilinmiyor',
+                'Ünite': unit ? unit.name : 'Bilinmiyor',
+                'Açıklama': topic.description || '',
+                'Durum': topic.is_active ? 'Aktif' : 'Pasif',
+                'Oluşturulma': this.formatDate(topic.created_at)
+            };
+        });
+
+        window.exportToCSV(csvData, 'konular.csv');
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('tr-TR');
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 }
+
+// Global functions
+function showCreateTopicModal() {
+    if (window.topicsManager) {
+        window.topicsManager.showCreateModal();
+    }
+}
+
+function exportTopics() {
+    if (window.topicsManager) {
+        window.topicsManager.exportTopics();
+    }
+}
+
+// Topics manager'ı başlat
+document.addEventListener('DOMContentLoaded', () => {
+    window.topicsManager = new TopicsManager();
+});
 </script>
 {% endblock %}

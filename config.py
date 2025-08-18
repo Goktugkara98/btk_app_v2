@@ -14,7 +14,7 @@ class Config:
     """Base configuration."""
     # Application settings
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-please-change-in-production'
-    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
+    DEBUG = _env_bool('FLASK_DEBUG', True)
     
     # MySQL database configuration
     MYSQL_CONFIG = {

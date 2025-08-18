@@ -1,21 +1,25 @@
 # =============================================================================
-# ADMIN ROUTES
+# ADMIN API ROUTES
 # =============================================================================
 # Admin paneli için API rotaları
-# Müfredat yönetimi ve sistem yönetimi endpoint'leri
+# Sadece müfredat CRUD işlemleri
 # =============================================================================
 
 from flask import Blueprint, request, jsonify
+from app.services.admin_service import AdminService
 from app.services.curriculum_service import CurriculumService
-from app.services.auth_service import AuthenticationService
 from functools import wraps
+import logging
 
 # Blueprint oluştur
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint('admin', __name__, url_prefix='')
 
 # Servis instance'ları
+admin_service = AdminService()
 curriculum_service = CurriculumService()
-auth_service = AuthenticationService()
+
+# Logging
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # YARDIMCI FONKSİYONLAR
@@ -25,491 +29,383 @@ def admin_required(f):
     """Admin yetkisi kontrolü decorator'ı"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Development mode - bypass auth for now
-        # TODO: Implement proper JWT token authentication
-        return f(*args, **kwargs)
+        # DEBUG: API decorator'a gelen session bilgilerini print yap (sadece development modunda)
+        from flask import session, current_app
+        if current_app.debug:
+            print("=== API ADMIN_REQUIRED DECORATOR DEBUG ===")
+            print(f"Session data: {dict(session)}")
+            print(f"user_id: {session.get('user_id')}")
+            print(f"user_id: {session.get('user_id')}")
+            print(f"is_admin: {session.get('is_admin')}")
+            print(f"logged_in: {session.get('logged_in')}")
+            print(f"username: {session.get('username')}")
+            print("=========================================")
         
-        # Production auth code (commented out for development)
-        # auth_header = request.headers.get('Authorization')
-        # if not auth_header:
-        #     return jsonify({'error': 'Yetkilendirme gerekli'}), 401
-        # 
-        # try:
-        #     token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
-        #     user = auth_service.verify_token(token)
-        #     if not user or not user.get('is_admin'):
-        #         return jsonify({'error': 'Admin yetkisi gerekli'}), 403
-        # except:
-        #     return jsonify({'error': 'Geçersiz token'}), 401
-        # 
-        # return f(*args, **kwargs)
+        # Development mode - bypass auth for now
+        # TODO: Production'da gerçek auth kontrolü ekle
+        return f(*args, **kwargs)
     return decorated_function
 
-def handle_response(success, data=None, message=None, status_code=200):
-    """Standart API response formatı"""
-    response = {'success': success}
-    if data is not None:
-        response['data'] = data
-    if message:
-        response['message'] = message
-    return jsonify(response), status_code
-
 # =============================================================================
-# DASHBOARD VE İSTATİSTİKLER
+# MÜFREDAT GENEL BAKIŞ
 # =============================================================================
 
-@admin_bp.route('/dashboard', methods=['GET'])
+@admin_bp.route('/admin/curriculum/overview', methods=['GET'])
 @admin_required
-def get_dashboard_stats():
-    """Admin dashboard istatistikleri"""
+def get_curriculum_overview():
+    """Müfredat genel bakış"""
     try:
-        stats = curriculum_service.get_curriculum_statistics()
-        return handle_response(True, stats, "Dashboard verileri başarıyla getirildi")
+        # DEBUG: API endpoint'e gelen session bilgilerini print yap (sadece development modunda)
+        from flask import session, current_app
+        if current_app.debug:
+            print("=== CURRICULUM OVERVIEW API DEBUG ===")
+            print(f"Session data: {dict(session)}")
+            print(f"user_id: {session.get('user_id')}")
+            print(f"is_admin: {session.get('is_admin')}")
+            print(f"logged_in: {session.get('logged_in')}")
+            print(f"username: {session.get('username')}")
+            print("=====================================")
+        
+        overview = admin_service.get_curriculum_overview()
+        if current_app.debug:
+            print(f"Curriculum overview data: {overview}")
+        return jsonify(overview)
     except Exception as e:
-        return handle_response(False, message=f"Dashboard verileri alınırken hata: {str(e)}", status_code=500)
+        logger.error(f"Curriculum overview error: {str(e)}")
+        return jsonify({
+            'total_grades': 0,
+            'total_subjects': 0,
+            'total_units': 0,
+            'total_topics': 0
+        })
 
 # =============================================================================
 # GRADES (SINIFLAR) YÖNETİMİ
 # =============================================================================
 
-@admin_bp.route('/grades', methods=['GET'])
+@admin_bp.route('/admin/grades', methods=['GET'])
 @admin_required
 def get_grades():
-    """Tüm sınıfları listele"""
+    """Tüm sınıfları getir"""
     try:
         grades = curriculum_service.get_all_grades()
-        return handle_response(True, grades, "Sınıflar başarıyla getirildi")
+        return jsonify(grades)
     except Exception as e:
-        return handle_response(False, message=f"Sınıflar getirilirken hata: {str(e)}", status_code=500)
+        logger.error(f"Grades error: {str(e)}")
+        return jsonify([])
 
-@admin_bp.route('/grades/active', methods=['GET'])
-@admin_required
-def get_active_grades():
-    """Aktif sınıfları listele"""
-    try:
-        grades = curriculum_service.get_all_grades()
-        active_grades = [g for g in grades if g.get('is_active', True)]
-        return handle_response(True, active_grades, "Aktif sınıflar başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Aktif sınıflar getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/grades/<int:grade_id>', methods=['GET'])
-@admin_required
-def get_grade(grade_id):
-    """Belirli bir sınıfı getir"""
-    try:
-        grade = curriculum_service.get_grade_by_id(grade_id)
-        if not grade:
-            return handle_response(False, message="Sınıf bulunamadı", status_code=404)
-        return handle_response(True, grade, "Sınıf başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Sınıf getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/grades', methods=['POST'])
+@admin_bp.route('/admin/grades', methods=['POST'])
 @admin_required
 def create_grade():
     """Yeni sınıf oluştur"""
     try:
         data = request.get_json()
-        if not data or not data.get('grade_name'):
-            return handle_response(False, message="Sınıf adı gerekli", status_code=400)
+        grade_name = data.get('grade_name')
+        description = data.get('description', '')
+        is_active = data.get('is_active', True)
         
-        grade_id = curriculum_service.create_grade(
-            grade_name=data['grade_name'],
-            description=data.get('description')
-        )
+        if not grade_name:
+            return jsonify({'error': 'Sınıf adı gerekli'}), 400
         
-        return handle_response(True, {'grade_id': grade_id}, "Sınıf başarıyla oluşturuldu", 201)
+        grade_id = curriculum_service.create_grade(grade_name, description, is_active)
+        if grade_id:
+            return jsonify({'success': True, 'grade_id': grade_id})
+        else:
+            return jsonify({'error': 'Sınıf oluşturulamadı'}), 500
     except Exception as e:
-        return handle_response(False, message=f"Sınıf oluşturulurken hata: {str(e)}", status_code=500)
+        logger.error(f"Grade creation error: {str(e)}")
+        return jsonify({'error': f'Sınıf oluşturulurken hata: {str(e)}'}), 500
 
-@admin_bp.route('/grades/<int:grade_id>', methods=['PUT'])
+@admin_bp.route('/admin/grades/<int:grade_id>', methods=['PUT'])
 @admin_required
 def update_grade(grade_id):
-    """Sınıf bilgilerini güncelle"""
+    """Sınıf güncelle"""
     try:
         data = request.get_json()
-        if not data or not data.get('grade_name'):
-            return handle_response(False, message="Sınıf adı gerekli", status_code=400)
+        grade_name = data.get('grade_name')
+        description = data.get('description', '')
+        is_active = data.get('is_active')
         
-        success = curriculum_service.update_grade(
-            grade_id=grade_id,
-            grade_name=data['grade_name'],
-            description=data.get('description'),
-            is_active=data.get('is_active', True)
-        )
+        if not grade_name:
+            return jsonify({'error': 'Sınıf adı gerekli'}), 400
         
+        success = curriculum_service.update_grade(grade_id, grade_name, description, is_active)
         if success:
-            return handle_response(True, message="Sınıf başarıyla güncellendi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Sınıf güncellenemedi", status_code=404)
+            return jsonify({'error': 'Sınıf güncellenemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Sınıf güncellenirken hata: {str(e)}", status_code=500)
+        logger.error(f"Grade update error: {str(e)}")
+        return jsonify({'error': f'Sınıf güncellenirken hata: {str(e)}'}), 500
 
-@admin_bp.route('/grades/<int:grade_id>', methods=['DELETE'])
+@admin_bp.route('/admin/grades/<int:grade_id>', methods=['DELETE'])
 @admin_required
 def delete_grade(grade_id):
-    """Sınıfı sil"""
+    """Sınıf sil"""
     try:
         success = curriculum_service.delete_grade(grade_id)
         if success:
-            return handle_response(True, message="Sınıf başarıyla silindi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Sınıf silinemedi", status_code=404)
+            return jsonify({'error': 'Sınıf silinemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Sınıf silinirken hata: {str(e)}", status_code=500)
+        logger.error(f"Grade deletion error: {str(e)}")
+        return jsonify({'error': f'Sınıf silinirken hata: {str(e)}'}), 500
 
 # =============================================================================
 # SUBJECTS (DERSLER) YÖNETİMİ
 # =============================================================================
 
-@admin_bp.route('/subjects', methods=['GET'])
+@admin_bp.route('/admin/subjects', methods=['GET'])
 @admin_required
 def get_subjects():
-    """Tüm dersleri listele"""
-    try:
-        grade_id = request.args.get('grade_id', type=int)
-        if grade_id:
-            subjects = curriculum_service.get_subjects_by_grade(grade_id)
-        else:
-            subjects = curriculum_service.get_all_subjects()
-        return handle_response(True, subjects, "Dersler başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Dersler getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/subjects/active', methods=['GET'])
-@admin_required
-def get_active_subjects():
-    """Aktif dersleri listele"""
+    """Tüm dersleri getir"""
     try:
         subjects = curriculum_service.get_all_subjects()
-        active_subjects = [s for s in subjects if s.get('is_active', True)]
-        return handle_response(True, active_subjects, "Aktif dersler başarıyla getirildi")
+        return jsonify(subjects)
     except Exception as e:
-        return handle_response(False, message=f"Aktif dersler getirilirken hata: {str(e)}", status_code=500)
+        logger.error(f"Subjects error: {str(e)}")
+        return jsonify([])
 
-@admin_bp.route('/subjects/<int:subject_id>', methods=['GET'])
-@admin_required
-def get_subject(subject_id):
-    """Belirli bir dersi getir"""
-    try:
-        subject = curriculum_service.get_subject_by_id(subject_id)
-        if not subject:
-            return handle_response(False, message="Ders bulunamadı", status_code=404)
-        return handle_response(True, subject, "Ders başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Ders getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/subjects', methods=['POST'])
+@admin_bp.route('/admin/subjects', methods=['POST'])
 @admin_required
 def create_subject():
     """Yeni ders oluştur"""
     try:
         data = request.get_json()
-        if not data or not data.get('subject_name') or not data.get('grade_id'):
-            return handle_response(False, message="Ders adı ve sınıf ID'si gerekli", status_code=400)
+        subject_name = data.get('subject_name')
+        grade_id = data.get('grade_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active', True)
         
-        subject_id = curriculum_service.create_subject(
-            grade_id=data['grade_id'],
-            subject_name=data['subject_name'],
-            description=data.get('description')
-        )
+        if not subject_name or not grade_id:
+            return jsonify({'error': 'Ders adı ve sınıf ID gerekli'}), 400
         
-        return handle_response(True, {'subject_id': subject_id}, "Ders başarıyla oluşturuldu", 201)
+        subject_id = curriculum_service.create_subject(subject_name, grade_id, description, is_active)
+        if subject_id:
+            return jsonify({'success': True, 'subject_id': subject_id})
+        else:
+            return jsonify({'error': 'Ders oluşturulamadı'}), 500
     except Exception as e:
-        return handle_response(False, message=f"Ders oluşturulurken hata: {str(e)}", status_code=500)
+        logger.error(f"Subject creation error: {str(e)}")
+        return jsonify({'error': f'Ders oluşturulurken hata: {str(e)}'}), 500
 
-@admin_bp.route('/subjects/<int:subject_id>', methods=['PUT'])
+@admin_bp.route('/admin/subjects/<int:subject_id>', methods=['PUT'])
 @admin_required
 def update_subject(subject_id):
-    """Ders bilgilerini güncelle"""
+    """Ders güncelle"""
     try:
         data = request.get_json()
-        if not data or not data.get('subject_name') or not data.get('grade_id'):
-            return handle_response(False, message="Ders adı ve sınıf ID'si gerekli", status_code=400)
+        subject_name = data.get('subject_name')
+        grade_id = data.get('grade_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active')
         
-        success = curriculum_service.update_subject(
-            subject_id=subject_id,
-            grade_id=data['grade_id'],
-            subject_name=data['subject_name'],
-            description=data.get('description'),
-            is_active=data.get('is_active', True)
-        )
+        if not subject_name or not grade_id:
+            return jsonify({'error': 'Ders adı ve sınıf ID gerekli'}), 400
         
+        success = curriculum_service.update_subject(subject_id, subject_name, grade_id, description, is_active)
         if success:
-            return handle_response(True, message="Ders başarıyla güncellendi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Ders güncellenemedi", status_code=404)
+            return jsonify({'error': 'Ders güncellenemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Ders güncellenirken hata: {str(e)}", status_code=500)
+        logger.error(f"Subject update error: {str(e)}")
+        return jsonify({'error': f'Ders güncellenirken hata: {str(e)}'}), 500
 
-@admin_bp.route('/subjects/<int:subject_id>', methods=['DELETE'])
+@admin_bp.route('/admin/subjects/<int:subject_id>', methods=['DELETE'])
 @admin_required
 def delete_subject(subject_id):
-    """Dersi sil"""
+    """Ders sil"""
     try:
         success = curriculum_service.delete_subject(subject_id)
         if success:
-            return handle_response(True, message="Ders başarıyla silindi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Ders silinemedi", status_code=404)
+            return jsonify({'error': 'Ders silinemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Ders silinirken hata: {str(e)}", status_code=500)
+        logger.error(f"Subject deletion error: {str(e)}")
+        return jsonify({'error': f'Ders silinirken hata: {str(e)}'}), 500
 
 # =============================================================================
 # UNITS (ÜNİTELER) YÖNETİMİ
 # =============================================================================
 
-@admin_bp.route('/units', methods=['GET'])
+@admin_bp.route('/admin/units', methods=['GET'])
 @admin_required
 def get_units():
-    """Tüm üniteleri listele"""
+    """Tüm üniteleri getir"""
     try:
-        subject_id = request.args.get('subject_id', type=int)
-        if subject_id:
-            units = curriculum_service.get_units_by_subject(subject_id)
-        else:
-            units = curriculum_service.get_all_units()
-        return handle_response(True, units, "Üniteler başarıyla getirildi")
+        units = curriculum_service.get_all_units()
+        return jsonify(units)
     except Exception as e:
-        return handle_response(False, message=f"Üniteler getirilirken hata: {str(e)}", status_code=500)
+        logger.error(f"Units error: {str(e)}")
+        return jsonify([])
 
-@admin_bp.route('/units/<int:unit_id>', methods=['GET'])
-@admin_required
-def get_unit(unit_id):
-    """Belirli bir üniteyi getir"""
-    try:
-        unit = curriculum_service.get_unit_by_id(unit_id)
-        if not unit:
-            return handle_response(False, message="Ünite bulunamadı", status_code=404)
-        return handle_response(True, unit, "Ünite başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Ünite getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/units', methods=['POST'])
+@admin_bp.route('/admin/units', methods=['POST'])
 @admin_required
 def create_unit():
     """Yeni ünite oluştur"""
     try:
         data = request.get_json()
-        if not data or not data.get('unit_name') or not data.get('subject_id'):
-            return handle_response(False, message="Ünite adı ve ders ID'si gerekli", status_code=400)
+        unit_name = data.get('unit_name')
+        subject_id = data.get('subject_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active', True)
         
-        unit_id = curriculum_service.create_unit(
-            subject_id=data['subject_id'],
-            unit_name=data['unit_name'],
-            description=data.get('description'),
-            order_number=data.get('order_number')
-        )
+        if not unit_name or not subject_id:
+            return jsonify({'error': 'Ünite adı ve ders ID gerekli'}), 400
         
-        return handle_response(True, {'unit_id': unit_id}, "Ünite başarıyla oluşturuldu", 201)
+        unit_id = curriculum_service.create_unit(unit_name, subject_id, description, is_active)
+        if unit_id:
+            return jsonify({'success': True, 'unit_id': unit_id})
+        else:
+            return jsonify({'error': 'Ünite oluşturulamadı'}), 500
     except Exception as e:
-        return handle_response(False, message=f"Ünite oluşturulurken hata: {str(e)}", status_code=500)
+        logger.error(f"Unit creation error: {str(e)}")
+        return jsonify({'error': f'Ünite oluşturulurken hata: {str(e)}'}), 500
 
-@admin_bp.route('/units/<int:unit_id>', methods=['PUT'])
+@admin_bp.route('/admin/units/<int:unit_id>', methods=['PUT'])
 @admin_required
 def update_unit(unit_id):
-    """Ünite bilgilerini güncelle"""
+    """Ünite güncelle"""
     try:
         data = request.get_json()
-        if not data or not data.get('unit_name') or not data.get('subject_id'):
-            return handle_response(False, message="Ünite adı ve ders ID'si gerekli", status_code=400)
+        unit_name = data.get('unit_name')
+        subject_id = data.get('subject_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active')
         
-        success = curriculum_service.update_unit(
-            unit_id=unit_id,
-            subject_id=data['subject_id'],
-            unit_name=data['unit_name'],
-            description=data.get('description'),
-            is_active=data.get('is_active', True),
-            order_number=data.get('order_number')
-        )
+        if not unit_name or not subject_id:
+            return jsonify({'error': 'Ünite adı ve ders ID gerekli'}), 400
         
+        success = curriculum_service.update_unit(unit_id, unit_name, subject_id, description, is_active)
         if success:
-            return handle_response(True, message="Ünite başarıyla güncellendi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Ünite güncellenemedi", status_code=404)
+            return jsonify({'error': 'Ünite güncellenemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Ünite güncellenirken hata: {str(e)}", status_code=500)
+        logger.error(f"Unit update error: {str(e)}")
+        return jsonify({'error': f'Ünite güncellenirken hata: {str(e)}'}), 500
 
-@admin_bp.route('/units/<int:unit_id>', methods=['DELETE'])
+@admin_bp.route('/admin/units/<int:unit_id>', methods=['DELETE'])
 @admin_required
 def delete_unit(unit_id):
-    """Üniteyi sil"""
+    """Ünite sil"""
     try:
         success = curriculum_service.delete_unit(unit_id)
         if success:
-            return handle_response(True, message="Ünite başarıyla silindi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Ünite silinemedi", status_code=404)
+            return jsonify({'error': 'Ünite silinemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Ünite silinirken hata: {str(e)}", status_code=500)
+        logger.error(f"Unit deletion error: {str(e)}")
+        return jsonify({'error': f'Ünite silinirken hata: {str(e)}'}), 500
 
 # =============================================================================
 # TOPICS (KONULAR) YÖNETİMİ
 # =============================================================================
 
-@admin_bp.route('/topics', methods=['GET'])
+@admin_bp.route('/admin/topics', methods=['GET'])
 @admin_required
 def get_topics():
-    """Tüm konuları listele"""
+    """Tüm konuları getir"""
     try:
-        unit_id = request.args.get('unit_id', type=int)
-        if unit_id:
-            topics = curriculum_service.get_topics_by_unit(unit_id)
-        else:
-            topics = curriculum_service.get_all_topics()
-        return handle_response(True, topics, "Konular başarıyla getirildi")
+        topics = curriculum_service.get_all_topics()
+        return jsonify(topics)
     except Exception as e:
-        return handle_response(False, message=f"Konular getirilirken hata: {str(e)}", status_code=500)
+        logger.error(f"Topics error: {str(e)}")
+        return jsonify([])
 
-@admin_bp.route('/topics/<int:topic_id>', methods=['GET'])
-@admin_required
-def get_topic(topic_id):
-    """Belirli bir konuyu getir"""
-    try:
-        topic = curriculum_service.get_topic_by_id(topic_id)
-        if not topic:
-            return handle_response(False, message="Konu bulunamadı", status_code=404)
-        return handle_response(True, topic, "Konu başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"Konu getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/topics', methods=['POST'])
+@admin_bp.route('/admin/topics', methods=['POST'])
 @admin_required
 def create_topic():
     """Yeni konu oluştur"""
     try:
         data = request.get_json()
-        if not data or not data.get('topic_name') or not data.get('unit_id'):
-            return handle_response(False, message="Konu adı ve ünite ID'si gerekli", status_code=400)
+        topic_name = data.get('topic_name')
+        unit_id = data.get('unit_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active', True)
         
-        topic_id = curriculum_service.create_topic(
-            unit_id=data['unit_id'],
-            topic_name=data['topic_name'],
-            description=data.get('description')
-        )
+        if not topic_name or not unit_id:
+            return jsonify({'error': 'Konu adı ve ünite ID gerekli'}), 400
         
-        return handle_response(True, {'topic_id': topic_id}, "Konu başarıyla oluşturuldu", 201)
+        topic_id = curriculum_service.create_topic(topic_name, unit_id, description, is_active)
+        if topic_id:
+            return jsonify({'success': True, 'topic_id': topic_id})
+        else:
+            return jsonify({'error': 'Konu oluşturulamadı'}), 500
     except Exception as e:
-        return handle_response(False, message=f"Konu oluşturulurken hata: {str(e)}", status_code=500)
+        logger.error(f"Topic creation error: {str(e)}")
+        return jsonify({'error': f'Konu oluşturulurken hata: {str(e)}'}), 500
 
-@admin_bp.route('/topics/<int:topic_id>', methods=['PUT'])
+@admin_bp.route('/admin/topics/<int:topic_id>', methods=['PUT'])
 @admin_required
 def update_topic(topic_id):
-    """Konu bilgilerini güncelle"""
+    """Konu güncelle"""
     try:
         data = request.get_json()
-        if not data or not data.get('topic_name') or not data.get('unit_id'):
-            return handle_response(False, message="Konu adı ve ünite ID'si gerekli", status_code=400)
+        topic_name = data.get('topic_name')
+        unit_id = data.get('unit_id')
+        description = data.get('description', '')
+        is_active = data.get('is_active')
         
-        success = curriculum_service.update_topic(
-            topic_id=topic_id,
-            unit_id=data['unit_id'],
-            topic_name=data['topic_name'],
-            description=data.get('description'),
-            is_active=data.get('is_active', True)
-        )
+        if not topic_name or not unit_id:
+            return jsonify({'error': 'Konu adı ve ünite ID gerekli'}), 400
         
+        success = curriculum_service.update_topic(topic_id, topic_name, unit_id, description, is_active)
         if success:
-            return handle_response(True, message="Konu başarıyla güncellendi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Konu güncellenemedi", status_code=404)
+            return jsonify({'error': 'Konu güncellenemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Konu güncellenirken hata: {str(e)}", status_code=500)
+        logger.error(f"Topic update error: {str(e)}")
+        return jsonify({'error': f'Konu güncellenirken hata: {str(e)}'}), 500
 
-@admin_bp.route('/topics/<int:topic_id>', methods=['DELETE'])
+@admin_bp.route('/admin/topics/<int:topic_id>', methods=['DELETE'])
 @admin_required
 def delete_topic(topic_id):
-    """Konuyu sil"""
+    """Konu sil"""
     try:
         success = curriculum_service.delete_topic(topic_id)
         if success:
-            return handle_response(True, message="Konu başarıyla silindi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="Konu silinemedi", status_code=404)
+            return jsonify({'error': 'Konu silinemedi'}), 404
     except Exception as e:
-        return handle_response(False, message=f"Konu silinirken hata: {str(e)}", status_code=500)
+        logger.error(f"Topic deletion error: {str(e)}")
+        return jsonify({'error': f'Konu silinirken hata: {str(e)}'}), 500
 
 # =============================================================================
-# JSON DOSYALARI YÖNETİMİ
+# VERİ AKTARIMI
 # =============================================================================
 
-@admin_bp.route('/curriculum/json-files', methods=['GET'])
+@admin_bp.route('/admin/import-export/export', methods=['GET'])
 @admin_required
-def get_json_files():
-    """Mevcut JSON müfredat dosyalarını listele"""
+def export_curriculum():
+    """Müfredat verilerini export et"""
     try:
-        files = curriculum_service.get_curriculum_json_files()
-        return handle_response(True, files, "JSON dosyaları başarıyla getirildi")
+        export_data = curriculum_service.export_curriculum_data()
+        return jsonify(export_data)
     except Exception as e:
-        return handle_response(False, message=f"JSON dosyaları getirilirken hata: {str(e)}", status_code=500)
+        logger.error(f"Export error: {str(e)}")
+        return jsonify({'error': f'Export işlemi sırasında hata: {str(e)}'}), 500
 
-@admin_bp.route('/curriculum/json/<filename>', methods=['GET'])
+@admin_bp.route('/admin/import-export/import', methods=['POST'])
 @admin_required
-def get_json_content(filename):
-    """JSON dosyası içeriğini getir"""
-    try:
-        content = curriculum_service.load_curriculum_from_json(filename)
-        if content is None:
-            return handle_response(False, message="JSON dosyası bulunamadı veya okunamadı", status_code=404)
-        return handle_response(True, content, "JSON içeriği başarıyla getirildi")
-    except Exception as e:
-        return handle_response(False, message=f"JSON içeriği getirilirken hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/curriculum/import/<filename>', methods=['POST'])
-@admin_required
-def import_json_to_db(filename):
-    """JSON dosyasından veritabanına aktarım"""
-    try:
-        result = curriculum_service.import_json_to_database(filename)
-        if result['success']:
-            return handle_response(True, result['imported'], result['message'])
-        else:
-            return handle_response(False, message=result['message'], status_code=400)
-    except Exception as e:
-        return handle_response(False, message=f"JSON aktarımında hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/curriculum/export/<int:grade_id>', methods=['GET'])
-@admin_required
-def export_db_to_json(grade_id):
-    """Veritabanından JSON formatında export"""
-    try:
-        data = curriculum_service.export_database_to_json(grade_id)
-        if data is None:
-            return handle_response(False, message="Sınıf bulunamadı veya export edilemedi", status_code=404)
-        return handle_response(True, data, "Veriler başarıyla export edildi")
-    except Exception as e:
-        return handle_response(False, message=f"Export işleminde hata: {str(e)}", status_code=500)
-
-@admin_bp.route('/curriculum/save-json', methods=['POST'])
-@admin_required
-def save_json_file():
-    """JSON dosyasını kaydet"""
+def import_curriculum():
+    """Müfredat verilerini import et"""
     try:
         data = request.get_json()
-        if not data or not data.get('filename') or not data.get('content'):
-            return handle_response(False, message="Dosya adı ve içerik gerekli", status_code=400)
+        if not data:
+            return jsonify({'error': 'Import verisi gerekli'}), 400
         
-        success = curriculum_service.save_curriculum_to_json(data['filename'], data['content'])
+        success = curriculum_service.import_curriculum_data(data)
         if success:
-            return handle_response(True, message="JSON dosyası başarıyla kaydedildi")
+            return jsonify({'success': True})
         else:
-            return handle_response(False, message="JSON dosyası kaydedilemedi", status_code=500)
+            return jsonify({'error': 'Import işlemi başarısız'}), 500
     except Exception as e:
-        return handle_response(False, message=f"JSON kaydetme hatası: {str(e)}", status_code=500)
-
-# =============================================================================
-# HATA YÖNETİMİ
-# =============================================================================
-
-@admin_bp.errorhandler(404)
-def not_found(error):
-    return handle_response(False, message="Endpoint bulunamadı", status_code=404)
-
-@admin_bp.errorhandler(405)
-def method_not_allowed(error):
-    return handle_response(False, message="HTTP metodu desteklenmiyor", status_code=405)
-
-@admin_bp.errorhandler(500)
-def internal_error(error):
-    return handle_response(False, message="Sunucu hatası", status_code=500)
+        logger.error(f"Import error: {str(e)}")
+        return jsonify({'error': f'Import işlemi sırasında hata: {str(e)}'}), 500

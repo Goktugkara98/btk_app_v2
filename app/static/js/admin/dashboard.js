@@ -78,12 +78,12 @@ class AdminDashboard {
     }
 
     updateStatistics(data) {
-        // Update stat cards
+        // Update stat cards - using correct IDs from template
         const statElements = {
-            totalGrades: document.getElementById('totalGrades'),
-            totalSubjects: document.getElementById('totalSubjects'),
-            totalUnits: document.getElementById('totalUnits'),
-            totalTopics: document.getElementById('totalTopics')
+            total_grades: document.getElementById('total-grades'),
+            total_subjects: document.getElementById('total-subjects'),
+            total_units: document.getElementById('total-units'),
+            total_topics: document.getElementById('total-topics')
         };
 
         Object.keys(statElements).forEach(key => {
