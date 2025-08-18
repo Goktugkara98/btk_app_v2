@@ -142,23 +142,31 @@ class GradesManager {
 
     async loadGrades() {
         try {
-            showLoading('Sınıflar yükleniyor...');
+            if (window.adminBase) window.adminBase.showLoading();
             
-            const response = await fetch('/admin/api/grades');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.grades = data.data || [];
+            // Prefer shared adminBase wrapper which returns { success, data }
+            let result;
+            if (window.adminBase && typeof window.adminBase.getGrades === 'function') {
+                result = await window.adminBase.getGrades();
+            } else {
+                // Fallback to direct fetch which returns array
+                const resp = await fetch('/api/admin/grades');
+                const arr = await resp.json();
+                result = { success: true, data: Array.isArray(arr) ? arr : [] };
+            }
+
+            if (result && result.success) {
+                this.grades = result.data || [];
                 this.filteredGrades = [...this.grades];
                 this.renderGrades();
             } else {
-                showToast('Sınıflar yüklenemedi', 'error');
+                if (window.adminBase) window.adminBase.showError('Sınıflar yüklenemedi');
             }
         } catch (error) {
             console.error('Sınıf yükleme hatası:', error);
-            showToast('Sınıflar yüklenirken hata oluştu', 'error');
+            if (window.adminBase) window.adminBase.showError('Sınıflar yüklenirken hata oluştu');
         } finally {
-            hideLoading();
+            if (window.adminBase) window.adminBase.hideLoading();
         }
     }
 
@@ -331,33 +339,39 @@ class GradesManager {
             };
 
             const gradeId = formData.get('id');
-            const url = gradeId ? `/admin/api/grades/${gradeId}` : '/admin/api/grades';
-            const method = gradeId ? 'PUT' : 'POST';
 
-            showLoading('Sınıf kaydediliyor...');
+            if (window.adminBase) window.adminBase.showLoading();
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(gradeData)
-            });
+            let result;
+            if (window.adminBase && gradeId) {
+                result = await window.adminBase.updateItem('grade', gradeId, gradeData);
+            } else if (window.adminBase && !gradeId) {
+                result = await window.adminBase.createItem('grade', gradeData);
+            } else {
+                // Fallback to direct fetch
+                const url = gradeId ? `/api/admin/grades/${gradeId}` : '/api/admin/grades';
+                const method = gradeId ? 'PUT' : 'POST';
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gradeData)
+                });
+                result = await response.json();
+            }
 
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(gradeId ? 'Sınıf güncellendi' : 'Sınıf eklendi', 'success');
+            if (result && result.success) {
+                if (window.adminBase) window.adminBase.showSuccess(gradeId ? 'Sınıf güncellendi' : 'Sınıf eklendi');
                 bootstrap.Modal.getInstance(document.getElementById('gradeModal')).hide();
                 this.loadGrades();
             } else {
-                showToast(data.message || 'Sınıf kaydedilemedi', 'error');
+                const msg = (result && result.message) || 'Sınıf kaydedilemedi';
+                if (window.adminBase) window.adminBase.showError(msg);
             }
         } catch (error) {
             console.error('Sınıf kaydetme hatası:', error);
-            showToast('Sınıf kaydedilirken hata oluştu', 'error');
+            if (window.adminBase) window.adminBase.showError('Sınıf kaydedilirken hata oluştu');
         } finally {
-            hideLoading();
+            if (window.adminBase) window.adminBase.hideLoading();
         }
     }
 
@@ -373,31 +387,38 @@ class GradesManager {
                 return;
             }
 
-            showLoading('Durum güncelleniyor...');
+            if (window.adminBase) window.adminBase.showLoading();
 
-            const response = await fetch(`/admin/api/grades/${gradeId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    is_active: newStatus
-                })
-            });
+            // Backend requires grade_name; send full payload
+            const payload = {
+                grade_name: grade.grade_name,
+                description: grade.description || '',
+                is_active: newStatus
+            };
 
-            const data = await response.json();
+            let result;
+            if (window.adminBase && typeof window.adminBase.updateItem === 'function') {
+                result = await window.adminBase.updateItem('grade', gradeId, payload);
+            } else {
+                const response = await fetch(`/api/admin/grades/${gradeId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                result = await response.json();
+            }
 
-            if (data.success) {
-                showToast(`Sınıf ${action} yapıldı`, 'success');
+            if (result && result.success) {
+                if (window.adminBase) window.adminBase.showSuccess(`Sınıf ${action} yapıldı`);
                 this.loadGrades();
             } else {
-                showToast('Durum güncellenemedi', 'error');
+                if (window.adminBase) window.adminBase.showError('Durum güncellenemedi');
             }
         } catch (error) {
             console.error('Durum güncelleme hatası:', error);
-            showToast('Durum güncellenirken hata oluştu', 'error');
+            if (window.adminBase) window.adminBase.showError('Durum güncellenirken hata oluştu');
         } finally {
-            hideLoading();
+            if (window.adminBase) window.adminBase.hideLoading();
         }
     }
 
@@ -407,25 +428,27 @@ class GradesManager {
                 return;
             }
 
-            showLoading('Sınıf siliniyor...');
+            if (window.adminBase) window.adminBase.showLoading();
 
-            const response = await fetch(`/admin/api/grades/${gradeId}`, {
-                method: 'DELETE'
-            });
+            let result;
+            if (window.adminBase && typeof window.adminBase.deleteItem === 'function') {
+                result = await window.adminBase.deleteItem('grade', gradeId);
+            } else {
+                const response = await fetch(`/api/admin/grades/${gradeId}`, { method: 'DELETE' });
+                result = await response.json();
+            }
 
-            const data = await response.json();
-
-            if (data.success) {
-                showToast('Sınıf silindi', 'success');
+            if (result && result.success) {
+                if (window.adminBase) window.adminBase.showSuccess('Sınıf silindi');
                 this.loadGrades();
             } else {
-                showToast('Sınıf silinemedi', 'error');
+                if (window.adminBase) window.adminBase.showError('Sınıf silinemedi');
             }
         } catch (error) {
             console.error('Sınıf silme hatası:', error);
-            showToast('Sınıf silinirken hata oluştu', 'error');
+            if (window.adminBase) window.adminBase.showError('Sınıf silinirken hata oluştu');
         } finally {
-            hideLoading();
+            if (window.adminBase) window.adminBase.hideLoading();
         }
     }
 

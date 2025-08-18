@@ -335,21 +335,27 @@ class AdminPanel {
     // API request methods
     static async apiRequest(endpoint, options = {}) {
         try {
-            const response = await fetch(`/api/admin${endpoint}`, {
+            console.log('AdminBase: Making API request to:', `/api${endpoint}`);
+            const response = await fetch(`/api${endpoint}`, {
                 method: options.method || 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     ...options.headers
                 },
                 body: options.body ? JSON.stringify(options.body) : undefined,
                 ...options
             });
 
+            console.log('AdminBase: Fetch response received:', response.status, response.statusText);
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            return await response.json();
+            const data = await response.json();
+            console.log('AdminBase: JSON data parsed:', data);
+            return data;
         } catch (error) {
             console.error('API request error:', error);
             throw error;
@@ -358,16 +364,152 @@ class AdminPanel {
 
     static async getDashboardStats() {
         try {
-            const response = await this.apiRequest('/admin/curriculum/overview');
+            console.log('AdminBase: Starting getDashboardStats...');
+            const response = await this.apiRequest('/admin/overview');
+            console.log('AdminBase: API response received:', response);
             return {
                 success: true,
                 data: response
             };
         } catch (error) {
+            console.error('AdminBase: getDashboardStats error:', error);
             return {
                 success: false,
                 message: error.message
             };
+        }
+    }
+
+    // CRUD operations for admin entities
+    static async getGrades() {
+        try {
+            const response = await this.apiRequest('/admin/grades');
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error('AdminBase: getGrades error:', error);
+            return {
+                success: false,
+                message: error.message || 'Sınıflar yüklenirken bir hata oluştu'
+            };
+        }
+    }
+
+    static async getSubjects() {
+        try {
+            console.log('AdminBase: Fetching subjects...');
+            const response = await this.apiRequest('/admin/subjects');
+            console.log('AdminBase: Subjects response:', response);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error('AdminBase: getSubjects error:', error);
+            return {
+                success: false,
+                message: error.message || 'Dersler yüklenirken bir hata oluştu'
+            };
+        }
+    }
+
+    static async getUnits() {
+        try {
+            const response = await this.apiRequest('/admin/units');
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error('AdminBase: getUnits error:', error);
+            return {
+                success: false,
+                message: error.message || 'Üniteler yüklenirken bir hata oluştu'
+            };
+        }
+    }
+
+    static async getTopics() {
+        try {
+            const response = await this.apiRequest('/admin/topics');
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error('AdminBase: getTopics error:', error);
+            return {
+                success: false,
+                message: error.message || 'Konular yüklenirken bir hata oluştu'
+            };
+        }
+    }
+
+    static async createItem(type, data) {
+        try {
+            const response = await this.apiRequest(`/admin/${type}s`, {
+                method: 'POST',
+                body: data
+            });
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error(`AdminBase: create${type} error:`, error);
+            return {
+                success: false,
+                message: error.message
+            };
+        }
+    }
+
+    static async updateItem(type, id, data) {
+        try {
+            const response = await this.apiRequest(`/admin/${type}s/${id}`, {
+                method: 'PUT',
+                body: data
+            });
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error(`AdminBase: update${type} error:`, error);
+            return {
+                success: false,
+                message: error.message
+            };
+        }
+    }
+
+    static async deleteItem(type, id) {
+        try {
+            const response = await this.apiRequest(`/admin/${type}s/${id}`, {
+                method: 'DELETE'
+            });
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            console.error(`AdminBase: delete${type} error:`, error);
+            return {
+                success: false,
+                message: error.message
+            };
+        }
+    }
+
+    static resetForm(formId) {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.reset();
+            // Clear validation states
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
         }
     }
 
@@ -618,7 +760,16 @@ document.addEventListener('DOMContentLoaded', () => {
         exportToJSON: AdminPanel.exportToJSON,
         apiRequest: AdminPanel.apiRequest,
         getDashboardStats: AdminPanel.getDashboardStats,
-        updateTable: AdminPanel.updateTable
+        updateTable: AdminPanel.updateTable,
+        // CRUD operations
+        getGrades: AdminPanel.getGrades,
+        getSubjects: AdminPanel.getSubjects,
+        getUnits: AdminPanel.getUnits,
+        getTopics: AdminPanel.getTopics,
+        createItem: AdminPanel.createItem,
+        updateItem: AdminPanel.updateItem,
+        deleteItem: AdminPanel.deleteItem,
+        resetForm: AdminPanel.resetForm
     };
     
     // Initialize tooltips

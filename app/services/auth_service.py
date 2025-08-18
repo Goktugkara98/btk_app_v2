@@ -43,7 +43,8 @@ class AuthenticationService:
                         'redirect': '/login'
                     }), 401
                 # Normal sayfa istekleri için redirect
-                return redirect(url_for('pages.auth.login'))
+                # Not: Auth sayfaları 'auth' blueprint'indedir.
+                return redirect(url_for('auth.login'))
             return f(*args, **kwargs)
         return decorated_function
     
@@ -60,7 +61,15 @@ class AuthenticationService:
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not self.is_logged_in():
-                return redirect(url_for('pages.login'))
+                # AJAX istekleri için JSON yanıt (API kullanımı için uygun)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Giriş yapmanız gerekiyor',
+                        'redirect': '/login'
+                    }), 401
+                # Not: Auth sayfaları 'auth' blueprint'indedir.
+                return redirect(url_for('auth.login'))
             
             current_user = self.get_current_user()
             if not current_user or not current_user.get('is_admin'):

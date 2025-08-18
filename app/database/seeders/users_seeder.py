@@ -1,5 +1,6 @@
 from typing import Optional
 from app.database.db_connection import DatabaseConnection
+from werkzeug.security import generate_password_hash
 
 
 class UsersSeeder:
@@ -7,7 +8,8 @@ class UsersSeeder:
 
     Notes:
     - Uses email unique constraint for ON DUPLICATE KEY UPDATE.
-    - Password hashes are placeholders and should be replaced in production.
+    - Default dev password is 'admin123' (only for development/testing!).
+      In production, seeders should be disabled and strong passwords enforced.
     """
 
     def __init__(self, db_connection: Optional[DatabaseConnection] = None) -> None:
@@ -16,12 +18,15 @@ class UsersSeeder:
 
     def seed_default_users(self) -> bool:
         try:
+            # Generate a Werkzeug-compatible password hash for dev users
+            # IMPORTANT: This is only for local development/testing.
+            default_password = 'admin123'
+            password_hash = generate_password_hash(default_password)
+
             sql = (
                 "INSERT INTO users "
-                "(username, email, password_hash, first_name, last_name, phone, birth_date, gender, country, city, school, bio, is_admin) VALUES "
-                "('admin', 'admin@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Admin', 'User', '+90 555 123 4567', '1990-01-01', 'male', 'Turkey', 'Ankara', 'BTK Akademi', 'Sistem yöneticisi', true),"
-                "('demo_user', 'demo@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Demo', 'User', '+90 555 987 6543', '2000-05-15', 'female', 'Turkey', 'Istanbul', 'Demo Okulu', 'Demo kullanıcı hesabı', false),"
-                "('test_user', 'test@btk.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2', 'Test', 'User', '+90 555 111 2222', '1995-12-20', 'other', 'Turkey', 'Izmir', 'Test Okulu', 'Test kullanıcı hesabı', false) "
+                "(username, email, password_hash, first_name, last_name, phone, birth_date, gender, country, city, school, bio, is_admin) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                 "ON DUPLICATE KEY UPDATE "
                 "username = VALUES(username), "
                 "first_name = VALUES(first_name), "
@@ -32,11 +37,33 @@ class UsersSeeder:
                 "country = VALUES(country), "
                 "city = VALUES(city), "
                 "school = VALUES(school), "
-                "bio = VALUES(bio)"
+                "bio = VALUES(bio), "
+                "password_hash = VALUES(password_hash), "
+                "is_admin = VALUES(is_admin)"
             )
+
+            data = [
+                (
+                    'admin', 'admin@btk.com', password_hash, 'Admin', 'User',
+                    '+90 555 123 4567', '1990-01-01', 'male', 'Turkey', 'Ankara',
+                    'BTK Akademi', 'Sistem yöneticisi', True
+                ),
+                (
+                    'demo_user', 'demo@btk.com', password_hash, 'Demo', 'User',
+                    '+90 555 987 6543', '2000-05-15', 'female', 'Turkey', 'Istanbul',
+                    'Demo Okulu', 'Demo kullanıcı hesabı', False
+                ),
+                (
+                    'test_user', 'test@btk.com', password_hash, 'Test', 'User',
+                    '+90 555 111 2222', '1995-12-20', 'other', 'Turkey', 'Izmir',
+                    'Test Okulu', 'Test kullanıcı hesabı', False
+                ),
+            ]
+
             with self.db as conn:
-                conn.cursor.execute(sql)
+                conn.cursor.executemany(sql, data)
                 conn.connection.commit()
             return True
         except Exception:
             return False
+

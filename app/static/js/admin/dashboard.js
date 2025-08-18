@@ -54,23 +54,28 @@ class AdminDashboard {
                 window.adminBase.showLoading();
             }
             
+            console.log('Calling adminBase.getDashboardStats()...');
             const response = await window.adminBase.getDashboardStats();
-            console.log('Dashboard API response:', response);
+            console.log('Dashboard API response received:', response);
             
-            if (response.success) {
+            if (response && response.success) {
                 console.log('Updating statistics with data:', response.data);
                 this.updateStatistics(response.data);
                 this.updateGradeBreakdown(response.data.grade_breakdown || []);
             } else {
-                console.error('Dashboard API returned error:', response);
-                window.adminBase.showError('Dashboard verileri yüklenirken hata oluştu');
+                console.error('Dashboard API returned error or no response:', response);
+                if (window.adminBase) {
+                    window.adminBase.showError('Dashboard verileri yüklenirken hata oluştu');
+                }
             }
         } catch (error) {
             console.error('Dashboard loading error:', error);
+            console.error('Error stack:', error.stack);
             if (window.adminBase) {
                 window.adminBase.showError('Dashboard verileri yüklenirken hata oluştu: ' + error.message);
             }
         } finally {
+            console.log('Dashboard loading finished');
             if (window.adminBase) {
                 window.adminBase.hideLoading();
             }

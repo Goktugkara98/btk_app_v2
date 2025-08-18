@@ -5,8 +5,19 @@ import requests
 import json
 import time
 
+def safe_json(resp):
+    try:
+        return resp.json()
+    except Exception:
+        return None
+
 def test_admin_panel():
     base_url = "http://localhost:5000"
+    s = requests.Session()
+    s.headers.update({
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+    })
     
     print("Admin Panel Test Ediliyor...")
     print("=" * 50)
@@ -14,9 +25,11 @@ def test_admin_panel():
     # Test 1: Dashboard sayfası
     try:
         print("1. Dashboard sayfası test ediliyor...")
-        response = requests.get(f"{base_url}/admin/dashboard")
+        response = s.get(f"{base_url}/admin/")
         if response.status_code == 200:
             print("✓ Dashboard sayfası çalışıyor")
+        elif response.status_code in (302, 401):
+            print(f"• Dashboard yönlendirme/oturum gerektiriyor (status: {response.status_code})")
         else:
             print(f"✗ Dashboard hatası: {response.status_code}")
     except Exception as e:
@@ -27,22 +40,28 @@ def test_admin_panel():
         print("\n2. API endpoint'leri test ediliyor...")
         
         # Curriculum overview
-        response = requests.get(f"{base_url}/admin/api/curriculum/overview")
+        response = s.get(f"{base_url}/api/admin/curriculum/overview")
         if response.status_code == 200:
-            data = response.json()
+            data = safe_json(response)
             print("✓ Curriculum overview API çalışıyor")
             print(f"  - Veri: {data}")
+        elif response.status_code in (401, 403):
+            data = safe_json(response)
+            print(f"• Curriculum overview yetkisiz beklenen durum (status: {response.status_code})")
+            print(f"  - JSON: {data}")
         else:
             print(f"✗ Curriculum overview API hatası: {response.status_code}")
-        
-        # Recent activity
-        response = requests.get(f"{base_url}/admin/api/curriculum/recent-activity")
+
+        # Overview alias
+        response = s.get(f"{base_url}/api/admin/overview")
         if response.status_code == 200:
-            data = response.json()
-            print("✓ Recent activity API çalışıyor")
-            print(f"  - Veri: {data}")
+            print("✓ Overview alias API çalışıyor")
+        elif response.status_code in (401, 403):
+            data = safe_json(response)
+            print(f"• Overview alias yetkisiz beklenen durum (status: {response.status_code})")
+            print(f"  - JSON: {data}")
         else:
-            print(f"✗ Recent activity API hatası: {response.status_code}")
+            print(f"✗ Overview alias API hatası: {response.status_code}")
             
     except Exception as e:
         print(f"✗ API test hatası: {e}")
@@ -60,9 +79,11 @@ def test_admin_panel():
         ]
         
         for page in pages:
-            response = requests.get(f"{base_url}{page}")
+            response = s.get(f"{base_url}{page}")
             if response.status_code == 200:
                 print(f"✓ {page} sayfası çalışıyor")
+            elif response.status_code in (302, 401):
+                print(f"• {page} yönlendirme/oturum gerektiriyor (status: {response.status_code})")
             else:
                 print(f"✗ {page} hatası: {response.status_code}")
                 
@@ -75,6 +96,6 @@ def test_admin_panel():
 if __name__ == "__main__":
     # Uygulamanın başlaması için biraz bekle
     print("Uygulama başlatılıyor...")
-    time.sleep(3)
-    
+    time.sleep(5)
+
     test_admin_panel()

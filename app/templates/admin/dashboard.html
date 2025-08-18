@@ -147,22 +147,12 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Dashboard JS -->
-<script src="{{ url_for('static', filename='js/admin/dashboard.js') }}"></script>
 <script>
-// Session bilgilerini console'a yazdır
-console.log('=== SESSION DEBUG INFO ===');
-console.log('Session data:', {{ session | tojson | safe }});
-console.log('User ID:', {{ session.get('user_id') | tojson | safe }});
-console.log('Is Admin:', {{ session.get('is_admin') | tojson | safe }});
-console.log('Logged In:', {{ session.get('logged_in') | tojson | safe }});
-console.log('Username:', {{ session.get('username') | tojson | safe }});
-console.log('Email:', {{ session.get('email') | tojson | safe }});
-console.log('========================');
+console.log('=== DASHBOARD TEMPLATE LOADED ===');
 
 // Dashboard veri yükleme
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard yükleniyor...');
+    console.log('Dashboard yükleniyooooor...');
     
     // Dashboard verilerini yükle
     loadDashboardData();
@@ -171,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Dashboard verileri yükleniyor...');
             const response = await fetch('/api/admin/curriculum/overview');
+            console.log('Fetch URL:', '/api/admin/curriculum/overview');
             console.log('API Response:', response);
             
             if (!response.ok) {
@@ -196,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateStatistics(data) {
+        console.log('updateStatistics called with:', data);
         // Stat kartlarını güncelle
         const statElements = {
             total_grades: document.getElementById('total-grades'),
@@ -204,14 +196,21 @@ document.addEventListener('DOMContentLoaded', function() {
             total_topics: document.getElementById('total-topics')
         };
         
+        console.log('Found elements:', statElements);
+        
         Object.keys(statElements).forEach(key => {
             const element = statElements[key];
             if (element && data[key] !== undefined) {
                 element.textContent = data[key] || 0;
                 console.log(`Updated ${key}: ${data[key]}`);
+            } else {
+                console.log(`Element not found or data missing for ${key}`);
             }
         });
     }
 });
 </script>
+
+<!-- Dashboard JS -->
+<script src="{{ url_for('static', filename='js/admin/dashboard.js') }}"></script>
 {% endblock %}

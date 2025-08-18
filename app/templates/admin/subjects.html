@@ -200,7 +200,7 @@ class SubjectsManager {
 
     async loadGrades() {
         try {
-            const response = await fetch('/admin/api/grades');
+            const response = await fetch('/api/admin/grades');
             const data = await response.json();
             
             if (data.success) {

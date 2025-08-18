@@ -166,7 +166,7 @@ class ImportExportManager {
                 topics: document.getElementById('export-topics').checked
             };
             
-            const response = await fetch('/admin/api/import-export/export', {
+            const response = await fetch('/api/admin/import-export/export', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ class ImportExportManager {
         }
         
         // Final API call
-        const response = await fetch('/admin/api/import-export/import', {
+        const response = await fetch('/api/admin/import-export/import', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
