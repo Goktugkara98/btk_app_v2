@@ -61,7 +61,8 @@ def get_curriculum_overview():
     print("=== CURRICULUM OVERVIEW ENDPOINT HIT ===")
     try:
         # DEBUG: API endpoint'e gelen session bilgilerini print yap (sadece development modunda)
-        from flask import session, current_app
+        from flask import session, current_app, jsonify
+        
         if current_app.debug:
             print("=== CURRICULUM OVERVIEW API DEBUG ===")
             print(f"Session data: {dict(session)}")
@@ -71,21 +72,36 @@ def get_curriculum_overview():
             print(f"username: {session.get('username')}")
             print("=====================================")
         
+        # Check if user is admin
+        if not session.get('is_admin'):
+            return jsonify({
+                'success': False,
+                'error': 'Unauthorized',
+                'message': 'Admin privileges required'
+            }), 403
+        
         overview = admin_service.get_curriculum_overview()
         if current_app.debug:
             print(f"Curriculum overview data: {overview}")
-        return jsonify(overview)
+        
+        return jsonify({
+            'success': True,
+            'data': overview
+        })
+        
     except Exception as e:
         logger.exception(f"Curriculum overview error: {str(e)}")
-        # Hata durumunda bile en azından 0 değerleriyle bir yanıt döndür (başarılı formatla aynı)
-        response = {
-            'total_grades': 0,
-            'total_subjects': 0,
-            'total_units': 0,
-            'total_topics': 0
-        }
-        print(f"Returning fallback response: {response}")
-        return jsonify(response)
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'An error occurred while fetching curriculum overview',
+            'data': {
+                'total_grades': 0,
+                'total_subjects': 0,
+                'total_units': 0,
+                'total_topics': 0
+            }
+        }), 500
 
 # =============================================================================
 # GRADES (SINIFLAR) YÖNETİMİ

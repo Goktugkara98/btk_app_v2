@@ -176,7 +176,7 @@ function setLoadingState(isLoading) {
 // Real login API call
 async function loginAPI(email, password) {
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch('/api/users/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

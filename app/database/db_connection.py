@@ -83,20 +83,40 @@ class DatabaseConnection:
     def close(self):
         """5.2.2. Veritabanı bağlantısını ve (varsa) cursor'u kapatır."""
         try:
+            # Close cursor if it exists
             if self.cursor:
                 try:
                     self.cursor.close()
                 except Exception as e:
-                    # Cursor kapatılırken hata oluşursa yine de devam et
-                    pass
-            self.cursor = None
+                    # Log cursor close error but continue
+                    print(f"Warning: Error closing cursor: {e}")
+                finally:
+                    self.cursor = None
             
-            if self.connection and self.connection.is_connected():
-                self.connection.close()
-                self.connection = None
+            # Close connection if it exists
+            if self.connection:
+                try:
+                    # Check if connection is still valid before trying to close
+                    if hasattr(self.connection, 'is_connected'):
+                        try:
+                            if self.connection.is_connected():
+                                self.connection.close()
+                        except Exception as e:
+                            # If is_connected() fails, still try to close
+                            print(f"Warning: Error checking connection status: {e}")
+                            self.connection.close()
+                    else:
+                        self.connection.close()
+                except Exception as e:
+                    # Log connection close error but don't raise
+                    print(f"Warning: Error closing database connection: {e}")
+                finally:
+                    self.connection = None
+                    
         except Exception as e:
-            # Hata yönetimi
-            raise MySQLError(f"Error closing database connection: {e}")
+            # Catch any unexpected errors during cleanup
+            print(f"Unexpected error during database cleanup: {e}")
+            # Don't raise to prevent masking the original error
 
     def _ensure_connection(self):
         """5.2.3. Bağlantının aktif olup olmadığını kontrol eder. Değilse, yeniden bağlanır."""

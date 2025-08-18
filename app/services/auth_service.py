@@ -34,17 +34,31 @@ class AuthenticationService:
         """
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # Debug: Log session state
+            from flask import current_app
+            if current_app.debug:
+                print("=== AUTH DEBUG (login_required) ===")
+                print(f"Request path: {request.path}")
+                print(f"Session data: {dict(session)}")
+                print(f"is_logged_in: {self.is_logged_in()}")
+                print(f"User ID in session: {session.get('user_id')}")
+                print("=================================")
+            
             if not self.is_logged_in():
                 # AJAX istekleri için JSON yanıt
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({
                         'status': 'error',
                         'message': 'Giriş yapmanız gerekiyor',
-                        'redirect': '/login'
+                        'redirect': '/login',
+                        'debug': {
+                            'session': dict(session),
+                            'is_logged_in': self.is_logged_in(),
+                            'headers': dict(request.headers)
+                        }
                     }), 401
-                # Normal sayfa istekleri için redirect
-                # Not: Auth sayfaları 'auth' blueprint'indedir.
-                return redirect(url_for('auth.login'))
+                # Auth sayfaları 'pages.auth' blueprint'indedir.
+                return redirect(url_for('pages.auth.login') + f'?next={request.path}')
             return f(*args, **kwargs)
         return decorated_function
     
@@ -60,16 +74,32 @@ class AuthenticationService:
         """
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # Debug: Log session state
+            from flask import current_app
+            if current_app.debug:
+                print("=== AUTH DEBUG ===")
+                print(f"Request path: {request.path}")
+                print(f"Session data: {dict(session)}")
+                print(f"is_logged_in: {self.is_logged_in()}")
+                print(f"User ID in session: {session.get('user_id')}")
+                print(f"is_admin in session: {session.get('is_admin')}")
+                print("==================")
+            
             if not self.is_logged_in():
                 # AJAX istekleri için JSON yanıt (API kullanımı için uygun)
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({
                         'status': 'error',
                         'message': 'Giriş yapmanız gerekiyor',
-                        'redirect': '/login'
+                        'redirect': '/login',
+                        'debug': {
+                            'session': dict(session),
+                            'is_logged_in': self.is_logged_in(),
+                            'headers': dict(request.headers)
+                        }
                     }), 401
-                # Not: Auth sayfaları 'auth' blueprint'indedir.
-                return redirect(url_for('auth.login'))
+                # Auth sayfaları 'pages.auth' blueprint'indedir.
+                return redirect(url_for('pages.auth.login') + f'?next={request.path}')
             
             current_user = self.get_current_user()
             if not current_user or not current_user.get('is_admin'):

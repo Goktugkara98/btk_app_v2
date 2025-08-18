@@ -365,17 +365,18 @@ class AdminPanel {
     static async getDashboardStats() {
         try {
             console.log('AdminBase: Starting getDashboardStats...');
-            const response = await this.apiRequest('/admin/overview');
-            console.log('AdminBase: API response received:', response);
-            return {
-                success: true,
-                data: response
-            };
+            const response = await this.apiRequest('/admin/curriculum/overview', 'GET');
+            return response;
         } catch (error) {
             console.error('AdminBase: getDashboardStats error:', error);
-            return {
-                success: false,
-                message: error.message
+            // If unauthorized, redirect to login
+            if (error.status === 401) {
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+                return { success: false, error: 'Unauthorized' };
+            }
+            return { 
+                success: false, 
+                error: error.message || 'An error occurred while fetching dashboard data'
             };
         }
     }

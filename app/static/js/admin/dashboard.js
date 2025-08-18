@@ -58,15 +58,28 @@ class AdminDashboard {
             const response = await window.adminBase.getDashboardStats();
             console.log('Dashboard API response received:', response);
             
-            if (response && response.success) {
+            if (response && response.success && response.data) {
                 console.log('Updating statistics with data:', response.data);
                 this.updateStatistics(response.data);
-                this.updateGradeBreakdown(response.data.grade_breakdown || []);
-            } else {
-                console.error('Dashboard API returned error or no response:', response);
-                if (window.adminBase) {
-                    window.adminBase.showError('Dashboard verileri yüklenirken hata oluştu');
+                // Check if grade_breakdown exists before trying to use it
+                if (response.data.grade_breakdown) {
+                    this.updateGradeBreakdown(response.data.grade_breakdown);
                 }
+            } else {
+                const errorMessage = response && response.message 
+                    ? response.message 
+                    : 'Dashboard verileri yüklenirken hata oluştu';
+                console.error('Dashboard API error:', errorMessage);
+                if (window.adminBase) {
+                    window.adminBase.showError(errorMessage);
+                }
+                // Update with default/empty data
+                this.updateStatistics({
+                    total_grades: 0,
+                    total_subjects: 0,
+                    total_units: 0,
+                    total_topics: 0
+                });
             }
         } catch (error) {
             console.error('Dashboard loading error:', error);
