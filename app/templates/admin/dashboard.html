@@ -1,77 +1,141 @@
 {% extends "admin/base_admin.html" %}
 
-{% block page_title %}Müfredat Yönetimi{% endblock %}
-{% block page_subtitle %}Sınıf, ders, ünite ve konuları düzenle{% endblock %}
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Müfredat yönetimi genel bakış{% endblock %}
 
 {% block content %}
-<!-- Stats Row -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Toplam Sınıf
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-grades">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+<!-- Stats Overview -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-header">
+            <div class="stat-title">Toplam Sınıf</div>
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
             </div>
+        </div>
+        <div class="stat-value" id="total-grades">0</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>Son güncelleme</span>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Toplam Ders
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-subjects">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-book fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <div class="stat-card success">
+        <div class="stat-header">
+            <div class="stat-title">Toplam Ders</div>
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
             </div>
+        </div>
+        <div class="stat-value" id="total-subjects">0</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>Son güncelleme</span>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Toplam Ünite
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-units">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-cube fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <div class="stat-card warning">
+        <div class="stat-header">
+            <div class="stat-title">Toplam Ünite</div>
+            <div class="stat-icon">
+                <i class="fas fa-cube"></i>
             </div>
+        </div>
+        <div class="stat-value" id="total-units">0</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>Son güncelleme</span>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Toplam Konu
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-topics">0</div>
+    <div class="stat-card info">
+        <div class="stat-header">
+            <div class="stat-title">Toplam Konu</div>
+            <div class="stat-icon">
+                <i class="fas fa-tag"></i>
+            </div>
+        </div>
+        <div class="stat-value" id="total-topics">0</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>Son güncelleme</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="admin-card">
+    <div class="card-header">
+        <h5 class="card-title">
+            <i class="fas fa-bolt"></i>
+            Hızlı İşlemler
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="{{ url_for('pages.admin_pages.grades_management') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                    <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+                    <span class="fw-semibold">Sınıfları Yönet</span>
+                    <small class="text-muted">Sınıf ekle, düzenle, sil</small>
+                </a>
+            </div>
+            
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="{{ url_for('pages.admin_pages.subjects_management') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                    <i class="fas fa-book fa-2x mb-2"></i>
+                    <span class="fw-semibold">Dersleri Yönet</span>
+                    <small class="text-muted">Ders ekle, düzenle, sil</small>
+                </a>
+            </div>
+            
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="{{ url_for('pages.admin_pages.units_management') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                    <i class="fas fa-cube fa-2x mb-2"></i>
+                    <span class="fw-semibold">Üniteleri Yönet</span>
+                    <small class="text-muted">Ünite ekle, düzenle, sil</small>
+                </a>
+            </div>
+            
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="{{ url_for('pages.admin_pages.topics_management') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                    <i class="fas fa-tag fa-2x mb-2"></i>
+                    <span class="fw-semibold">Konuları Yönet</span>
+                    <small class="text-muted">Konu ekle, düzenle, sil</small>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="admin-card">
+    <div class="card-header">
+        <h5 class="card-title">
+            <i class="fas fa-history"></i>
+            Son Aktiviteler
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">Son Eklenen Dersler</h6>
+                <div id="recent-subjects">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-book fa-2x mb-2"></i>
+                        <p>Henüz ders eklenmemiş</p>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-tag fa-2x text-gray-300"></i>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">Son Eklenen Üniteler</h6>
+                <div id="recent-units">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-cube fa-2x mb-2"></i>
+                        <p>Henüz ünite eklenmemiş</p>
                     </div>
                 </div>
             </div>
@@ -79,65 +143,60 @@
     </div>
 </div>
 
-<!-- Quick Actions Row -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Müfredat Düzenleme</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.grades_management') }}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-graduation-cap mb-2"></i><br>
-                            Sınıfları Düzenle
-                        </a>
+<!-- System Status -->
+<div class="admin-card">
+    <div class="card-header">
+        <h5 class="card-title">
+            <i class="fas fa-server"></i>
+            Sistem Durumu
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success rounded-circle p-2 me-3">
+                        <i class="fas fa-database text-white"></i>
                     </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.subjects_management') }}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-book mb-2"></i><br>
-                            Dersleri Düzenle
-                        </a>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.units_management') }}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-cube mb-2"></i><br>
-                            Üniteleri Düzenle
-                        </a>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.topics_management') }}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-tag mb-2"></i><br>
-                            Konuları Düzenle
-                        </a>
+                    <div>
+                        <div class="fw-semibold">Veritabanı</div>
+                        <small class="text-success">Bağlı</small>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Data Management Row -->
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Veri Yönetimi</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-lg-6 col-md-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.import_export') }}" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-upload mb-2"></i><br>
-                            Veri Yükle (JSON/CSV)
-                        </a>
+            
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success rounded-circle p-2 me-3">
+                        <i class="fas fa-server text-white"></i>
                     </div>
-                    <div class="col-lg-6 col-md-6 mb-3">
-                        <a href="{{ url_for('pages.admin_pages.import_export') }}" class="btn btn-outline-dark w-100">
-                            <i class="fas fa-download mb-2"></i><br>
-                            Veri İndir (JSON/CSV)
-                        </a>
+                    <div>
+                        <div class="fw-semibold">Sunucu</div>
+                        <small class="text-success">Çalışıyor</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success rounded-circle p-2 me-3">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Güvenlik</div>
+                        <small class="text-success">Aktif</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success rounded-circle p-2 me-3">
+                        <i class="fas fa-sync text-white"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Senkronizasyon</div>
+                        <small class="text-success">Güncel</small>
                     </div>
                 </div>
             </div>
@@ -146,71 +205,116 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-console.log('=== DASHBOARD TEMPLATE LOADED ===');
+// Dashboard specific functionality
+class DashboardManager {
+    constructor() {
+        this.init();
+    }
 
-// Dashboard veri yükleme
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard yükleniyooooor...');
-    
-    // Dashboard verilerini yükle
-    loadDashboardData();
-    
-    async function loadDashboardData() {
+    init() {
+        console.log('Dashboard Manager initialized');
+        this.loadRecentData();
+    }
+
+    async loadRecentData() {
         try {
-            console.log('Dashboard verileri yükleniyor...');
-            const response = await fetch('/api/admin/curriculum/overview');
-            console.log('Fetch URL:', '/api/admin/curriculum/overview');
-            console.log('API Response:', response);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // Load recent subjects
+            const subjectsResponse = await apiRequest('/admin/subjects?limit=5');
+            if (subjectsResponse.success && subjectsResponse.data) {
+                this.updateRecentSubjects(subjectsResponse.data);
             }
-            
-            const data = await response.json();
-            console.log('Dashboard Data:', data);
-            
-            // İstatistikleri güncelle
-            updateStatistics(data);
-            
+
+            // Load recent units
+            const unitsResponse = await apiRequest('/admin/units?limit=5');
+            if (unitsResponse.success && unitsResponse.data) {
+                this.updateRecentUnits(unitsResponse.data);
+            }
         } catch (error) {
-            console.error('Dashboard veri yükleme hatası:', error);
-            // Hata durumunda varsayılan değerleri göster
-            updateStatistics({
-                total_grades: 0,
-                total_subjects: 0,
-                total_units: 0,
-                total_topics: 0
-            });
+            console.error('Error loading recent data:', error);
         }
     }
-    
-    function updateStatistics(data) {
-        console.log('updateStatistics called with:', data);
-        // Stat kartlarını güncelle
-        const statElements = {
-            total_grades: document.getElementById('total-grades'),
-            total_subjects: document.getElementById('total-subjects'),
-            total_units: document.getElementById('total-units'),
-            total_topics: document.getElementById('total-topics')
-        };
-        
-        console.log('Found elements:', statElements);
-        
-        Object.keys(statElements).forEach(key => {
-            const element = statElements[key];
-            if (element && data[key] !== undefined) {
-                element.textContent = data[key] || 0;
-                console.log(`Updated ${key}: ${data[key]}`);
-            } else {
-                console.log(`Element not found or data missing for ${key}`);
-            }
+
+    updateRecentSubjects(subjects) {
+        const container = document.getElementById('recent-subjects');
+        if (!container) return;
+
+        if (subjects.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-book fa-2x mb-2"></i>
+                    <p>Henüz ders eklenmemiş</p>
+                </div>
+            `;
+            return;
+        }
+
+        const html = subjects.map(subject => `
+            <div class="d-flex align-items-center py-2 border-bottom">
+                <div class="bg-primary rounded-circle p-2 me-3">
+                    <i class="fas fa-book text-white fa-sm"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">${subject.subject_name}</div>
+                    <small class="text-muted">${subject.grade_name || 'Sınıf belirtilmemiş'}</small>
+                </div>
+                <small class="text-muted">${this.formatDate(subject.created_at)}</small>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    updateRecentUnits(units) {
+        const container = document.getElementById('recent-units');
+        if (!container) return;
+
+        if (units.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-cube fa-2x mb-2"></i>
+                    <p>Henüz ünite eklenmemiş</p>
+                </div>
+            `;
+            return;
+        }
+
+        const html = units.map(unit => `
+            <div class="d-flex align-items-center py-2 border-bottom">
+                <div class="bg-warning rounded-circle p-2 me-3">
+                    <i class="fas fa-cube text-white fa-sm"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">${unit.unit_name}</div>
+                    <small class="text-muted">${unit.subject_name || 'Ders belirtilmemiş'}</small>
+                </div>
+                <small class="text-muted">${this.formatDate(unit.created_at)}</small>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return 'Tarih belirtilmemiş';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         });
     }
+
+    refresh() {
+        this.loadRecentData();
+        showToast('Dashboard verileri yenilendi!', 'success');
+    }
+}
+
+// Initialize dashboard manager
+document.addEventListener('DOMContentLoaded', () => {
+    window.currentPageManager = new DashboardManager();
 });
 </script>
-
-<!-- Dashboard JS -->
-<script src="{{ url_for('static', filename='js/admin/dashboard.js') }}"></script>
 {% endblock %}

@@ -20,13 +20,13 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 
 # Import authentication service
-try:
-    from app.services.auth_service import login_required
-except ImportError as e:
-    login_required = None
+from app.services.auth_service import AuthenticationService
 
 # Create the user pages blueprint
 user_bp = Blueprint('user', __name__)
+
+# Create authentication service instance
+auth_service = AuthenticationService()
 
 # =============================================================================
 # 4.0. KULLANICI SAYFA ROTALARI (USER PAGE ROUTES)
@@ -37,7 +37,7 @@ user_bp = Blueprint('user', __name__)
 # -------------------------------------------------------------------------
 
 @user_bp.route('/profile')
-@login_required
+@auth_service.login_required
 def profile():
     """4.1.1. Kullanıcı profil sayfasını render eder."""
     # Kullanıcı ID'sini al

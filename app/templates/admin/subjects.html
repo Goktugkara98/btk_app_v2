@@ -1,132 +1,202 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}Ders Yönetimi{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item active">Ders Yönetimi</li>
-{% endblock %}
-
-{% block page_title %}Ders Yönetimi{% endblock %}
-{% block page_subtitle %}Dersleri ekleyin, düzenleyin ve yönetin{% endblock %}
-
-{% block page_actions %}
-<button class="btn btn-primary" onclick="showCreateSubjectModal()">
-    <i class="fas fa-plus me-2"></i>Yeni Ders
-</button>
-<button class="btn btn-outline-primary" onclick="exportSubjects()">
-    <i class="fas fa-download me-2"></i>Export
-</button>
-{% endblock %}
+{% block title %}Ders Yönetimi - Admin Panel{% endblock %}
 
 {% block content %}
-<!-- Search and Filters -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="search-box">
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="form-control" id="search-subjects" placeholder="Ders ara..." data-target="subjects-table">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-book me-2"></i>
+            Ders Yönetimi
+        </h1>
+        <button class="btn btn-primary" onclick="adminPanel.openModal('subjectModal')">
+            <i class="fas fa-plus me-2"></i>
+            Yeni Ders Ekle
+        </button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Toplam Ders
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="totalSubjects">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Aktif Dersler
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="activeSubjects">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Toplam Ünite
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="totalUnits">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cubes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Ortalama Ünite/Ders
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="avgUnitsPerSubject">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="filter-box">
-            <select class="form-select" id="grade-filter">
-                <option value="">Tüm Sınıflar</option>
-                <!-- Sınıflar JavaScript ile doldurulacak -->
-            </select>
+
+    <!-- Filters -->
+    <div class="admin-card mb-4">
+        <div class="admin-card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="gradeFilter" class="form-label">Sınıf Filtresi</label>
+                    <select class="form-select" id="gradeFilter" onchange="subjectsManager.filterByGrade()">
+                        <option value="">Tüm Sınıflar</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="statusFilter" class="form-label">Durum Filtresi</label>
+                    <select class="form-select" id="statusFilter" onchange="subjectsManager.filterByStatus()">
+                        <option value="">Tüm Durumlar</option>
+                        <option value="1">Aktif</option>
+                        <option value="0">Pasif</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="searchInput" class="form-label">Arama</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Ders adı veya açıklama..." onkeyup="subjectsManager.search()">
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="filter-box">
-            <select class="form-select" id="status-filter">
-                <option value="">Tüm Durumlar</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Pasif</option>
-            </select>
+
+    <!-- Main Content -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h5 class="admin-card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Ders Listesi
+            </h5>
+            <div class="admin-card-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="adminPanel.exportToCSV('subjectsTable', 'dersler.csv')">
+                    <i class="fas fa-download me-1"></i>
+                    CSV İndir
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="adminPanel.refreshSession()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Session Yenile
+                </button>
+            </div>
+        </div>
+        <div class="admin-card-body">
+            <div class="table-responsive">
+                <table class="admin-table" id="subjectsTable">
+                    <thead>
+                        <tr>
+                            <th>Ders Adı</th>
+                            <th>Sınıf</th>
+                            <th>Açıklama</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                Veriler yükleniyor...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Subjects Table -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-list me-2"></i>Ders Listesi
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover" id="subjects-table">
-                <thead>
-                    <tr>
-                        <th>Sıra</th>
-                        <th>Ders Adı</th>
-                        <th>Sınıf</th>
-                        <th>Açıklama</th>
-                        <th>Ünite Sayısı</th>
-                        <th>Durum</th>
-                        <th>Oluşturulma</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody id="subjects-tbody">
-                    <!-- Dersler JavaScript ile doldurulacak -->
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Pagination -->
-        <nav aria-label="Ders sayfaları" class="mt-4">
-            <ul class="pagination justify-content-center" id="subjects-pagination">
-                <!-- Sayfalama JavaScript ile doldurulacak -->
-            </ul>
-        </nav>
-    </div>
-</div>
-
-<!-- Create/Edit Subject Modal -->
-<div class="modal fade" id="subjectModal" tabindex="-1">
+<!-- Subject Modal -->
+<div class="modal fade" id="subjectModal" tabindex="-1" aria-labelledby="subjectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="subjectModalTitle">Yeni Ders Ekle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="subjectModalLabel">Ders Ekle/Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="subjectForm">
+            <form id="subjectForm" onsubmit="adminPanel.handleSubjectSubmit(event)">
                 <div class="modal-body">
-                    <input type="hidden" id="subject-id" name="id">
-                    
                     <div class="mb-3">
-                        <label for="subject-name" class="form-label">Ders Adı *</label>
-                        <input type="text" class="form-control" id="subject-name" name="name" required>
+                        <label for="subject_name" class="form-label">Ders Adı *</label>
+                        <input type="text" class="form-control" id="subject_name" name="subject_name" required>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="subject-grade" class="form-label">Sınıf *</label>
-                        <select class="form-select" id="subject-grade" name="grade_id" required>
-                            <option value="">Sınıf seçin</option>
-                            <!-- Sınıflar JavaScript ile doldurulacak -->
+                        <label for="grade_id" class="form-label">Sınıf *</label>
+                        <select class="form-select" id="grade_id" name="grade_id" required>
+                            <option value="">Sınıf Seçin</option>
                         </select>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="subject-description" class="form-label">Açıklama</label>
-                        <textarea class="form-control" id="subject-description" name="description" rows="3"></textarea>
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="subject-order" class="form-label">Sıra Numarası</label>
-                        <input type="number" class="form-control" id="subject-order" name="order_number" min="1">
-                        <div class="form-text">Dersin görüntülenme sırası</div>
-                    </div>
-                    
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="subject-active" name="is_active" checked>
-                            <label class="form-check-label" for="subject-active">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
                                 Aktif
                             </label>
                         </div>
@@ -135,457 +205,258 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Kaydet
+                        <i class="fas fa-save me-2"></i>
+                        Kaydet
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Veri İçe Aktar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="importFile" class="form-label">CSV Dosyası Seçin</label>
+                    <input type="file" class="form-control" id="importFile" accept=".csv">
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    CSV dosyası şu sütunları içermelidir: subject_name, grade_id, description, is_active
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="adminPanel.handleImport()">
+                    <i class="fas fa-upload me-2"></i>
+                    İçe Aktar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
-// Subjects Management JavaScript
+// Subjects Page Manager
 class SubjectsManager {
     constructor() {
-        this.currentPage = 1;
-        this.perPage = 10;
         this.subjects = [];
-        this.grades = [];
         this.filteredSubjects = [];
         this.init();
     }
 
     init() {
-        this.loadGrades();
-        this.loadSubjects();
-        this.setupEventListeners();
+        this.loadSubjectsData();
+        this.loadGradesForFilter();
+        this.loadStatistics();
     }
 
-    setupEventListeners() {
-        // Search
-        const searchInput = document.getElementById('search-subjects');
-        if (searchInput) {
-            searchInput.addEventListener('input', this.debounce((e) => {
-                this.filterSubjects();
-            }, 300));
-        }
-
-        // Grade filter
-        const gradeFilter = document.getElementById('grade-filter');
-        if (gradeFilter) {
-            gradeFilter.addEventListener('change', () => {
-                this.filterSubjects();
-            });
-        }
-
-        // Status filter
-        const statusFilter = document.getElementById('status-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', () => {
-                this.filterSubjects();
-            });
-        }
-
-        // Form submit
-        const subjectForm = document.getElementById('subjectForm');
-        if (subjectForm) {
-            subjectForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.saveSubject();
-            });
-        }
+    loadSubjectsData() {
+        adminPanel.loadSubjectsData();
     }
 
-    async loadGrades() {
-        try {
-            const response = await fetch('/api/admin/grades');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.grades = data.data || [];
-                this.populateGradeFilters();
-            }
-        } catch (error) {
-            console.error('Sınıf yükleme hatası:', error);
-        }
-    }
-
-    populateGradeFilters() {
-        const gradeFilter = document.getElementById('grade-filter');
-        const subjectGrade = document.getElementById('subject-grade');
-        
-        if (gradeFilter) {
-            gradeFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
-            this.grades.forEach(grade => {
-                gradeFilter.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
+    loadGradesForFilter() {
+        adminPanel.apiRequest('/api/admin/grades', 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.populateGradeFilter(response.data);
+                    this.populateGradeSelect(response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Grades loading error:', error);
             });
-        }
-        
-        if (subjectGrade) {
-            subjectGrade.innerHTML = '<option value="">Sınıf seçin</option>';
-            this.grades.forEach(grade => {
-                subjectGrade.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
-            });
-        }
     }
 
-    async loadSubjects() {
-        try {
-            showLoading('Dersler yükleniyor...');
-            
-            const response = await fetch('/admin/api/subjects');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.subjects = data.data || [];
-                this.filteredSubjects = [...this.subjects];
-                this.renderSubjects();
-            } else {
-                showToast('Dersler yüklenemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ders yükleme hatası:', error);
-            showToast('Dersler yüklenirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
+    populateGradeFilter(grades) {
+        const filter = document.getElementById('gradeFilter');
+        if (!filter) return;
 
-    filterSubjects() {
-        const searchTerm = document.getElementById('search-subjects').value.toLowerCase();
-        const gradeFilter = document.getElementById('grade-filter').value;
-        const statusFilter = document.getElementById('status-filter').value;
-        
-        this.filteredSubjects = this.subjects.filter(subject => {
-            const matchesSearch = subject.name.toLowerCase().includes(searchTerm) ||
-                                subject.description.toLowerCase().includes(searchTerm);
-            
-            const matchesGrade = !gradeFilter || subject.grade_id == gradeFilter;
-            
-            const matchesStatus = !statusFilter || 
-                                (statusFilter === 'active' && subject.is_active) ||
-                                (statusFilter === 'inactive' && !subject.is_active);
-            
-            return matchesSearch && matchesGrade && matchesStatus;
+        filter.innerHTML = '<option value="">Tüm Sınıflar</option>';
+        grades.forEach(grade => {
+            const option = document.createElement('option');
+            option.value = grade.id;
+            option.textContent = grade.grade_name;
+            filter.appendChild(option);
         });
-        
-        this.currentPage = 1;
-        this.renderSubjects();
     }
 
-    renderSubjects() {
-        const tbody = document.getElementById('subjects-tbody');
+    populateGradeSelect(grades) {
+        const select = document.getElementById('grade_id');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Sınıf Seçin</option>';
+        grades.forEach(grade => {
+            const option = document.createElement('option');
+            option.value = grade.id;
+            option.textContent = grade.grade_name;
+            select.appendChild(option);
+        });
+    }
+
+    loadStatistics() {
+        adminPanel.apiRequest('/api/admin/dashboard/stats', 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.updateStatistics(response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Statistics loading error:', error);
+            });
+    }
+
+    updateStatistics(stats) {
+        const elements = {
+            'totalSubjects': stats.total_subjects || 0,
+            'activeSubjects': stats.active_subjects || 0,
+            'totalUnits': stats.total_units || 0,
+            'avgUnitsPerSubject': stats.total_subjects > 0 ? Math.round(stats.total_units / stats.total_subjects) : 0
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                adminPanel.animateNumber(element, value);
+            }
+        });
+    }
+
+    filterByGrade() {
+        const gradeId = document.getElementById('gradeFilter').value;
+        this.applyFilters();
+    }
+
+    filterByStatus() {
+        const status = document.getElementById('statusFilter').value;
+        this.applyFilters();
+    }
+
+    search() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        this.applyFilters(searchTerm);
+    }
+
+    applyFilters(searchTerm = '') {
+        const gradeId = document.getElementById('gradeFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        this.filteredSubjects = this.subjects.filter(subject => {
+            const matchesGrade = !gradeId || subject.grade_id == gradeId;
+            const matchesStatus = status === '' || subject.is_active == status;
+            const matchesSearch = !searchTerm || 
+                subject.subject_name.toLowerCase().includes(searchTerm) ||
+                (subject.description && subject.description.toLowerCase().includes(searchTerm));
+
+            return matchesGrade && matchesStatus && matchesSearch;
+        });
+
+        this.renderFilteredSubjects();
+    }
+
+    renderFilteredSubjects() {
+        const tbody = document.querySelector('#subjectsTable tbody');
         if (!tbody) return;
 
-        const startIndex = (this.currentPage - 1) * this.perPage;
-        const endIndex = startIndex + this.perPage;
-        const pageSubjects = this.filteredSubjects.slice(startIndex, endIndex);
-
-        tbody.innerHTML = '';
-
-        if (pageSubjects.length === 0) {
+        if (this.filteredSubjects.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-3"></i>
-                        <p>Ders bulunamadı</p>
+                    <td colspan="5" class="text-center text-muted">
+                        <i class="fas fa-search me-2"></i>
+                        Sonuç bulunamadı
                     </td>
                 </tr>
             `;
             return;
         }
 
-        pageSubjects.forEach(subject => {
-            const row = this.createSubjectRow(subject);
+        tbody.innerHTML = '';
+        this.filteredSubjects.forEach(subject => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${subject.subject_name}</td>
+                <td>${subject.grade_name || '-'}</td>
+                <td>${subject.description || '-'}</td>
+                <td>
+                    <span class="badge ${subject.is_active ? 'bg-success' : 'bg-secondary'}">
+                        ${subject.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                onclick="adminPanel.editSubject(${subject.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="adminPanel.deleteSubject(${subject.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
             tbody.appendChild(row);
         });
-
-        this.renderPagination();
     }
 
-    createSubjectRow(subject) {
-        const grade = this.grades.find(g => g.id === subject.grade_id);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${subject.order_number || '-'}</td>
-            <td>
-                <strong>${subject.name}</strong>
-            </td>
-            <td>
-                <span class="badge bg-primary">${grade ? grade.name : 'Bilinmiyor'}</span>
-            </td>
-            <td>${subject.description || '-'}</td>
-            <td>
-                <span class="badge bg-info">${subject.unit_count || 0}</span>
-            </td>
-            <td>
-                <span class="badge bg-${subject.is_active ? 'success' : 'secondary'}">
-                    ${subject.is_active ? 'Aktif' : 'Pasif'}
-                </span>
-            </td>
-            <td>${this.formatDate(subject.created_at)}</td>
-            <td>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="subjectsManager.editSubject(${subject.id})" title="Düzenle">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-${subject.is_active ? 'warning' : 'success'}" 
-                            onclick="subjectsManager.toggleSubjectStatus(${subject.id})" 
-                            title="${subject.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
-                        <i class="fas fa-${subject.is_active ? 'toggle-off' : 'toggle-on'}"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="subjectsManager.deleteSubject(${subject.id})" title="Sil">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        return row;
-    }
-
-    renderPagination() {
-        const pagination = document.getElementById('subjects-pagination');
-        if (!pagination) return;
-
-        const totalPages = Math.ceil(this.filteredSubjects.length / this.perPage);
-        
-        if (totalPages <= 1) {
-            pagination.innerHTML = '';
-            return;
-        }
-
-        let paginationHTML = '';
-
-        // Previous button
-        paginationHTML += `
-            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="subjectsManager.goToPage(${this.currentPage - 1})">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-        `;
-
-        // Page numbers
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
-                paginationHTML += `
-                    <li class="page-item ${i === this.currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="subjectsManager.goToPage(${i})">${i}</a>
-                    </li>
-                `;
-            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
-                paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-        }
-
-        // Next button
-        paginationHTML += `
-            <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="subjectsManager.goToPage(${this.currentPage + 1})">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-        `;
-
-        pagination.innerHTML = paginationHTML;
-    }
-
-    goToPage(page) {
-        const totalPages = Math.ceil(this.filteredSubjects.length / this.perPage);
-        if (page < 1 || page > totalPages) return;
-        
-        this.currentPage = page;
-        this.renderSubjects();
-    }
-
-    showCreateModal() {
-        document.getElementById('subjectModalTitle').textContent = 'Yeni Ders Ekle';
-        document.getElementById('subjectForm').reset();
-        document.getElementById('subject-id').value = '';
-        
-        const modal = new bootstrap.Modal(document.getElementById('subjectModal'));
-        modal.show();
-    }
-
-    editSubject(subjectId) {
-        const subject = this.subjects.find(s => s.id === subjectId);
-        if (!subject) return;
-
-        document.getElementById('subjectModalTitle').textContent = 'Ders Düzenle';
-        document.getElementById('subject-id').value = subject.id;
-        document.getElementById('subject-name').value = subject.name;
-        document.getElementById('subject-grade').value = subject.grade_id;
-        document.getElementById('subject-description').value = subject.description || '';
-        document.getElementById('subject-order').value = subject.order_number || '';
-        document.getElementById('subject-active').checked = subject.is_active;
-
-        const modal = new bootstrap.Modal(document.getElementById('subjectModal'));
-        modal.show();
-    }
-
-    async saveSubject() {
-        try {
-            const formData = new FormData(document.getElementById('subjectForm'));
-            const subjectData = {
-                name: formData.get('name'),
-                grade_id: parseInt(formData.get('grade_id')),
-                description: formData.get('description'),
-                order_number: parseInt(formData.get('order_number')) || null,
-                is_active: formData.get('is_active') === 'on'
-            };
-
-            const subjectId = formData.get('id');
-            const url = subjectId ? `/admin/api/subjects/${subjectId}` : '/admin/api/subjects';
-            const method = subjectId ? 'PUT' : 'POST';
-
-            showLoading('Ders kaydediliyor...');
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(subjectData)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(subjectId ? 'Ders güncellendi' : 'Ders eklendi', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('subjectModal')).hide();
-                this.loadSubjects();
-            } else {
-                showToast(data.message || 'Ders kaydedilemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ders kaydetme hatası:', error);
-            showToast('Ders kaydedilirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async toggleSubjectStatus(subjectId) {
-        try {
-            const subject = this.subjects.find(s => s.id === subjectId);
-            if (!subject) return;
-
-            const newStatus = !subject.is_active;
-            const action = newStatus ? 'aktif' : 'pasif';
-
-            if (!confirm(`Bu dersi ${action} yapmak istediğinizden emin misiniz?`)) {
-                return;
-            }
-
-            showLoading('Durum güncelleniyor...');
-
-            const response = await fetch(`/admin/api/subjects/${subjectId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    is_active: newStatus
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(`Ders ${action} yapıldı`, 'success');
-                this.loadSubjects();
-            } else {
-                showToast('Durum güncellenemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Durum güncelleme hatası:', error);
-            showToast('Durum güncellenirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async deleteSubject(subjectId) {
-        try {
-            if (!confirm('Bu dersi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-                return;
-            }
-
-            showLoading('Ders siliniyor...');
-
-            const response = await fetch(`/admin/api/subjects/${subjectId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast('Ders silindi', 'success');
-                this.loadSubjects();
-            } else {
-                showToast('Ders silinemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ders silme hatası:', error);
-            showToast('Ders silinirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    exportSubjects() {
-        const csvData = this.filteredSubjects.map(subject => {
-            const grade = this.grades.find(g => g.id === subject.grade_id);
-            return {
-                'Sıra': subject.order_number || '',
-                'Ders Adı': subject.name,
-                'Sınıf': grade ? grade.name : 'Bilinmiyor',
-                'Açıklama': subject.description || '',
-                'Durum': subject.is_active ? 'Aktif' : 'Pasif',
-                'Oluşturulma': this.formatDate(subject.created_at)
-            };
-        });
-
-        window.exportToCSV(csvData, 'dersler.csv');
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('tr-TR');
-    }
-
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    // Override the renderSubjectsTable method to store data locally
+    renderSubjectsTable(subjects) {
+        this.subjects = subjects;
+        this.filteredSubjects = subjects;
+        this.renderFilteredSubjects();
     }
 }
 
-// Global functions
-function showCreateSubjectModal() {
-    if (window.subjectsManager) {
-        window.subjectsManager.showCreateModal();
-    }
-}
-
-function exportSubjects() {
-    if (window.subjectsManager) {
-        window.subjectsManager.exportSubjects();
-    }
-}
-
-// Subjects manager'ı başlat
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
     window.subjectsManager = new SubjectsManager();
+    window.currentPageManager = window.subjectsManager;
 });
+
+// Handle subject form submission
+adminPanel.handleSubjectSubmit = function(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox value to boolean
+    data.is_active = formData.has('is_active');
+    
+    const editId = form.dataset.editId;
+    
+    if (editId) {
+        // Update existing subject
+        adminPanel.updateSubject(editId, data);
+    } else {
+        // Create new subject
+        adminPanel.createSubject(data);
+    }
+};
+
+// Handle import
+adminPanel.handleImport = function() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        adminPanel.showToast('Lütfen bir dosya seçin', 'warning');
+        return;
+    }
+    
+    adminPanel.importFromFile(file, 'subjects');
+    adminPanel.closeModal('importModal');
+    fileInput.value = '';
+};
 </script>
 {% endblock %}

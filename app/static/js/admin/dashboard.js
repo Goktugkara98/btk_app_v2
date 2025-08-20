@@ -96,6 +96,8 @@ class AdminDashboard {
     }
 
     updateStatistics(data) {
+        console.log('updateStatistics called with data:', data);
+        
         // Update stat cards - using correct IDs from template
         const statElements = {
             total_grades: document.getElementById('total-grades'),
@@ -104,10 +106,18 @@ class AdminDashboard {
             total_topics: document.getElementById('total-topics')
         };
 
+        console.log('Found elements:', statElements);
+
         Object.keys(statElements).forEach(key => {
             const element = statElements[key];
             if (element && data[key] !== undefined) {
+                console.log(`Updating ${key}:`, data[key]);
                 this.animateNumber(element, data[key]);
+            } else {
+                console.log(`Element not found or data missing for ${key}:`, {
+                    element: element,
+                    dataValue: data[key]
+                });
             }
         });
     }

@@ -146,21 +146,34 @@ def register():
 @user_bp.route('/login', methods=['POST'])
 def login():
     """5.2.2. Kullanıcı giriş işlemini gerçekleştirir."""
+    print('=== LOGIN DEBUG (API ROUTE) ===')
+    print(f'Request method: {request.method}')
+    print(f'Request path: {request.path}')
+    print(f'Request headers: {dict(request.headers)}')
+    
     user_service = get_user_service()
     if not user_service:
+        print('ERROR: User service not available')
         return jsonify({
             'status': 'error',
             'message': 'User service not available'
         }), 500
     
     data = request.get_json()
+    print(f'Received JSON data: {data}')
+    
     if not data:
+        print('ERROR: Invalid JSON received')
         return jsonify({'status': 'error', 'message': 'Invalid JSON'}), 400
 
+    print('Calling user_service.login_user...')
     # Login iş mantığı servis katmanına devredildi.
     success, result = user_service.login_user(data)
+    
+    print(f'Login service result - Success: {success}, Result: {result}')
 
     if success:
+        print('Login successful, setting session...')
         # Session'a kullanıcı bilgilerini kaydet
         session['logged_in'] = True
         session['user_id'] = result['id']
@@ -168,18 +181,25 @@ def login():
         session['email'] = result['email']
         session['is_admin'] = result.get('is_admin', False)
         
-        return jsonify({
+        print(f'Session set: {dict(session)}')
+        
+        response_data = {
             'status': 'success',
             'message': 'Giriş başarılı',
             'data': result
-        }), 200  # 200 OK
+        }
+        print(f'Returning success response: {response_data}')
+        return jsonify(response_data), 200  # 200 OK
     else:
+        print(f'Login failed: {result}')
         # Hata mesajı servisten geldiği için doğrudan kullanılır.
-        return jsonify({
+        error_response = {
             'status': 'error',
             'message': result.get('message', 'Giriş işlemi başarısız'),
             'details': result
-        }), 401  # 401 Unauthorized
+        }
+        print(f'Returning error response (401): {error_response}')
+        return jsonify(error_response), 401  # 401 Unauthorized
 
 @user_bp.route('/logout', methods=['POST'])
 def logout():

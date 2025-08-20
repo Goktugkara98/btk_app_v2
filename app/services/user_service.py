@@ -52,7 +52,7 @@ class UserService:
         try:
             users = self.user_repo.get_all_users()
             formatted_users = [{
-                'id': user.get('id'),
+                'id': user.get('user_id'),
                 'username': user.get('username'),
                 'email': user.get('email'),
                 'created_at': user.get('created_at').isoformat() if user.get('created_at') else None
@@ -96,9 +96,9 @@ class UserService:
                 return False, {'message': 'Kullanıcı oluşturulurken bir hata oluştu'}
 
             # 5. Başarılı sonuç dön
-            created_user = self.user_repo.get_user_by_id(new_user_id)
+            created_user = self.user_repo.get_by_id(new_user_id)
             return True, {
-                'id': created_user.get('id'),
+                'id': created_user.get('user_id'),
                 'username': created_user.get('username'),
                 'email': created_user.get('email')
             }
@@ -169,12 +169,12 @@ class UserService:
                 return False, {'message': 'Kullanıcı oluşturulurken bir hata oluştu'}
 
             # 10. Başarılı sonuç dön
-            created_user = self.user_repo.get_user_by_id(new_user_id)
+            created_user = self.user_repo.get_by_id(new_user_id)
             if not created_user:
                 return False, {'message': 'Kullanıcı oluşturuldu ancak bilgileri alınamadı'}
             
             return True, {
-                'id': created_user.get('id'),
+                'id': created_user.get('user_id'),
                 'username': created_user.get('username'),
                 'email': created_user.get('email')
             }
@@ -187,55 +187,89 @@ class UserService:
         4.2.4. Login form verilerini işler ve kullanıcı girişini gerçekleştirir.
         Login form'da email ve password alanları bulunur.
         """
+        print('=== LOGIN DEBUG (USER SERVICE) ===', flush=True)
+        print(f'Received login_data: {login_data}', flush=True)
+        
         from app.services.auth_service import auth_service
         
         # 1. Form verilerini kontrol et
         email = login_data.get('email', '').strip()
         password = login_data.get('password', '')
+        
+        print(f'Extracted - Email: {email}, Password length: {len(password) if password else 0}', flush=True)
 
         # 2. Gerekli alanların kontrolü
         if not email:
+            print('ERROR: Email field is empty', flush=True)
             return False, {'message': 'E-posta alanı gereklidir'}
         if not password:
+            print('ERROR: Password field is empty', flush=True)
             return False, {'message': 'Şifre alanı gereklidir'}
 
         # 3. Email format kontrolü
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, email):
+            print(f'ERROR: Invalid email format: {email}', flush=True)
             return False, {'message': 'Geçerli bir e-posta adresi giriniz'}
+
+        print('Email format is valid, proceeding...', flush=True)
 
         try:
             # 4. Kullanıcıyı e-posta ile bul
-            user = self.user_repo.get_user_by_email(email)
+            print(f'Looking up user by email: {email}', flush=True)
+            user = self.user_repo.get_by_email(email)
+            
+            print(f'User lookup result: {user}', flush=True)
             
             if not user:
+                print('ERROR: User not found', flush=True)
                 return False, {'message': 'E-posta veya şifre hatalı'}
 
             # 5. Şifre kontrolü
-            if not check_password_hash(user.get('password_hash'), password):
+            stored_hash = user.get('password_hash')
+            print(f'Stored password hash exists: {bool(stored_hash)}', flush=True)
+            print(f'Stored hash length: {len(stored_hash) if stored_hash else 0}', flush=True)
+            
+            password_match = check_password_hash(stored_hash, password)
+            print(f'Password match result: {password_match}', flush=True)
+            
+            if not password_match:
+                print('ERROR: Password does not match', flush=True)
                 return False, {'message': 'E-posta veya şifre hatalı'}
 
             # 6. Session'a kullanıcıyı kaydet
             user_data = {
-                'id': user.get('id'),
+                'id': user.get('user_id'),
                 'username': user.get('username'),
                 'email': user.get('email'),
                 'is_admin': user.get('is_admin', False)
             }
             
-            if not auth_service.login_user(user_data):
+            print(f'Attempting to set session with user_data: {user_data}', flush=True)
+            
+            auth_result = auth_service.login_user(user_data)
+            print(f'Auth service login result: {auth_result}', flush=True)
+            
+            if not auth_result:
+                print('ERROR: Failed to set session', flush=True)
                 return False, {'message': 'Oturum açılırken bir hata oluştu'}
 
             # 7. Başarılı giriş - kullanıcı bilgilerini döndür (şifre hariç)
-            return True, {
-                'id': user.get('id'),
+            success_data = {
+                'id': user.get('user_id'),
                 'username': user.get('username'),
                 'email': user.get('email'),
                 'is_admin': user.get('is_admin', False),
                 'created_at': user.get('created_at').isoformat() if user.get('created_at') else None
             }
+            
+            print(f'Login successful! Returning: {success_data}', flush=True)
+            return True, success_data
 
         except Exception as e:
+            print(f'ERROR: Exception occurred: {e}', flush=True)
+            import traceback
+            print(f'Traceback: {traceback.format_exc()}', flush=True)
             return False, {'message': 'Beklenmeyen bir hata oluştu'}
 
     def get_user_profile(self, user_id: int) -> Optional[Dict[str, Any]]:
@@ -244,7 +278,7 @@ class UserService:
         Şifre hariç tüm kullanıcı bilgilerini döndürür.
         """
         try:
-            user_profile = self.user_repo.get_user_profile(user_id)
+            user_profile = self.user_repo.get_by_id(user_id)
             
             if not user_profile:
                 return None
@@ -265,7 +299,7 @@ class UserService:
             
             # Şifre hariç tüm bilgileri döndür
             return {
-                'id': user_profile.get('id'),
+                'id': user_profile.get('user_id'),
                 'username': user_profile.get('username'),
                 'email': user_profile.get('email'),
                 'first_name': user_profile.get('first_name'),

@@ -1,148 +1,226 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}Ünite Yönetimi{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item active">Ünite Yönetimi</li>
-{% endblock %}
-
-{% block page_title %}Ünite Yönetimi{% endblock %}
-{% block page_subtitle %}Üniteleri ekleyin, düzenleyin ve yönetin{% endblock %}
-
-{% block page_actions %}
-<button class="btn btn-primary" onclick="showCreateUnitModal()">
-    <i class="fas fa-plus me-2"></i>Yeni Ünite
-</button>
-<button class="btn btn-outline-primary" onclick="exportUnits()">
-    <i class="fas fa-download me-2"></i>Export
-</button>
-{% endblock %}
+{% block title %}Ünite Yönetimi - Admin Panel{% endblock %}
 
 {% block content %}
-<!-- Search and Filters -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="search-box">
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="form-control" id="search-units" placeholder="Ünite ara..." data-target="units-table">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-cubes me-2"></i>
+            Ünite Yönetimi
+        </h1>
+        <button class="btn btn-primary" onclick="adminPanel.openModal('unitModal')">
+            <i class="fas fa-plus me-2"></i>
+            Yeni Ünite Ekle
+        </button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Toplam Ünite
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="totalUnits">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cubes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Aktif Üniteler
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="activeUnits">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Toplam Konu
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="totalTopics">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tags fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Ortalama Konu/Ünite
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="avgTopicsPerUnit">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="filter-box">
-            <select class="form-select" id="grade-filter">
-                <option value="">Tüm Sınıflar</option>
-                <!-- Sınıflar JavaScript ile doldurulacak -->
-            </select>
+
+    <!-- Filters -->
+    <div class="admin-card mb-4">
+        <div class="admin-card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="gradeFilter" class="form-label">Sınıf Filtresi</label>
+                    <select class="form-select" id="gradeFilter" onchange="unitsManager.filterByGrade()">
+                        <option value="">Tüm Sınıflar</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="subjectFilter" class="form-label">Ders Filtresi</label>
+                    <select class="form-select" id="subjectFilter" onchange="unitsManager.filterBySubject()">
+                        <option value="">Tüm Dersler</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Durum Filtresi</label>
+                    <select class="form-select" id="statusFilter" onchange="unitsManager.filterByStatus()">
+                        <option value="">Tüm Durumlar</option>
+                        <option value="1">Aktif</option>
+                        <option value="0">Pasif</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="searchInput" class="form-label">Arama</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Ünite adı veya açıklama..." onkeyup="unitsManager.search()">
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="filter-box">
-            <select class="form-select" id="subject-filter">
-                <option value="">Tüm Dersler</option>
-                <!-- Dersler JavaScript ile doldurulacak -->
-            </select>
+
+    <!-- Main Content -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h5 class="admin-card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Ünite Listesi
+            </h5>
+            <div class="admin-card-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="adminPanel.exportToCSV('unitsTable', 'uniteler.csv')">
+                    <i class="fas fa-download me-1"></i>
+                    CSV İndir
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="adminPanel.refreshSession()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Session Yenile
+                </button>
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="filter-box">
-            <select class="form-select" id="status-filter">
-                <option value="">Tüm Durumlar</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Pasif</option>
-            </select>
+        <div class="admin-card-body">
+            <div class="table-responsive">
+                <table class="admin-table" id="unitsTable">
+                    <thead>
+                        <tr>
+                            <th>Ünite No</th>
+                            <th>Ünite Adı</th>
+                            <th>Ders</th>
+                            <th>Sınıf</th>
+                            <th>Açıklama</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                Veriler yükleniyor...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Units Table -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-list me-2"></i>Ünite Listesi
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover" id="units-table">
-                <thead>
-                    <tr>
-                        <th>Sıra</th>
-                        <th>Ünite Adı</th>
-                        <th>Sınıf</th>
-                        <th>Ders</th>
-                        <th>Açıklama</th>
-                        <th>Konu Sayısı</th>
-                        <th>Durum</th>
-                        <th>Oluşturulma</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody id="units-tbody">
-                    <!-- Üniteler JavaScript ile doldurulacak -->
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Pagination -->
-        <nav aria-label="Ünite sayfaları" class="mt-4">
-            <ul class="pagination justify-content-center" id="units-pagination">
-                <!-- Sayfalama JavaScript ile doldurulacak -->
-            </ul>
-        </nav>
-    </div>
-</div>
-
-<!-- Create/Edit Unit Modal -->
-<div class="modal fade" id="unitModal" tabindex="-1">
+<!-- Unit Modal -->
+<div class="modal fade" id="unitModal" tabindex="-1" aria-labelledby="unitModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="unitModalTitle">Yeni Ünite Ekle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="unitModalLabel">Ünite Ekle/Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="unitForm">
+            <form id="unitForm" onsubmit="adminPanel.handleUnitSubmit(event)">
                 <div class="modal-body">
-                    <input type="hidden" id="unit-id" name="id">
-                    
-                    <div class="mb-3">
-                        <label for="unit-name" class="form-label">Ünite Adı *</label>
-                        <input type="text" class="form-control" id="unit-name" name="name" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="unit_number" class="form-label">Ünite No *</label>
+                                <input type="number" class="form-control" id="unit_number" name="unit_number" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="unit_name" class="form-label">Ünite Adı *</label>
+                                <input type="text" class="form-control" id="unit_name" name="unit_name" required>
+                            </div>
+                        </div>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="unit-grade" class="form-label">Sınıf *</label>
-                        <select class="form-select" id="unit-grade" name="grade_id" required>
-                            <option value="">Sınıf seçin</option>
-                            <!-- Sınıflar JavaScript ile doldurulacak -->
+                        <label for="grade_id" class="form-label">Sınıf *</label>
+                        <select class="form-select" id="grade_id" name="grade_id" required onchange="unitsManager.onGradeChange()">
+                            <option value="">Sınıf Seçin</option>
                         </select>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="unit-subject" class="form-label">Ders *</label>
-                        <select class="form-select" id="unit-subject" name="subject_id" required>
+                        <label for="subject_id" class="form-label">Ders *</label>
+                        <select class="form-select" id="subject_id" name="subject_id" required>
                             <option value="">Önce sınıf seçin</option>
                         </select>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="unit-description" class="form-label">Açıklama</label>
-                        <textarea class="form-control" id="unit-description" name="description" rows="3"></textarea>
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="unit-order" class="form-label">Sıra Numarası</label>
-                        <input type="number" class="form-control" id="unit-order" name="order_number" min="1">
-                        <div class="form-text">Ünitenin görüntülenme sırası</div>
-                    </div>
-                    
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="unit-active" name="is_active" checked>
-                            <label class="form-check-label" for="unit-active">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
                                 Aktif
                             </label>
                         </div>
@@ -151,536 +229,327 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Kaydet
+                        <i class="fas fa-save me-2"></i>
+                        Kaydet
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Veri İçe Aktar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="importFile" class="form-label">CSV Dosyası Seçin</label>
+                    <input type="file" class="form-control" id="importFile" accept=".csv">
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    CSV dosyası şu sütunları içermelidir: unit_number, unit_name, subject_id, description, is_active
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="adminPanel.handleImport()">
+                    <i class="fas fa-upload me-2"></i>
+                    İçe Aktar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
-// Units Management JavaScript
+// Units Page Manager
 class UnitsManager {
     constructor() {
-        this.currentPage = 1;
-        this.perPage = 10;
         this.units = [];
+        this.filteredUnits = [];
         this.grades = [];
         this.subjects = [];
-        this.filteredUnits = [];
         this.init();
     }
 
     init() {
+        this.loadUnitsData();
         this.loadGrades();
-        this.loadUnits();
-        this.setupEventListeners();
+        this.loadStatistics();
     }
 
-    setupEventListeners() {
-        // Search
-        const searchInput = document.getElementById('search-units');
-        if (searchInput) {
-            searchInput.addEventListener('input', this.debounce((e) => {
-                this.filterUnits();
-            }, 300));
-        }
-
-        // Grade filter
-        const gradeFilter = document.getElementById('grade-filter');
-        if (gradeFilter) {
-            gradeFilter.addEventListener('change', () => {
-                this.updateSubjectFilter();
-                this.filterUnits();
-            });
-        }
-
-        // Subject filter
-        const subjectFilter = document.getElementById('subject-filter');
-        if (subjectFilter) {
-            subjectFilter.addEventListener('change', () => {
-                this.filterUnits();
-            });
-        }
-
-        // Status filter
-        const statusFilter = document.getElementById('status-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', () => {
-                this.filterUnits();
-            });
-        }
-
-        // Form submit
-        const unitForm = document.getElementById('unitForm');
-        if (unitForm) {
-            unitForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.saveUnit();
-            });
-        }
-
-        // Grade change in modal
-        const unitGrade = document.getElementById('unit-grade');
-        if (unitGrade) {
-            unitGrade.addEventListener('change', () => {
-                this.updateModalSubjectFilter();
-            });
-        }
+    loadUnitsData() {
+        adminPanel.loadUnitsData();
     }
 
-    async loadGrades() {
-        try {
-            const response = await fetch('/api/admin/grades');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.grades = data.data || [];
-                this.populateGradeFilters();
-            }
-        } catch (error) {
-            console.error('Sınıf yükleme hatası:', error);
-        }
-    }
-
-    async loadSubjects() {
-        try {
-            const response = await fetch('/admin/api/subjects');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.subjects = data.data || [];
-            }
-        } catch (error) {
-            console.error('Ders yükleme hatası:', error);
-        }
-    }
-
-    populateGradeFilters() {
-        const gradeFilter = document.getElementById('grade-filter');
-        const unitGrade = document.getElementById('unit-grade');
-        
-        if (gradeFilter) {
-            gradeFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
-            this.grades.forEach(grade => {
-                gradeFilter.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
+    loadGrades() {
+        adminPanel.apiRequest('/api/admin/grades', 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.grades = response.data;
+                    this.populateGradeFilter(response.data);
+                    this.populateGradeSelect(response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Grades loading error:', error);
             });
-        }
-        
-        if (unitGrade) {
-            unitGrade.innerHTML = '<option value="">Sınıf seçin</option>';
-            this.grades.forEach(grade => {
-                unitGrade.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
+    }
+
+    loadSubjects(gradeId = null) {
+        const endpoint = gradeId ? `/api/admin/subjects?grade_id=${gradeId}` : '/api/admin/subjects';
+        adminPanel.apiRequest(endpoint, 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.subjects = response.data;
+                    this.populateSubjectFilter(response.data);
+                    if (gradeId) {
+                        this.populateSubjectSelect(response.data);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Subjects loading error:', error);
             });
-        }
     }
 
-    updateSubjectFilter() {
-        const gradeFilter = document.getElementById('grade-filter');
-        const subjectFilter = document.getElementById('subject-filter');
-        
-        if (!gradeFilter || !subjectFilter) return;
-        
-        const selectedGradeId = gradeFilter.value;
-        subjectFilter.innerHTML = '<option value="">Tüm Dersler</option>';
-        
-        if (selectedGradeId) {
-            const gradeSubjects = this.subjects.filter(subject => subject.grade_id == selectedGradeId);
-            gradeSubjects.forEach(subject => {
-                subjectFilter.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
-            });
-        }
-    }
+    populateGradeFilter(grades) {
+        const filter = document.getElementById('gradeFilter');
+        if (!filter) return;
 
-    updateModalSubjectFilter() {
-        const unitGrade = document.getElementById('unit-grade');
-        const unitSubject = document.getElementById('unit-subject');
-        
-        if (!unitGrade || !unitSubject) return;
-        
-        const selectedGradeId = unitGrade.value;
-        unitSubject.innerHTML = '<option value="">Ders seçin</option>';
-        
-        if (selectedGradeId) {
-            const gradeSubjects = this.subjects.filter(subject => subject.grade_id == selectedGradeId);
-            gradeSubjects.forEach(subject => {
-                unitSubject.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
-            });
-        }
-    }
-
-    async loadUnits() {
-        try {
-            showLoading('Üniteler yükleniyor...');
-            
-            const response = await fetch('/admin/api/units');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.units = data.data || [];
-                this.filteredUnits = [...this.units];
-                this.renderUnits();
-            } else {
-                showToast('Üniteler yüklenemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ünite yükleme hatası:', error);
-            showToast('Üniteler yüklenirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    filterUnits() {
-        const searchTerm = document.getElementById('search-units').value.toLowerCase();
-        const gradeFilter = document.getElementById('grade-filter').value;
-        const subjectFilter = document.getElementById('subject-filter').value;
-        const statusFilter = document.getElementById('status-filter').value;
-        
-        this.filteredUnits = this.units.filter(unit => {
-            const matchesSearch = unit.name.toLowerCase().includes(searchTerm) ||
-                                unit.description.toLowerCase().includes(searchTerm);
-            
-            const matchesGrade = !gradeFilter || unit.grade_id == gradeFilter;
-            const matchesSubject = !subjectFilter || unit.subject_id == subjectFilter;
-            
-            const matchesStatus = !statusFilter || 
-                                (statusFilter === 'active' && unit.is_active) ||
-                                (statusFilter === 'inactive' && !unit.is_active);
-            
-            return matchesSearch && matchesGrade && matchesSubject && matchesStatus;
+        filter.innerHTML = '<option value="">Tüm Sınıflar</option>';
+        grades.forEach(grade => {
+            const option = document.createElement('option');
+            option.value = grade.id;
+            option.textContent = grade.grade_name;
+            filter.appendChild(option);
         });
-        
-        this.currentPage = 1;
-        this.renderUnits();
     }
 
-    renderUnits() {
-        const tbody = document.getElementById('units-tbody');
+    populateGradeSelect(grades) {
+        const select = document.getElementById('grade_id');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Sınıf Seçin</option>';
+        grades.forEach(grade => {
+            const option = document.createElement('option');
+            option.value = grade.id;
+            option.textContent = grade.grade_name;
+            select.appendChild(option);
+        });
+    }
+
+    populateSubjectFilter(subjects) {
+        const filter = document.getElementById('subjectFilter');
+        if (!filter) return;
+
+        filter.innerHTML = '<option value="">Tüm Dersler</option>';
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.subject_name;
+            filter.appendChild(option);
+        });
+    }
+
+    populateSubjectSelect(subjects) {
+        const select = document.getElementById('subject_id');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Ders Seçin</option>';
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.subject_name;
+            select.appendChild(option);
+        });
+    }
+
+    onGradeChange() {
+        const gradeId = document.getElementById('grade_id').value;
+        const subjectSelect = document.getElementById('subject_id');
+        
+        if (gradeId) {
+            this.loadSubjects(gradeId);
+        } else {
+            subjectSelect.innerHTML = '<option value="">Önce sınıf seçin</option>';
+        }
+    }
+
+    loadStatistics() {
+        adminPanel.apiRequest('/api/admin/dashboard/stats', 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.updateStatistics(response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Statistics loading error:', error);
+            });
+    }
+
+    updateStatistics(stats) {
+        const elements = {
+            'totalUnits': stats.total_units || 0,
+            'activeUnits': stats.active_units || 0,
+            'totalTopics': stats.total_topics || 0,
+            'avgTopicsPerUnit': stats.total_units > 0 ? Math.round(stats.total_topics / stats.total_units) : 0
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                adminPanel.animateNumber(element, value);
+            }
+        });
+    }
+
+    filterByGrade() {
+        const gradeId = document.getElementById('gradeFilter').value;
+        if (gradeId) {
+            this.loadSubjects(gradeId);
+        } else {
+            this.loadSubjects();
+        }
+        this.applyFilters();
+    }
+
+    filterBySubject() {
+        this.applyFilters();
+    }
+
+    filterByStatus() {
+        this.applyFilters();
+    }
+
+    search() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        this.applyFilters(searchTerm);
+    }
+
+    applyFilters(searchTerm = '') {
+        const gradeId = document.getElementById('gradeFilter').value;
+        const subjectId = document.getElementById('subjectFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        this.filteredUnits = this.units.filter(unit => {
+            const matchesGrade = !gradeId || unit.grade_id == gradeId;
+            const matchesSubject = !subjectId || unit.subject_id == subjectId;
+            const matchesStatus = status === '' || unit.is_active == status;
+            const matchesSearch = !searchTerm || 
+                unit.unit_name.toLowerCase().includes(searchTerm) ||
+                (unit.description && unit.description.toLowerCase().includes(searchTerm));
+
+            return matchesGrade && matchesSubject && matchesStatus && matchesSearch;
+        });
+
+        this.renderFilteredUnits();
+    }
+
+    renderFilteredUnits() {
+        const tbody = document.querySelector('#unitsTable tbody');
         if (!tbody) return;
 
-        const startIndex = (this.currentPage - 1) * this.perPage;
-        const endIndex = startIndex + this.perPage;
-        const pageUnits = this.filteredUnits.slice(startIndex, endIndex);
-
-        tbody.innerHTML = '';
-
-        if (pageUnits.length === 0) {
+        if (this.filteredUnits.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-3"></i>
-                        <p>Ünite bulunamadı</p>
+                    <td colspan="7" class="text-center text-muted">
+                        <i class="fas fa-search me-2"></i>
+                        Sonuç bulunamadı
                     </td>
                 </tr>
             `;
             return;
         }
 
-        pageUnits.forEach(unit => {
-            const row = this.createUnitRow(unit);
+        tbody.innerHTML = '';
+        this.filteredUnits.forEach(unit => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${unit.unit_number}</td>
+                <td>${unit.unit_name}</td>
+                <td>${unit.subject_name || '-'}</td>
+                <td>${unit.grade_name || '-'}</td>
+                <td>${unit.description || '-'}</td>
+                <td>
+                    <span class="badge ${unit.is_active ? 'bg-success' : 'bg-secondary'}">
+                        ${unit.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                onclick="adminPanel.editUnit(${unit.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="adminPanel.deleteUnit(${unit.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
             tbody.appendChild(row);
         });
-
-        this.renderPagination();
     }
 
-    createUnitRow(unit) {
-        const grade = this.grades.find(g => g.id === unit.grade_id);
-        const subject = this.subjects.find(s => s.id === unit.subject_id);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${unit.order_number || '-'}</td>
-            <td>
-                <strong>${unit.name}</strong>
-            </td>
-            <td>
-                <span class="badge bg-primary">${grade ? grade.name : 'Bilinmiyor'}</span>
-            </td>
-            <td>
-                <span class="badge bg-success">${subject ? subject.name : 'Bilinmiyor'}</span>
-            </td>
-            <td>${unit.description || '-'}</td>
-            <td>
-                <span class="badge bg-info">${unit.topic_count || 0}</span>
-            </td>
-            <td>
-                <span class="badge bg-${unit.is_active ? 'success' : 'secondary'}">
-                    ${unit.is_active ? 'Aktif' : 'Pasif'}
-                </span>
-            </td>
-            <td>${this.formatDate(unit.created_at)}</td>
-            <td>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="unitsManager.editUnit(${unit.id})" title="Düzenle">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-${unit.is_active ? 'warning' : 'success'}" 
-                            onclick="unitsManager.toggleUnitStatus(${unit.id})" 
-                            title="${unit.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
-                        <i class="fas fa-${unit.is_active ? 'toggle-off' : 'toggle-on'}"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="unitsManager.deleteUnit(${unit.id})" title="Sil">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        return row;
-    }
-
-    renderPagination() {
-        const pagination = document.getElementById('units-pagination');
-        if (!pagination) return;
-
-        const totalPages = Math.ceil(this.filteredUnits.length / this.perPage);
-        
-        if (totalPages <= 1) {
-            pagination.innerHTML = '';
-            return;
-        }
-
-        let paginationHTML = '';
-
-        // Previous button
-        paginationHTML += `
-            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="unitsManager.goToPage(${this.currentPage - 1})">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-        `;
-
-        // Page numbers
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
-                paginationHTML += `
-                    <li class="page-item ${i === this.currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="unitsManager.goToPage(${i})">${i}</a>
-                    </li>
-                `;
-            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
-                paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-        }
-
-        // Next button
-        paginationHTML += `
-            <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="unitsManager.goToPage(${this.currentPage + 1})">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-        `;
-
-        pagination.innerHTML = paginationHTML;
-    }
-
-    goToPage(page) {
-        const totalPages = Math.ceil(this.filteredUnits.length / this.perPage);
-        if (page < 1 || page > totalPages) return;
-        
-        this.currentPage = page;
-        this.renderUnits();
-    }
-
-    showCreateModal() {
-        document.getElementById('unitModalTitle').textContent = 'Yeni Ünite Ekle';
-        document.getElementById('unitForm').reset();
-        document.getElementById('unit-id').value = '';
-        document.getElementById('unit-subject').innerHTML = '<option value="">Önce sınıf seçin</option>';
-        
-        const modal = new bootstrap.Modal(document.getElementById('unitModal'));
-        modal.show();
-    }
-
-    editUnit(unitId) {
-        const unit = this.units.find(u => u.id === unitId);
-        if (!unit) return;
-
-        document.getElementById('unitModalTitle').textContent = 'Ünite Düzenle';
-        document.getElementById('unit-id').value = unit.id;
-        document.getElementById('unit-name').value = unit.name;
-        document.getElementById('unit-grade').value = unit.grade_id;
-        document.getElementById('unit-description').value = unit.description || '';
-        document.getElementById('unit-order').value = unit.order_number || '';
-        document.getElementById('unit-active').checked = unit.is_active;
-
-        // Update subject filter for selected grade
-        this.updateModalSubjectFilter();
-        document.getElementById('unit-subject').value = unit.subject_id;
-
-        const modal = new bootstrap.Modal(document.getElementById('unitModal'));
-        modal.show();
-    }
-
-    async saveUnit() {
-        try {
-            const formData = new FormData(document.getElementById('unitForm'));
-            const unitData = {
-                name: formData.get('name'),
-                grade_id: parseInt(formData.get('grade_id')),
-                subject_id: parseInt(formData.get('subject_id')),
-                description: formData.get('description'),
-                order_number: parseInt(formData.get('order_number')) || null,
-                is_active: formData.get('is_active') === 'on'
-            };
-
-            const unitId = formData.get('id');
-            const url = unitId ? `/admin/api/units/${unitId}` : '/admin/api/units';
-            const method = unitId ? 'PUT' : 'POST';
-
-            showLoading('Ünite kaydediliyor...');
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(unitData)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(unitId ? 'Ünite güncellendi' : 'Ünite eklendi', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('unitModal')).hide();
-                this.loadUnits();
-            } else {
-                showToast(data.message || 'Ünite kaydedilemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ünite kaydetme hatası:', error);
-            showToast('Ünite kaydedilirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async toggleUnitStatus(unitId) {
-        try {
-            const unit = this.units.find(u => u.id === unitId);
-            if (!unit) return;
-
-            const newStatus = !unit.is_active;
-            const action = newStatus ? 'aktif' : 'pasif';
-
-            if (!confirm(`Bu üniteyi ${action} yapmak istediğinizden emin misiniz?`)) {
-                return;
-            }
-
-            showLoading('Durum güncelleniyor...');
-
-            const response = await fetch(`/admin/api/units/${unitId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    is_active: newStatus
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast(`Ünite ${action} yapıldı`, 'success');
-                this.loadUnits();
-            } else {
-                showToast('Durum güncellenemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Durum güncelleme hatası:', error);
-            showToast('Durum güncellenirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async deleteUnit(unitId) {
-        try {
-            if (!confirm('Bu üniteyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-                return;
-            }
-
-            showLoading('Ünite siliniyor...');
-
-            const response = await fetch(`/admin/api/units/${unitId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast('Ünite silindi', 'success');
-                this.loadUnits();
-            } else {
-                showToast('Ünite silinemedi', 'error');
-            }
-        } catch (error) {
-            console.error('Ünite silme hatası:', error);
-            showToast('Ünite silinirken hata oluştu', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    exportUnits() {
-        const csvData = this.filteredUnits.map(unit => {
-            const grade = this.grades.find(g => g.id === unit.grade_id);
-            const subject = this.subjects.find(s => s.id === unit.subject_id);
-            return {
-                'Sıra': unit.order_number || '',
-                'Ünite Adı': unit.name,
-                'Sınıf': grade ? grade.name : 'Bilinmiyor',
-                'Ders': subject ? subject.name : 'Bilinmiyor',
-                'Açıklama': unit.description || '',
-                'Durum': unit.is_active ? 'Aktif' : 'Pasif',
-                'Oluşturulma': this.formatDate(unit.created_at)
-            };
-        });
-
-        window.exportToCSV(csvData, 'uniteler.csv');
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('tr-TR');
-    }
-
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    // Override the renderUnitsTable method to store data locally
+    renderUnitsTable(units) {
+        this.units = units;
+        this.filteredUnits = units;
+        this.renderFilteredUnits();
     }
 }
 
-// Global functions
-function showCreateUnitModal() {
-    if (window.unitsManager) {
-        window.unitsManager.showCreateModal();
-    }
-}
-
-function exportUnits() {
-    if (window.unitsManager) {
-        window.unitsManager.exportUnits();
-    }
-}
-
-// Units manager'ı başlat
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
     window.unitsManager = new UnitsManager();
+    window.currentPageManager = window.unitsManager;
 });
+
+// Handle unit form submission
+adminPanel.handleUnitSubmit = function(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox value to boolean
+    data.is_active = formData.has('is_active');
+    
+    const editId = form.dataset.editId;
+    
+    if (editId) {
+        // Update existing unit
+        adminPanel.updateUnit(editId, data);
+    } else {
+        // Create new unit
+        adminPanel.createUnit(data);
+    }
+};
+
+// Handle import
+adminPanel.handleImport = function() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        adminPanel.showToast('Lütfen bir dosya seçin', 'warning');
+        return;
+    }
+    
+    adminPanel.importFromFile(file, 'units');
+    adminPanel.closeModal('importModal');
+    fileInput.value = '';
+};
 </script>
 {% endblock %}

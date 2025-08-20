@@ -1,343 +1,242 @@
-# =============================================================================
-# 1.0. MODÜL BAŞLIĞI VE AÇIKLAMASI
-# =============================================================================
-# Bu modül, kullanıcılar (`users` tablosu) ile ilgili tüm veritabanı
-# işlemlerini (CRUD) yöneten `UserRepository` sınıfını içerir.
-# =============================================================================
+"""
+User Repository - User Management
+Handles all database operations for users
+"""
 
-# =============================================================================
-# 2.0. İÇİNDEKİLER (GÜNCELLENDİ)
-# =============================================================================
-# 3.0. GEREKLİ KÜTÜPHANELER
-# 4.0. USERREPOSITORY SINIFI
-#   4.1. Başlatma ve Bağlantı Sahipliği
-#     4.1.1. __init__(self, db_connection)
-#   4.2. Dahili Bağlantı Yönetimi
-#     4.2.1. _ensure_connection(self)
-#     4.2.2. _close_if_owned(self)
-#   4.3. CRUD (Create, Read, Update, Delete) Metotları
-#     4.3.1. create_user(self, username, email, hashed_password, **kwargs)
-#     4.3.2. get_user(self, username)
-#     4.3.3. get_user_by_email(self, email)
-#     4.3.4. get_user_by_id(self, user_id)
-#     4.3.5. get_all_users(self)
-#     4.3.6. update_user(self, user_id, **kwargs)
-#     4.3.7. change_password(self, user_id, new_password_hash)
-#     4.3.8. delete_user(self, user_id)
-#     4.3.9. check_username_exists(self, username)
-#     4.3.10. check_email_exists(self, email)
-#     4.3.11. check_username_or_email_exists(self, username, email)
-#     4.3.12. get_user_profile(self, user_id)
-#     4.3.13. search_users(self, search_term)
-# =============================================================================
+from typing import List, Dict, Any, Optional
+from app.database.repositories.base_repository import BaseRepository
 
-# =============================================================================
-# 3.0. GEREKLİ KÜTÜPHANELER
-# =============================================================================
-from mysql.connector import Error as MySQLError
-from typing import Optional, Dict, List, Tuple
-from app.database.db_connection import DatabaseConnection
-
-# =============================================================================
-# 4.0. USERREPOSITORY SINIFI
-# =============================================================================
-class UserRepository:
-    """
-    Kullanıcı verilerinin veritabanı işlemlerini yönetir.
-    """
-
-    # -------------------------------------------------------------------------
-    # 4.1. Başlatma ve Bağlantı Sahipliği
-    # -------------------------------------------------------------------------
-    def __init__(self, db_connection: Optional[DatabaseConnection] = None):
-        """4.1.1. Sınıfın kurucu metodu. Harici veya dahili bağlantı kullanır."""
-        if db_connection:
-            self.db: DatabaseConnection = db_connection
-            self.own_connection: bool = False
-        else:
-            self.db: DatabaseConnection = DatabaseConnection()
-            self.own_connection: bool = True
-
-    # -------------------------------------------------------------------------
-    # 4.2. Dahili Bağlantı Yönetimi
-    # -------------------------------------------------------------------------
-    def _ensure_connection(self):
-        """4.2.1. Veritabanı bağlantısı kapalıysa yeniden kurar."""
-        self.db._ensure_connection()
-
-    def _close_if_owned(self):
-        """4.2.2. Eğer bağlantı bu sınıf tarafından oluşturulduysa kapatır."""
-        if self.own_connection:
-            self.db.close()
-
-    # -------------------------------------------------------------------------
-    # 4.3. CRUD (Create, Read, Update, Delete) Metotları
-    # -------------------------------------------------------------------------
-    def create_user(self, username: str, email: str, hashed_password: str, **kwargs) -> Optional[int]:
-        """4.3.1. Veritabanına yeni bir kullanıcı ekler."""
-        self._ensure_connection()
+class UserRepository(BaseRepository):
+    """Kullanıcıları yöneten repository"""
+    
+    def __init__(self):
+        """User repository'yi başlatır"""
+        super().__init__()
+        self.table_name = 'users'
+    
+    def get_all(self) -> List[Dict[str, Any]]:
+        """Tüm kullanıcıları getirir"""
         try:
-            with self.db as conn:
-                # Temel alanlar
-                fields = ['username', 'email', 'password_hash']
-                values = [username, email, hashed_password]
-                
-                # Opsiyonel alanlar
-                optional_fields = [
-                    'first_name', 'last_name', 'phone', 'birth_date', 'gender',
-                    'country', 'city', 'school', 'bio', 'avatar_path'
-                ]
-                
-                for field in optional_fields:
-                    if field in kwargs and kwargs[field] is not None:
-                        fields.append(field)
-                        values.append(kwargs[field])
-                
-                query = f"INSERT INTO users ({', '.join(fields)}) VALUES ({', '.join(['%s'] * len(fields))})"
-                conn.cursor.execute(query, values)
-                conn.connection.commit()
-                user_id = conn.cursor.lastrowid
-                return user_id
-        except MySQLError as e:
-            if e.errno == 1062: # Duplicate entry
-                return None
-            return None
-        finally:
-            self._close_if_owned()
-
-    def get_user(self, username: str) -> Optional[Dict]:
-        """4.3.2. Kullanıcı adına göre bir kullanıcıyı getirir."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
-                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
-                    FROM users u
-                    WHERE u.username = %s
-                """
-                conn.cursor.execute(query, (username,))
-                return conn.cursor.fetchone()
-        except MySQLError:
-            return None
-        finally:
-            self._close_if_owned()
-
-    def get_user_by_email(self, email: str) -> Optional[Dict]:
-        """4.3.3. Email adresine göre bir kullanıcıyı getirir."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
-                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
-                    FROM users u
-                    WHERE u.email = %s
-                """
-                conn.cursor.execute(query, (email,))
-                return conn.cursor.fetchone()
-        except MySQLError:
-            return None
-        finally:
-            self._close_if_owned()
-
-    def get_user_by_id(self, user_id: int) -> Optional[Dict]:
-        """4.3.4. ID'ye göre bir kullanıcıyı getirir."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
-                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
-                    FROM users u
-                    WHERE u.user_id = %s
-                """
-                conn.cursor.execute(query, (user_id,))
-                result = conn.cursor.fetchone()
-                return result
-        except MySQLError as e:
-            return None
-        finally:
-            self._close_if_owned()
-
-    def get_all_users(self) -> List[Dict]:
-        """4.3.5. Veritabanındaki tüm kullanıcıları getirir."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.password_hash, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
-                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
-                    FROM users u
-                    ORDER BY u.created_at DESC
-                """
-                conn.cursor.execute(query)
-                return conn.cursor.fetchall()
-        except MySQLError:
-            return []
-        finally:
-            self._close_if_owned()
-
-    def update_user(self, user_id: int, **kwargs) -> bool:
-        """4.3.6. Bir kullanıcının bilgilerini günceller."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                # Güncellenebilir alanlar
-                updatable_fields = [
-                    'username', 'email', 'first_name', 'last_name', 'phone', 
-                    'birth_date', 'gender', 'country', 'city', 'school', 'bio', 'avatar_path',
-                    'is_active', 'is_admin'
-                ]
-                
-                # Güncellenecek alanları filtrele
-                update_fields = []
-                update_values = []
-                
-                for field in updatable_fields:
-                    if field in kwargs and kwargs[field] is not None:
-                        update_fields.append(f"{field} = %s")
-                        update_values.append(kwargs[field])
-                
-                if not update_fields:
-                    return False
-                
-                update_values.append(user_id)
-                query = f"UPDATE users SET {', '.join(update_fields)} WHERE user_id = %s"
-                
-                conn.cursor.execute(query, update_values)
-                conn.connection.commit()
-                row_count = conn.cursor.rowcount
-                return row_count > 0
-        except MySQLError as e:
-            conn.connection.rollback()
-            return False
+            query = """
+                SELECT id, username, email, first_name, last_name, is_admin, is_active, 
+                       last_login, created_at, updated_at
+                FROM users 
+                ORDER BY created_at DESC
+            """
+            return self.fetch_all(query)
         except Exception as e:
-            return False
-        finally:
-            self._close_if_owned()
-
-    def change_password(self, user_id: int, new_password_hash: str) -> bool:
-        """4.3.7. Bir kullanıcının şifresini günceller."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = "UPDATE users SET password_hash = %s WHERE user_id = %s"
-                conn.cursor.execute(query, (new_password_hash, user_id))
-                conn.connection.commit()
-                return conn.cursor.rowcount > 0
-        except MySQLError:
-            conn.connection.rollback()
-            return False
-        finally:
-            self._close_if_owned()
-
-    def delete_user(self, user_id: int) -> bool:
-        """4.3.8. Bir kullanıcıyı ID'ye göre siler."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = "DELETE FROM users WHERE user_id = %s"
-                conn.cursor.execute(query, (user_id,))
-                conn.connection.commit()
-                return conn.cursor.rowcount > 0
-        except MySQLError:
-            conn.connection.rollback()
-            return False
-        finally:
-            self._close_if_owned()
-
-    def check_username_exists(self, username: str) -> bool:
-        """4.3.9. Kullanıcı adının var olup olmadığını kontrol eder."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = "SELECT COUNT(*) as count FROM users WHERE username = %s"
-                conn.cursor.execute(query, (username,))
-                result = conn.cursor.fetchone()
-                return result['count'] > 0
-        except MySQLError:
-            return False
-        finally:
-            self._close_if_owned()
-
-    def check_email_exists(self, email: str) -> bool:
-        """4.3.10. Email adresinin var olup olmadığını kontrol eder."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = "SELECT COUNT(*) as count FROM users WHERE email = %s"
-                conn.cursor.execute(query, (email,))
-                result = conn.cursor.fetchone()
-                return result['count'] > 0
-        except MySQLError:
-            return False
-        finally:
-            self._close_if_owned()
-
-    def check_username_or_email_exists(self, username: str, email: str) -> Tuple[bool, bool]:
-        """4.3.11. Hem kullanıcı adı hem de email'in var olup olmadığını kontrol eder."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                # Kullanıcı adı kontrolü
-                username_query = "SELECT COUNT(*) as count FROM users WHERE username = %s"
-                conn.cursor.execute(username_query, (username,))
-                username_result = conn.cursor.fetchone()
-                username_exists = username_result['count'] > 0
-
-                # Email kontrolü
-                email_query = "SELECT COUNT(*) as count FROM users WHERE email = %s"
-                conn.cursor.execute(email_query, (email,))
-                email_result = conn.cursor.fetchone()
-                email_exists = email_result['count'] > 0
-
-                return username_exists, email_exists
-        except MySQLError as e:
-            return False, False
-        finally:
-            self._close_if_owned()
-
-    def get_user_profile(self, user_id: int) -> Optional[Dict]:
-        """4.3.12. Kullanıcının profil bilgilerini getirir (şifre hariç)."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.first_name, u.last_name, 
-                           u.phone, u.birth_date, u.gender, u.country, u.city, u.school,
-                           u.bio, u.avatar_path, u.is_active, u.is_admin, u.created_at, u.updated_at
-                    FROM users u
-                    WHERE u.user_id = %s
-                """
-                conn.cursor.execute(query, (user_id,))
-                return conn.cursor.fetchone()
-        except MySQLError:
-            return None
-        finally:
-            self._close_if_owned()
-
-    def search_users(self, search_term: str) -> List[Dict]:
-        """4.3.13. Kullanıcıları arama terimine göre arar."""
-        self._ensure_connection()
-        try:
-            with self.db as conn:
-                query = """
-                    SELECT u.user_id AS id, u.username, u.email, u.first_name, u.last_name, 
-                           u.school, u.country, u.city
-                    FROM users u
-                    WHERE u.username LIKE %s OR u.email LIKE %s OR u.first_name LIKE %s OR u.last_name LIKE %s
-                    ORDER BY u.username
-                    LIMIT 50
-                """
-                search_pattern = f"%{search_term}%"
-                conn.cursor.execute(query, (search_pattern, search_pattern, search_pattern, search_pattern))
-                return conn.cursor.fetchall()
-        except MySQLError:
+            print(f"Error getting all users: {e}")
             return []
-        finally:
-            self._close_if_owned()
+    
+    def get_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """ID'ye göre kullanıcı getirir"""
+        try:
+            query = """
+                SELECT user_id, username, email, password_hash, first_name, last_name, is_admin, is_active, 
+                       created_at, updated_at
+                FROM users WHERE user_id = %s
+            """
+            return self.fetch_one(query, (user_id,))
+        except Exception as e:
+            print(f"Error getting user by ID: {e}")
+            return None
+    
+    def get_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        """Kullanıcı adına göre kullanıcı getirir"""
+        try:
+            query = """
+                SELECT id, username, email, first_name, last_name, is_admin, is_active, 
+                       last_login, created_at, updated_at
+                FROM users WHERE username = %s
+            """
+            return self.fetch_one(query, (username,))
+        except Exception as e:
+            print(f"Error getting user by username: {e}")
+            return None
+    
+    def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Email'e göre kullanıcı getirir"""
+        print('=== LOGIN DEBUG (USER REPOSITORY) ===')
+        print(f'Looking up user by email: {email}')
+        
+        try:
+            query = """
+                SELECT user_id, username, email, password_hash, first_name, last_name, is_admin, is_active, 
+                       created_at, updated_at
+                FROM users WHERE email = %s
+            """
+            print(f'Executing query: {query}')
+            print(f'Query parameters: {(email,)}')
+            
+            result = self.fetch_one(query, (email,))
+            
+            if result:
+                # Don't print password_hash for security, but show that it exists
+                safe_result = dict(result)
+                if 'password_hash' in safe_result:
+                    safe_result['password_hash'] = f'[HASH_EXISTS: {bool(safe_result["password_hash"])}]'
+                print(f'User found: {safe_result}')
+            else:
+                print('User not found')
+            
+            return result
+            
+        except Exception as e:
+            print(f"ERROR: Exception in get_by_email: {e}")
+            import traceback
+            print(f'Traceback: {traceback.format_exc()}')
+            return None
+    
+    def create_user(self, username: str, email: str, hashed_password: str, **kwargs) -> Optional[int]:
+        """Yeni kullanıcı oluşturur"""
+        try:
+            query = """
+                INSERT INTO users (username, email, password_hash, first_name, last_name, 
+                                 is_admin, is_active, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """
+            
+            params = (
+                username,
+                email,
+                hashed_password,
+                kwargs.get('first_name', ''),
+                kwargs.get('last_name', ''),
+                kwargs.get('is_admin', False),
+                kwargs.get('is_active', True)
+            )
+            
+            return self.execute_query(query, params)
+            
+        except Exception as e:
+            print(f"Error creating user: {e}")
+            return None
+    
+    def update(self, user_id: int, data: Dict[str, Any]) -> bool:
+        """Kullanıcı bilgilerini günceller"""
+        try:
+            # Sadece güncellenebilir alanları al
+            updateable_fields = ['first_name', 'last_name', 'is_active']
+            update_data = {}
+            
+            for field in updateable_fields:
+                if field in data:
+                    update_data[field] = data[field]
+            
+            if not update_data:
+                return False
+            
+            # SQL query oluştur
+            set_clause = ', '.join([f"{field} = %s" for field in update_data.keys()])
+            query = f"""
+                UPDATE users 
+                SET {set_clause}, updated_at = NOW()
+                WHERE id = %s
+            """
+            
+            params = list(update_data.values()) + [user_id]
+            return self.execute_query(query, tuple(params)) > 0
+            
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            return False
+    
+    def count_all(self) -> int:
+        """Toplam kullanıcı sayısını getirir"""
+        try:
+            query = "SELECT COUNT(*) as count FROM users"
+            result = self.fetch_one(query)
+            return result['count'] if result else 0
+        except Exception as e:
+            print(f"Error counting users: {e}")
+            return 0
+    
+    def count_active(self) -> int:
+        """Aktif kullanıcı sayısını getirir"""
+        try:
+            query = "SELECT COUNT(*) as count FROM users WHERE is_active = 1"
+            result = self.fetch_one(query)
+            return result['count'] if result else 0
+        except Exception as e:
+            print(f"Error counting active users: {e}")
+            return 0
+    
+    def count_recent_logins(self, days: int = 7) -> int:
+        """Son X günde giriş yapan kullanıcı sayısını getirir"""
+        try:
+            query = """
+                SELECT COUNT(*) as count 
+                FROM users 
+                WHERE last_login >= DATE_SUB(NOW(), INTERVAL %s DAY)
+            """
+            result = self.fetch_one(query, (days,))
+            return result['count'] if result else 0
+        except Exception as e:
+            print(f"Error counting recent logins: {e}")
+            return 0
+    
+    def search(self, search_term: str) -> List[Dict[str, Any]]:
+        """Arama terimine göre kullanıcı arar"""
+        try:
+            query = """
+                SELECT id, username, email, first_name, last_name, is_admin, is_active, 
+                       last_login, created_at, updated_at
+                FROM users 
+                WHERE username LIKE %s OR email LIKE %s OR first_name LIKE %s OR last_name LIKE %s
+                ORDER BY created_at DESC
+            """
+            search_pattern = f"%{search_term}%"
+            return self.fetch_all(query, (search_pattern, search_pattern, search_pattern, search_pattern))
+        except Exception as e:
+            print(f"Error searching users: {e}")
+            return []
+    
+    def get_active_users(self) -> List[Dict[str, Any]]:
+        """Sadece aktif kullanıcıları getirir"""
+        try:
+            query = """
+                SELECT id, username, email, first_name, last_name, is_admin, is_active, 
+                       last_login, created_at, updated_at
+                FROM users 
+                WHERE is_active = 1
+                ORDER BY created_at DESC
+            """
+            return self.fetch_all(query)
+        except Exception as e:
+            print(f"Error getting active users: {e}")
+            return []
+    
+    def get_admin_users(self) -> List[Dict[str, Any]]:
+        """Sadece admin kullanıcıları getirir"""
+        try:
+            query = """
+                SELECT id, username, email, first_name, last_name, is_admin, is_active, 
+                       last_login, created_at, updated_at
+                FROM users 
+                WHERE is_admin = 1
+                ORDER BY created_at DESC
+            """
+            return self.fetch_all(query)
+        except Exception as e:
+            print(f"Error getting admin users: {e}")
+            return []
+    
+    def bulk_update_status(self, user_ids: List[int], is_active: bool) -> bool:
+        """Birden fazla kullanıcının durumunu toplu günceller"""
+        try:
+            if not user_ids:
+                return True
+            
+            placeholders = ','.join(['%s'] * len(user_ids))
+            query = f"""
+                UPDATE users 
+                SET is_active = %s, updated_at = NOW()
+                WHERE id IN ({placeholders})
+            """
+            
+            params = [is_active] + user_ids
+            return self.execute_query(query, tuple(params)) > 0
+            
+        except Exception as e:
+            print(f"Error bulk updating user status: {e}")
+            return False

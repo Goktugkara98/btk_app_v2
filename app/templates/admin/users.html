@@ -1,0 +1,556 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Kullanıcı Yönetimi - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-users me-2"></i>
+            Kullanıcı Yönetimi
+        </h1>
+        <button class="btn btn-primary" onclick="adminPanel.openModal('userModal')">
+            <i class="fas fa-plus me-2"></i>
+            Yeni Kullanıcı Ekle
+        </button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Toplam Kullanıcı
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="totalUsers">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Aktif Kullanıcılar
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="activeUsers">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Admin Kullanıcılar
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="adminUsers">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="stat-card-title text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Son Giriş (24s)
+                            </div>
+                            <div class="stat-card-number h5 mb-0 font-weight-bold text-gray-800" id="recentLogins">
+                                <span class="loading-placeholder">Yükleniyor...</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="admin-card mb-4">
+        <div class="admin-card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="roleFilter" class="form-label">Rol Filtresi</label>
+                    <select class="form-select" id="roleFilter" onchange="usersManager.filterByRole()">
+                        <option value="">Tüm Roller</option>
+                        <option value="1">Admin</option>
+                        <option value="0">Kullanıcı</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Durum Filtresi</label>
+                    <select class="form-select" id="statusFilter" onchange="usersManager.filterByStatus()">
+                        <option value="">Tüm Durumlar</option>
+                        <option value="1">Aktif</option>
+                        <option value="0">Pasif</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="lastLoginFilter" class="form-label">Son Giriş</label>
+                    <select class="form-select" id="lastLoginFilter" onchange="usersManager.filterByLastLogin()">
+                        <option value="">Tüm Zamanlar</option>
+                        <option value="today">Bugün</option>
+                        <option value="week">Bu Hafta</option>
+                        <option value="month">Bu Ay</option>
+                        <option value="never">Hiç Giriş Yapmamış</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="searchInput" class="form-label">Arama</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Kullanıcı adı, email veya ad..." onkeyup="usersManager.search()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h5 class="admin-card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Kullanıcı Listesi
+            </h5>
+            <div class="admin-card-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="adminPanel.exportToCSV('usersTable', 'kullanicilar.csv')">
+                    <i class="fas fa-download me-1"></i>
+                    CSV İndir
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="adminPanel.refreshSession()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Session Yenile
+                </button>
+            </div>
+        </div>
+        <div class="admin-card-body">
+            <div class="table-responsive">
+                <table class="admin-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Kullanıcı Adı</th>
+                            <th>Email</th>
+                            <th>Ad Soyad</th>
+                            <th>Rol</th>
+                            <th>Durum</th>
+                            <th>Son Giriş</th>
+                            <th>Kayıt Tarihi</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                Veriler yükleniyor...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">Kullanıcı Ekle/Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="userForm" onsubmit="adminPanel.handleUserSubmit(event)">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Kullanıcı Adı *</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">Ad *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">Soyad *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="passwordField">
+                        <label for="password" class="form-label">Şifre *</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                        <div class="form-text">Düzenleme sırasında boş bırakılırsa şifre değişmez</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin">
+                                    <label class="form-check-label" for="is_admin">
+                                        Admin Yetkisi
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                    <label class="form-check-label" for="is_active">
+                                        Aktif
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Veri İçe Aktar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="importFile" class="form-label">CSV Dosyası Seçin</label>
+                    <input type="file" class="form-control" id="importFile" accept=".csv">
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    CSV dosyası şu sütunları içermelidir: username, email, first_name, last_name, password, is_admin, is_active
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="adminPanel.handleImport()">
+                    <i class="fas fa-upload me-2"></i>
+                    İçe Aktar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Users Page Manager
+class UsersManager {
+    constructor() {
+        this.users = [];
+        this.filteredUsers = [];
+        this.init();
+    }
+
+    init() {
+        this.loadUsersData();
+        this.loadStatistics();
+    }
+
+    loadUsersData() {
+        adminPanel.loadUsersData();
+    }
+
+    loadStatistics() {
+        adminPanel.apiRequest('/api/admin/dashboard/stats', 'GET')
+            .then(response => {
+                if (response.success) {
+                    this.updateStatistics(response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Statistics loading error:', error);
+            });
+    }
+
+    updateStatistics(stats) {
+        const elements = {
+            'totalUsers': stats.total_users || 0,
+            'activeUsers': stats.active_users || 0,
+            'adminUsers': stats.admin_users || 0,
+            'recentLogins': stats.recent_logins || 0
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                adminPanel.animateNumber(element, value);
+            }
+        });
+    }
+
+    filterByRole() {
+        this.applyFilters();
+    }
+
+    filterByStatus() {
+        this.applyFilters();
+    }
+
+    filterByLastLogin() {
+        this.applyFilters();
+    }
+
+    search() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        this.applyFilters(searchTerm);
+    }
+
+    applyFilters(searchTerm = '') {
+        const role = document.getElementById('roleFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const lastLogin = document.getElementById('lastLoginFilter').value;
+
+        this.filteredUsers = this.users.filter(user => {
+            const matchesRole = role === '' || user.is_admin == role;
+            const matchesStatus = status === '' || user.is_active == status;
+            const matchesLastLogin = this.matchesLastLoginFilter(user.last_login, lastLogin);
+            const matchesSearch = !searchTerm || 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm);
+
+            return matchesRole && matchesStatus && matchesLastLogin && matchesSearch;
+        });
+
+        this.renderFilteredUsers();
+    }
+
+    matchesLastLoginFilter(lastLogin, filter) {
+        if (filter === '') return true;
+        if (!lastLogin) return filter === 'never';
+
+        const lastLoginDate = new Date(lastLogin);
+        const now = new Date();
+
+        switch (filter) {
+            case 'today':
+                return lastLoginDate.toDateString() === now.toDateString();
+            case 'week':
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return lastLoginDate >= weekAgo;
+            case 'month':
+                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                return lastLoginDate >= monthAgo;
+            case 'never':
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    renderFilteredUsers() {
+        const tbody = document.querySelector('#usersTable tbody');
+        if (!tbody) return;
+
+        if (this.filteredUsers.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        <i class="fas fa-search me-2"></i>
+                        Sonuç bulunamadı
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = '';
+        this.filteredUsers.forEach(user => {
+            const row = document.createElement('tr');
+            const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString('tr-TR') : 'Hiç giriş yapmamış';
+            const createdDate = new Date(user.created_at).toLocaleDateString('tr-TR');
+            
+            row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>
+                    <span class="badge ${user.is_admin ? 'bg-danger' : 'bg-info'}">
+                        ${user.is_admin ? 'Admin' : 'Kullanıcı'}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${user.is_active ? 'bg-success' : 'bg-secondary'}">
+                        ${user.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
+                </td>
+                <td>${lastLogin}</td>
+                <td>${createdDate}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                onclick="adminPanel.editUser(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                onclick="adminPanel.toggleUserAdmin(${user.id})">
+                            <i class="fas fa-user-shield"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="adminPanel.deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Override the renderUsersTable method to store data locally
+    renderUsersTable(users) {
+        this.users = users;
+        this.filteredUsers = users;
+        this.renderFilteredUsers();
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.usersManager = new UsersManager();
+    window.currentPageManager = window.usersManager;
+});
+
+// Handle user form submission
+adminPanel.handleUserSubmit = function(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox values to boolean
+    data.is_admin = formData.has('is_admin');
+    data.is_active = formData.has('is_active');
+    
+    // Remove password if empty (for updates)
+    if (!data.password) {
+        delete data.password;
+    }
+    
+    const editId = form.dataset.editId;
+    
+    if (editId) {
+        // Update existing user
+        adminPanel.updateUser(editId, data);
+    } else {
+        // Create new user
+        if (!data.password) {
+            adminPanel.showToast('Şifre gerekli', 'warning');
+            return;
+        }
+        adminPanel.createUser(data);
+    }
+};
+
+// Handle import
+adminPanel.handleImport = function() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        adminPanel.showToast('Lütfen bir dosya seçin', 'warning');
+        return;
+    }
+    
+    adminPanel.importFromFile(file, 'users');
+    adminPanel.closeModal('importModal');
+    fileInput.value = '';
+};
+
+// Override the populateUserForm method to handle password field
+adminPanel.populateUserForm = function(user) {
+    const form = document.getElementById('userForm');
+    if (form) {
+        form.querySelector('[name="username"]').value = user.username || '';
+        form.querySelector('[name="email"]').value = user.email || '';
+        form.querySelector('[name="first_name"]').value = user.first_name || '';
+        form.querySelector('[name="last_name"]').value = user.last_name || '';
+        form.querySelector('[name="is_admin"]').checked = user.is_admin;
+        form.querySelector('[name="is_active"]').checked = user.is_active;
+        form.querySelector('[name="password"]').value = '';
+        form.querySelector('[name="password"]').required = false;
+        form.dataset.editId = user.id;
+        
+        // Update modal title
+        document.getElementById('userModalLabel').textContent = 'Kullanıcı Düzenle';
+    }
+};
+
+// Override the openModal method to reset form for new users
+const originalOpenModal = adminPanel.openModal;
+adminPanel.openModal = function(modalId) {
+    if (modalId === 'userModal') {
+        const form = document.getElementById('userForm');
+        if (form) {
+            form.reset();
+            form.dataset.editId = '';
+            form.querySelector('[name="password"]').required = true;
+            document.getElementById('userModalLabel').textContent = 'Yeni Kullanıcı Ekle';
+        }
+    }
+    originalOpenModal.call(this, modalId);
+};
+</script>
+{% endblock %}

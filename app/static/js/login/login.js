@@ -175,26 +175,43 @@ function setLoadingState(isLoading) {
 
 // Real login API call
 async function loginAPI(email, password) {
+    console.log('=== LOGIN DEBUG (JS) ===');
+    console.log('Email:', email);
+    console.log('Password length:', password.length);
+    
     try {
-        const response = await fetch('/api/users/login', {
+        console.log('Sending POST request to /api/login...');
+        
+        const requestBody = {
+            email: email,
+            password: password
+        };
+        console.log('Request body:', requestBody);
+        
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
+            body: JSON.stringify(requestBody)
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (response.ok && data.status === 'success') {
+            console.log('Login successful!');
             return data;
         } else {
+            console.log('Login failed with response:', data);
             throw new Error(data.message || 'Giriş yapılırken bir hata oluştu');
         }
     } catch (error) {
+        console.error('Login API error:', error);
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             throw new Error('Sunucuya bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.');
         }

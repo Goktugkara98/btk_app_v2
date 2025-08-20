@@ -161,14 +161,24 @@ class AuthenticationService:
         Returns:
             True if successful, False otherwise
         """
+        print('=== LOGIN DEBUG (AUTH SERVICE) ===')
+        print(f'Received user_data: {user_data}')
+        
         try:
+            print('Setting session variables...')
             session['logged_in'] = True
             session['user_id'] = user_data.get('id')
             session['username'] = user_data.get('username')
             session['email'] = user_data.get('email')
             session['is_admin'] = user_data.get('is_admin', False)
+            
+            print(f'Session after setting: {dict(session)}')
+            print('Session set successfully')
             return True
         except Exception as e:
+            print(f'ERROR: Failed to set session: {e}')
+            import traceback
+            print(f'Traceback: {traceback.format_exc()}')
             return False
     
     def logout_user(self) -> bool:

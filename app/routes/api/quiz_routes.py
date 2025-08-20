@@ -35,13 +35,16 @@ quiz_bp = Blueprint('quiz', __name__)
 try:
     from app.services import get_quiz_service
     from app.services.quiz_session_service import QuizSessionService
-    from app.services.auth_service import login_required
+    from app.services.auth_service import AuthenticationService
     from app.database.db_connection import DatabaseConnection
 except ImportError as e:
     get_quiz_service = None
     QuizSessionService = None
-    login_required = None
+    AuthenticationService = None
     DatabaseConnection = None
+
+# Create authentication service instance
+auth_service = AuthenticationService() if AuthenticationService else None
 
 # =============================================================================
 # 4.0. SERVİS BAŞLATMA
@@ -808,7 +811,7 @@ def get_session_results(session_id):
         }), 500
 
 @quiz_bp.route('/quiz/submit', methods=['POST'])
-@login_required
+@auth_service.login_required if auth_service else lambda f: f
 def submit_quiz():
     """5.2.5. Quiz sonuçlarını gönderir (Legacy - deprecated)."""
     
@@ -851,7 +854,7 @@ def submit_quiz():
         }), 500
 
 @quiz_bp.route('/quiz/results', methods=['GET'])
-@login_required
+@auth_service.login_required if auth_service else lambda f: f
 def get_quiz_results():
     """5.2.3. Kullanıcının quiz sonuçlarını getirir."""
     

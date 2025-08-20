@@ -27,13 +27,13 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, current_app
 
 # Import authentication service
-try:
-    from app.services.auth_service import login_required
-except ImportError as e:
-    login_required = None
+from app.services.auth_service import AuthenticationService
 
 # Create the quiz pages blueprint
 quiz_bp = Blueprint('quiz', __name__)
+
+# Create authentication service instance
+auth_service = AuthenticationService()
 
 # =============================================================================
 # 4.0. QUIZ SAYFA ROTALARI (QUIZ PAGE ROUTES)
@@ -44,7 +44,7 @@ quiz_bp = Blueprint('quiz', __name__)
 # -------------------------------------------------------------------------
 
 @quiz_bp.route('/quiz')
-@login_required
+@auth_service.login_required
 def quiz():
     """4.1.1. Quiz sayfasını render eder."""
     return render_template('quiz_screen.html', title='Quiz')
